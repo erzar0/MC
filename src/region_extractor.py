@@ -1,13 +1,13 @@
 from concurrent.futures import as_completed
 from pathlib import Path
-from typing import Tuple, List
+from typing import List
 from tqdm import tqdm
-import anvil 
 import glob 
+import anvil
 import pympler
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
-from itertools import product, islice
+from itertools import product
 from batching import batch_n
 
 
