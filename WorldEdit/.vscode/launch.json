@@ -1,0 +1,213 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - Client",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 0
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "net.neoforged.fml.startup.Client",
+      "args": [
+        "--version",
+        "21.10.34-beta",
+        "--assetIndex",
+        "asset-index",
+        "--assetsDir",
+        "/home/kyre/.gradle/caches/minecraft/assets",
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Dforge.logging.markers\u003dSCAN,REGISTRIES,REGISTRYDUMP",
+        "-Dforge.logging.console.level\u003ddebug",
+        "-Dneoforge.enableGameTest\u003dtrue",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/run",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - ClientData",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 1
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "net.neoforged.fml.startup.DataClient",
+      "args": [
+        "--assetIndex",
+        "asset-index",
+        "--assetsDir",
+        "/home/kyre/.gradle/caches/minecraft/assets",
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/runs/clientData",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - GameTestServer",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 2
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "net.neoforged.fml.startup.GameTestServer",
+      "args": [
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Dneoforge.enableGameTest\u003dtrue",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/runs/gameTestServer",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - Junit",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 3
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "NONE",
+      "args": [
+        "--version",
+        "21.10.34-beta",
+        "--assetIndex",
+        "asset-index",
+        "--assetsDir",
+        "/home/kyre/.gradle/caches/minecraft/assets",
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/runs/junit",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - Server",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 4
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "net.neoforged.fml.startup.Server",
+      "args": [
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Dforge.logging.markers\u003dSCAN,REGISTRIES,REGISTRYDUMP",
+        "-Dforge.logging.console.level\u003ddebug",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/run",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Worldedit-neoforge - ServerData",
+      "presentation": {
+        "group": "NG - worldedit-neoforge",
+        "order": 5
+      },
+      "projectName": "worldedit-neoforge",
+      "mainClass": "net.neoforged.fml.startup.DataServer",
+      "args": [
+        "--fml.mcVersion",
+        "1.21.10",
+        "--fml.neoForgeVersion",
+        "21.10.34-beta",
+        "--fml.neoFormVersion",
+        "20251007.142004"
+      ],
+      "vmArgs": [
+        "--add-opens",
+        "java.base/java.lang.invoke\u003dALL-UNNAMED",
+        "--add-exports",
+        "jdk.naming.dns/com.sun.jndi.dns\u003djava.naming",
+        "-Djava.net.preferIPv6Addresses\u003dsystem"
+      ],
+      "cwd": "${workspaceFolder}/worldedit-neoforge/runs/serverData",
+      "env": {
+        "MOD_CLASSES": "worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"
+      },
+      "shortenCommandLine": "argfile"
+    }
+  ]
+}

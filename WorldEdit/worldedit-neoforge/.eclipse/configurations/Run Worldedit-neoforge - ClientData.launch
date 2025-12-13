@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="worldedit-neoforge"></stringAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="net.neoforged.fml.startup.DataClient"></stringAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" --assetIndex asset-index --assetsDir /home/kyre/.gradle/caches/minecraft/assets --fml.mcVersion 1.21.10 --fml.neoForgeVersion 21.10.34-beta --fml.neoFormVersion 20251007.142004"></stringAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value=" --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-exports jdk.naming.dns/com.sun.jndi.dns=java.naming -Djava.net.preferIPv6Addresses=system"></stringAttribute>
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="MOD_CLASSES" value="worldedit-neoforge%%/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/bin/main"></mapEntry>
+    </mapAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/kyre/repos/minecraft-world-generator/WorldEdit/worldedit-neoforge/runs/clientData"></stringAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.STOP_IN_MAIN" value="false"></booleanAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="true"></booleanAttribute>
+</launchConfiguration>
