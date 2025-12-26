@@ -1,8 +1,7 @@
 import amulet
-import amulet_nbt
 from amulet.api.errors import ChunkDoesNotExist, ChunkLoadError
 
-level = amulet.load_level("data/RUNETALE Converged Realms")
+level = amulet.load_level("data/20250401_April_World_by_McMeddon/20250401 April World 1.2")
 
 try:
     chunk = level.get_chunk(0, 0, "minecraft:overworld")
@@ -13,7 +12,7 @@ except ChunkLoadError:
 else:
     print(chunk)
 
-
+print(chunk.misc["inhabited_time"])
 level.save()
 
 level.close()

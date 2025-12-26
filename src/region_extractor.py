@@ -33,6 +33,7 @@ class RegionWrapper:
             return pympler.asizeof.asizeof(self)
 
     def _get_inhabited_time(self, x: int, z: int) -> int:
+        self.region.get_chunk(0, 0)
         chunk = self.region.chunk_data(x, z)
         if chunk is None:
             return 0
