@@ -3,83 +3,100 @@ from pathlib import Path
 from typing import List
 from tqdm import tqdm
 import glob 
-import anvil
 import pympler
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 from itertools import product
 from batching import batch_n
+import amulet
+import numpy as np
+from pprint import pprint
 
-
-class RegionWrapper:
-    def __init__(self, path: Path) -> None:
-        x, z = map(int, path.stem.split('.')[1:3])
-        region = anvil.Region.from_file(path.as_posix())
+class Region:
+    def __init__(self, x: int, z: int, region_cube: np.array, inhabited_time: int) -> None:
         self.x = x
         self.z = z
-        self.region = region
-        self.path = path
+        self.region = region_cube
+        self.inhabited_time = inhabited_time
 
-    def print_keys(self) -> None:
-        print(self.region.chunk_data(0, 0).pretty_tree())
+class WorldWrapper:
+    def __init__(self, world_path: Path) -> None:
+        self.world = amulet.load_level(world_path)
+        self.mca_files = glob.glob(f"{world_path}/**/region/*.mca", recursive=True)
+        self.mca_coords = [file.stem.split(".")[-2:] for file in map(Path, self.mca_files)]
+        self.chunk_coords = self.world.all_chunk_coords("minecraft:overworld")
+    
+    def misc_keys(self) -> None:
+        x, z = list(self.chunk_coords)[0]
+        return self.world.get_chunk(x, z, "minecraft:overworld").misc.keys()
+    
+    def get_region_volume(self, region_x: int, region_z: int) -> np.array:
+        sections = []
+        num_sections_per_chunk = 0
+        
+        for rx in range(32):
+            for rz in range(32):
+                chunk_coords = self._to_chunk_coords(region_x, region_z, rx, rz)
+                chunk = self.world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                
+                sub_indices = sorted(chunk.blocks.sub_chunks)
+                num_sections_per_chunk = len(sub_indices)
+                
+                for y in sub_indices:
+                    sections.append(chunk.blocks.get_sub_chunk(y))
 
-    def get_inhabited_times(self) -> List[int]:
-        return [self._get_inhabited_time(x, z) for x, z in product(range(32), range(32))]
+        data = np.array(sections)
+        
+        data = data.reshape(32, 32, num_sections_per_chunk, 16, 16, 16)
+        
+        data = data.transpose(0, 3, 1, 4, 2, 5)
+        
+        height = num_sections_per_chunk * 16
+        return data.reshape(512, 512, height)
+    
+    def get_inhabited_times(self, region_x: int, region_z: int) -> List[int]:
+        for x, z in self.mca_coords:
+            if int(x) == region_x and int(z) == region_z:
+                return self._mca_inhabited_times(region_x, region_z)
+    
+    def _mca_inhabited_times(self, region_x: int, region_z: int) -> List[int]:
+        inhabited_times = [[0 for _ in range(32)] for _ in range(32)]
+        for region_x_offset in range(32):
+            for region_z_offset in range(32):
+                chunk_coords = self._to_chunk_coords(region_x, region_z, region_x_offset, region_z_offset)
+                chunk_x, chunk_z = chunk_coords["x"], chunk_coords["z"]
+                if (chunk_x, chunk_z) in self.chunk_coords:
+                    inhabited_times[region_x_offset][region_z_offset] += self._chunk_inhibited_time(chunk_x, chunk_z)
+        return inhabited_times
 
-    def get_size(self, unit="MB") -> float:
-        if unit == "MB":
-            return pympler.asizeof.asizeof(self) / (1024 ** 2)
-        else:
-            return pympler.asizeof.asizeof(self)
-
-    def _get_inhabited_time(self, x: int, z: int) -> int:
-        self.region.get_chunk(0, 0)
-        chunk = self.region.chunk_data(x, z)
-        if chunk is None:
+    def _chunk_inhibited_time(self, x: int, z: int) -> int:
+        chunk = self.world.get_chunk(x, z, "minecraft:overworld")
+        if not chunk.misc:
             return 0
-        return chunk["Level"]["InhabitedTime"].value or 0
+        return chunk.misc.get("inhabited_time")
+    
+    @staticmethod
+    def _to_mca_coords(chunk_x: int, chunk_z: int) -> dict:
+        region_x = chunk_x // 32
+        region_z = chunk_z // 32
+        region_x_offset = chunk_x % 32
+        region_z_offset = chunk_z % 32
+        return {"x": region_x, "z": region_z, "x_offset": region_x_offset, "z_offset": region_z_offset}
+    
+    @staticmethod
+    def _to_chunk_coords(region_x: int, region_z: int, region_x_offset: int, region_z_offset: int) -> dict:
+        chunk_x = region_x * 32 + region_x_offset
+        chunk_z = region_z * 32 + region_z_offset
+        return {"x": chunk_x, "z": chunk_z}
 
 
 class MinecraftRegionExtractor:
-    def __init__(self, path) -> None:
-        self.path = path
-
-    def get_regions(self, workers: int = multiprocessing.cpu_count()) -> list[RegionWrapper]:
-        region_files = self.extract_region_paths()
-
-        results = []
-
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = [executor.submit(MinecraftRegionExtractor._load_region_worker, batch) for batch in batch_n(region_files, workers)]
-
-            with tqdm(total=len(region_files), desc="Loading regions") as pbar:
-                for future in as_completed(futures):
-                    batch_result = future.result()
-                    results.extend(batch_result)
-                    pbar.update(len(batch_result))
-
-        return results
-
-    def extract_region_paths(self) -> list[Path]:
-        return [
-            Path(path)
-            for path in glob.glob(f"{self.path}/**/region/*.mca", recursive=True)
-        ]
-
-    @staticmethod
-    def _load_region_worker(region_file_paths: list[Path]) -> list[tuple[int, int, anvil.Region]]:
-        """Worker for processing a batch of region files."""
-
-        results = []
-        for region_file_path in region_file_paths:
-            results.append(RegionWrapper(region_file_path))
-        return results
+    def __init__(self, directory_path) -> None:
+        self.path = directory_path 
+        self.world_paths = glob.glob(f"{self.path}/**/level.dat", recursive=True)
+        self.worlds = [WorldWrapper(Path(p).parent) for p in self.world_paths]
 
 
 if __name__ == "__main__":
-    extractor = MinecraftRegionExtractor("/home/kyre/repos/minecraft-world-generator/data/RUNETALE Converged Realms")
-    regions = extractor.get_regions()
-    for region in regions:
-        inhibited_times = region.get_inhabited_times()
-        print(f"Region ({region.x}, {region.z}) - Average Inhabited Time: {sum(inhibited_times)/len(inhibited_times)}")
+    extractor = WorldWrapper("/home/erzar/repos/MC/data/warty miasto v13 regular/warty miasto v13 regular")
 

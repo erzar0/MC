@@ -1,4 +1,4 @@
 {
-  "python.analysis.extraPaths": ["./src", "./anvil-parser"],
+  "python.analysis.extraPaths": ["./src"],
   "python-envs.pythonProjects": []
 }
