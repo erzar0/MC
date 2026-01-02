@@ -33,7 +33,7 @@ class WorldWrapper:
             raise ValueError(f"Region ({region_x}, {region_z}) not found in world.")
 
         bounds = self._world.bounds("minecraft:overworld")
-        height = (bounds.max_y - bounds.miny)
+        height = (bounds.max_y - bounds.min_y)
 
         volume_6d = np.zeros((32, 32, height // 16, 16, 16, 16), dtype=np.uint16)
 
