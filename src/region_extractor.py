@@ -33,14 +33,18 @@ class WorldWrapper:
             raise ValueError(f"Region ({region_x}, {region_z}) not found in world.")
 
         bounds = self._world.bounds("minecraft:overworld")
-        height = (bounds.max_y - bounds.min_y)
+        height = (bounds.max_y - bounds.miny)
 
         volume_6d = np.zeros((32, 32, height // 16, 16, 16, 16), dtype=np.uint16)
 
         for rx in range(32):
             for rz in range(32):
                 chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
-                chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                try:
+                    chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                except:
+                    continue
+
                 y_sections = sorted(chunk.blocks.sections)
                 for i, y in enumerate(y_sections):
                     sub_chunk = chunk.blocks.get_sub_chunk(y)
@@ -48,7 +52,7 @@ class WorldWrapper:
                     volume_6d[rx, rz, i] = self._blockstates.to_global_ids(sub_chunk, palette)
                     
         data = volume_6d.transpose(0, 3, 1, 5, 2, 4)
-        return self._trim_y_axis(data.reshape(512, 512, height))
+        return self._trim_y_axis(data.reshape(512, 512, -1))
 
     def _trim_y_axis(self, volume: np.array) -> np.array:
         has_content = np.any(volume != 0, axis=(0, 1))
