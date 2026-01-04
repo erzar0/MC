@@ -1,11 +1,15 @@
+from amulet.api.block import Block
+from amulet.api.registry import BlockManager
+from itertools import product
+from networkx import volume
 from pathlib import Path
 from typing import List
 import amulet
+import anvil
 import glob 
-from networkx import volume
 import numpy as np
-from amulet.api.block import Block
-from amulet.api.registry import BlockManager
+import re
+
 
 
 class WorldWrapper:
@@ -13,6 +17,7 @@ class WorldWrapper:
         self._world = amulet.load_level(world_path)
         self._mca_files = glob.glob(f"{world_path}/**/region/*.mca", recursive=True)
         self._mca_coords = tuple(tuple(int(val) for val in file.stem.split(".")[-2:]) for file in map(Path, self._mca_files))
+        self._mca_coord_to_path = {(x, z): path for (x, z), path in zip(self._mca_coords, self._mca_files)}
         self._chunk_coords = tuple(self._world.all_chunk_coords("minecraft:overworld"))
         self._blockstates = BlockStates()
     
@@ -35,7 +40,7 @@ class WorldWrapper:
         bounds = self._world.bounds("minecraft:overworld")
         height = (bounds.max_y - bounds.min_y)
 
-        volume_6d = np.zeros((32, 32, height // 16, 16, 16, 16), dtype=np.uint16)
+        volume_6d = np.zeros((32, 32, height // 16 + 1, 16, 16, 16), dtype=np.uint16)
 
         for rx in range(32):
             for rz in range(32):
@@ -46,7 +51,7 @@ class WorldWrapper:
                     continue
 
                 y_sections = sorted(chunk.blocks.sections)
-                for i, y in enumerate(y_sections):
+                for i, y in enumerate(y_sections[:24]):
                     sub_chunk = chunk.blocks.get_sub_chunk(y)
                     palette = chunk._block_palette
                     volume_6d[rx, rz, i] = self._blockstates.to_global_ids(sub_chunk, palette)
@@ -63,22 +68,17 @@ class WorldWrapper:
         return volume[:, :, indices[0] : indices[-1] + 1]
     
     def mca_inhabited_times(self, region_x: int, region_z: int) -> np.array:
-        inhabited_times = np.zeros((32, 32), dtype=np.int64)
+        region = anvil.Region.from_file(self._mca_coord_to_path[(region_x, region_z)])
 
-        for region_x_offset in range(32):
-            for region_z_offset in range(32):
-                chunk_coords = self.to_chunk_coords(region_x, region_z, region_x_offset, region_z_offset)
-                chunk_x, chunk_z = chunk_coords["x"], chunk_coords["z"]
-                if (chunk_x, chunk_z) in self._chunk_coords:
-                    inhabited_times[region_x_offset, region_z_offset] += self.chunk_inhibited_time(chunk_x, chunk_z)
+        chunks = [region.chunk_data(x, z) for x, z in product(range(32), range(32))]
+
+        inhabited_times = np.array([chunk["Level"]["InhabitedTime"].value if chunk is not None else 0 for chunk in chunks]).reshape(32, 32)
+
         return inhabited_times
 
     def chunk_inhibited_time(self, x: int, z: int) -> int:
-        chunk = self._world.get_chunk(x, z, "minecraft:overworld")
-        if not chunk.misc:
-            return 0
-        return chunk.misc.get("inhabited_time")
-    
+        return self._world.get_chunk(x, z, "minecraft:overworld").misc.get("InhabitedTime", 0)
+
     @staticmethod
     def to_mca_coords(chunk_x: int, chunk_z: int) -> dict:
         region_x = chunk_x // 32
@@ -112,11 +112,22 @@ class BlockStates:
         return new_id
 
     def to_global_ids(self, blocks_array: np.array, block_palette: BlockManager) -> np.array:
-        palette_translation = np.array([
-            self.get_global_id_by_block(str(block_palette._index_to_block[i]))
-            for i in range(len(block_palette))
-        ], dtype=np.uint16)
+        palette_translation = []
+        
+        marker_block = 'universal_minecraft:wool[color="magenta"]'
 
+        for i in range(len(block_palette)):
+            block_obj = block_palette._index_to_block[i]
+            block_str = str(block_obj)
+            
+            if "minecraft:numerical" in block_str:
+                global_id = self.get_global_id_by_block(marker_block)
+            else:
+                global_id = self.get_global_id_by_block(block_str)
+                
+            palette_translation.append(global_id)
+
+        palette_translation = np.array(palette_translation, dtype=np.uint16)
         return palette_translation[blocks_array]
 
     def get_block_by_global_id(self, id: int) -> str:

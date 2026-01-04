@@ -50,6 +50,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "setuptools==80.9.0",
     "six==1.17.0",
+    "snakeviz>=2.2.2",
     "stack-data==0.6.3",
     "tornado==6.5.2",
     "tqdm>=4.67.1",
