@@ -48,6 +48,7 @@ dependencies = [
     "pyzmq==27.1.0",
     "qtpy>=2.4.3",
     "seaborn>=0.13.2",
+    "selenium>=4.40.0",
     "setuptools==80.9.0",
     "six==1.17.0",
     "snakeviz>=2.2.2",
@@ -56,8 +57,10 @@ dependencies = [
     "tqdm>=4.67.1",
     "traitlets==5.14.3",
     "tzdata==2025.2",
+    "undetected-chromedriver>=3.5.5",
     "uv==0.9.11",
     "wcwidth==0.2.14",
+    "webdriver-manager>=4.0.2",
     "wheel==0.45.1",
     "wxpython>=4.2.4",
 ]
