@@ -1,0 +1,92 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam handwritten false
+skinparam backgroundColor #FFFFFF
+skinparam packageBackgroundColor transparent
+skinparam componentBackgroundColor #EBF4FA
+skinparam componentBorderColor #2B547E
+skinparam arrowColor #2B547E
+
+title **Minecraft Castle Diffusion Generation**\n(LongSANA Text-to-Video Architecture Strategy)
+
+package "Stage 1: Core Voxel Data Pipeline" {
+    [Minecraft .mca Files\n(Curated Castles)] as RawData
+    [region_extractor.py\n(WorldWrapper)] as Extractor
+    [3D Voxel Grid\nShape: (X, Z, Y, 3)] as VoxelGrid
+    [01_data_preparation.py] as TransposePrep
+    [Video Tensor .npy\nShape: (Y, X, Z, 3)] as VideoTensor
+
+    RawData --> Extractor : Scrape & Load
+    Extractor --> VoxelGrid : Extract RGB Blocks
+    VoxelGrid --> TransposePrep : Transpose Y Axis to Time
+    TransposePrep --> VideoTensor : Save Frames
+}
+
+package "Stage 1b: VLM Captioning Pipeline" {
+    [PyVista Renderer] as PyVista
+    [Isometric 2D Images\n(Views of Castle)] as IsoImages
+    [VLM (LLaVA/GPT-4V)] as VLM
+    [Text Caption .json\n"A massive stone castle"] as Caption
+
+    VoxelGrid --> PyVista : 3D Point Cloud Data
+    PyVista --> IsoImages : Render Screenshots
+    IsoImages --> VLM : Visual Context Input
+    VLM --> Caption : Generate Description
+}
+
+package "Stage 2 & 3: Model Training Loop" {
+    [02_dataset_loader.py\n(PyTorch Dataset)] as DataLoader
+
+    node "Base Model Preparation" {
+        [Pre-trained LongSANA\nDiT Weights] as LongSANA_Init
+        [Frozen Text Encoder\n(Gemma-2B / T5)] as TextEnc
+    }
+
+    node "Training Process (03_training_setup.py)" {
+        [SANA 3D VAE Encoder] as VAE_Enc
+        [Gaussian Noise\nAddition Process] as NoiseAdd
+        [LongSANA Diffusion Transformer\n(Block-Wise Autoregressive)] as DiT_Train
+        [Loss Calculation\n(MSE)] as Loss
+    }
+
+    VideoTensor --> DataLoader : Load Video Frame Arrays
+    Caption --> DataLoader : Load Text Condition
+
+    DataLoader --> VAE_Enc : Raw Video Tensors
+    DataLoader --> TextEnc : Text Prompts
+
+    VAE_Enc --> NoiseAdd : Latent Video
+    NoiseAdd --> DiT_Train : Noisy Latent Video
+    TextEnc --> DiT_Train : Cross-Attention Embeddings
+    LongSANA_Init --> DiT_Train : Initialize Weights
+
+    DiT_Train --> Loss : Predict Original Noise
+    Loss -.left.> DiT_Train : Backpropagate & Update Weights
+}
+
+package "Stage 4 & 5: Inference Generation Pipeline" {
+    actor "Minecraft User" as User
+    [04_inference_generation.py] as InfPipeline
+    [Fine-Tuned LongSANA Model] as FTModel
+    [SANA 3D VAE Decoder] as VAE_Dec
+
+    [Generated Video Tensor\nShape: (H, 256, 256, 3)] as GenVideo
+    [Spatial Transpose\nShape: (256, 256, H, 3)] as GenSpatial
+
+    [05_post_processing.py\n(scipy cKDTree)] as PP
+    [Discrete Block Array\nBlock IDs instead of RGB] as FinalDict
+    [Minecraft Game Injection\nAmulet / .mca] as FinalOutput
+
+    User --> InfPipeline : Text Prompt:\n"A towering desert palace"
+    InfPipeline --> FTModel : Send Prompt & Gaussian Noise
+    FTModel --> VAE_Dec : Denoised Latent Video
+    VAE_Dec --> GenVideo : Decode to RGB Slices
+
+    GenVideo --> GenSpatial : Transpose Time to Height (Y)
+    GenSpatial --> PP : Continuous Raw RGB values
+    PP --> FinalDict : Snap to nearest valid Block ID
+    FinalDict --> FinalOutput : Load into game world
+}
+
+DiT_Train -[hidden]down-> FTModel
+@enduml
