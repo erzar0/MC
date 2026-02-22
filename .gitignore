@@ -225,3 +225,5 @@ build/*
 mcamp/
 mcmap
 mcmap/*
+
+.idea/
