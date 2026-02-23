@@ -17,9 +17,9 @@ To train a robust model, you will need a large dataset (e.g., 5,000 to 20,000) o
    * Standardize the height bounding box (e.g., crop `H` to the highest block in the structure so the sky isn't empty).
 3. **Format as Video Tensors:**
    * Transpose the data from `(X, Z, Y, 3)` to `(Y, X, Z, 3)`. Now, each "frame" of this pseudo-video is a horizontal cross-section of the castle progressing from the foundation to the roof.
-   * Save the arrays as `.npy` or `.mp4` for the dataloader.
+   * Save the arrays as `.npy` / `.mp4` or blosc2 (lossless compression) for the dataloader.
 4. **VLM Captioning (The "Text" in Text-to-Video):**
-   * Render isometric images of the castles using `pyvista` (as seen in `main.ipynb`).
+   * Render isometric images of the castles using `pyvista`/`mcmap`.
    * Pass these images into a Vision-Language Model (VLM) like LLaVA or GPT-4V with the prompt: *"Describe this Minecraft structure in detail."*
    * Save the resulting text alongside the `.npy` cube.
 
