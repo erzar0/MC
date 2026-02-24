@@ -397,12 +397,6 @@ class Biomes:
 #                     f.write(compressed_region)
 
 
-
-
-
-
-
-
 if __name__ == "__main__":
     extractor = WorldWrapper("/home/erzar/repos/MC/data/warty miasto v13 regular/warty miasto v13 regular")
 
