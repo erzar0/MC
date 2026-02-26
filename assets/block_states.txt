@@ -9805,3 +9805,8 @@ universal_minecraft:redstone_wire[east="none",north="up",power="13",south="up",w
 universal_minecraft:redstone_wire[east="side",north="none",power="12",south="up",west="up"]
 universal_minecraft:redstone_wire[east="none",north="side",power="14",south="side",west="up"]
 universal_minecraft:redstone_wire[east="none",north="up",power="13",south="up",west="up"]
+universal_minecraft:button[face="wall",facing="west",material="stone",powered="true"]
+universal_minecraft:redstone_wire[east="up",north="none",power="0",south="up",west="none"]
+universal_minecraft:redstone_wire[east="up",north="up",power="0",south="up",west="side"]
+universal_minecraft:stairs[facing="south",half="bottom",material="diorite",shape="inner_left"]{universal_minecraft:water[falling="false",flowing="false",level="0"]}
+universal_minecraft:stairs[facing="south",half="bottom",material="diorite",shape="inner_right"]{universal_minecraft:water[falling="false",flowing="false",level="0"]}

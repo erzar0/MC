@@ -208,6 +208,19 @@ wheels = [
 ]
 
 [[package]]
+name = "anvil"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c6/7d/b9c32da66cb17503de1e6f9f291ee26c4d61e73200697e68a6e2e98aa96b/anvil-0.0.2.tar.gz", hash = "sha256:6d8a366744e02ddc9ee67dcc8325ae95f6b0d0521e66d3eb43907a5ce12aba62", size = 10501, upload-time = "2014-08-06T07:41:48.951Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/90/5ef8a714b945bfbf734ddc89702f98d36194c374ea053bc297279b87310c/anvil-0.0.2-py2.py3-none-any.whl", hash = "sha256:dc970bfbe526d55112d71c505ea9ea99ebc072784bc25eff32acea8141a6692a", size = 9093, upload-time = "2014-08-06T07:41:45.614Z" },
+]
+
+[[package]]
 name = "anyio"
 version = "4.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1916,6 +1929,7 @@ dependencies = [
     { name = "accelerate" },
     { name = "amulet-core" },
     { name = "amulet-map-editor" },
+    { name = "anvil" },
     { name = "asttokens" },
     { name = "blosc2" },
     { name = "build" },
@@ -1989,6 +2003,7 @@ requires-dist = [
     { name = "accelerate", specifier = ">=1.12.0" },
     { name = "amulet-core", specifier = ">=1.9.33" },
     { name = "amulet-map-editor", specifier = ">=0.10.48" },
+    { name = "anvil", specifier = ">=0.0.2" },
     { name = "asttokens", specifier = "==3.0.1" },
     { name = "blosc2", specifier = ">=3.12.2" },
     { name = "build", specifier = "==1.3.0" },
