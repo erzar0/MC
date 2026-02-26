@@ -31,7 +31,7 @@ class WorldProcessor:
     """
     def __init__(
         self, 
-        server_dir: str = "tmp/server",
+        server_dir: str = "tmp/third-party/server",
         chunker_bin: str = "tmp/third-party/chunker-cli/bin/chunker-cli",
         mcmap_bin: str = "tmp/third-party/mcmap/build/bin/mcmap",
         output_dir: str = "tmp/processed_worlds"
@@ -88,7 +88,7 @@ class WorldProcessor:
 
     def _convert_mcr_to_mca(self, world_path: Path, world_name: str) -> Path:
         """Copies world to server dir, converts it, and returns the path to converted world."""
-        if not list(world_path.glob("*.mcr")):
+        if not list(world_path.glob("region/*.mcr")):
             logger.info(f"World {world_name} does not contain .mcr files. Skipping conversion.")
             return world_path
             
@@ -279,4 +279,4 @@ class WorldProcessor:
 
 if __name__ == "__main__":
     processor = WorldProcessor()
-    processor.process_world(Path("/home/kyre/repos/minecraft-world-generator/tmp/Pink Mansion"), "pink_mansion")
+    processor.process_world(Path("/home/kyre/repos/minecraft-world-generator/tmp/Spectre Village - Beta v1.1.1"), "spectre_village_beta_v1_1_1")
