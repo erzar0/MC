@@ -1,37 +1,43 @@
 import torch
+from typing import Union, List, Optional, Dict, Any, Tuple, Callable
+import warnings
 from diffusers import SanaVideoPipeline
 from diffusers import AutoencoderKLWan
 from diffusers.utils import export_to_video
 from diffusers.pipelines.sana_video.pipeline_sana_video import *
+import PIL.Image as Image
+import numpy as np
 
 
 model_id = "Efficient-Large-Model/SANA-Video_2B_480p_diffusers"
 
 
-pipe: SanaVideoPipeline = SanaVideoPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
-pipe.vae.to(torch.float32)
-pipe.text_encoder.to(torch.bfloat16)
-pipe.to("cuda")
-motion_score = 30
 
-prompt = "happy turtle"
-negative_prompt = "A chaotic sequence with misshapen, deformed limbs in heavy motion blur, sudden disappearance, jump cuts, jerky movements, rapid shot changes, frames out of sync, inconsistent character shapes, temporal artifacts, jitter, and ghosting effects, creating a disorienting visual experience."
-motion_prompt = f" motion score: {motion_score}."
-prompt = prompt + motion_prompt
+# pipe: SanaVideoPipeline = SanaVideoPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+# pipe.vae.to(torch.float32)
+# pipe.text_encoder.to(torch.bfloat16)
+# pipe.to("cuda")
+# motion_score = 30
 
-video = pipe(
-    prompt=prompt,
-    negative_prompt=negative_prompt,
-    height=512,
-    width=512,
-    frames=80,
-    guidance_scale=6,
-    use_resolution_binning=False,  # Add this line
-    num_inference_steps=30,
-    generator=torch.Generator(device="cuda").manual_seed(42),
-).frames[0]
+# prompt = "happy turtle"
+# negative_prompt = "A chaotic sequence with misshapen, deformed limbs in heavy motion blur, sudden disappearance, jump cuts, jerky movements, rapid shot changes, frames out of sync, inconsistent character shapes, temporal artifacts, jitter, and ghosting effects, creating a disorienting visual experience."
+# motion_prompt = f" motion score: {motion_score}."
+# prompt = prompt + motion_prompt
 
-export_to_video(video, "sana_video.mp4", fps=16)
+# video = pipe(
+#     prompt=prompt,
+#     negative_prompt=negative_prompt,
+#     height=512,
+#     width=512,
+#     frames=16,
+#     guidance_scale=6,
+#     use_resolution_binning=False,  # Add this line
+#     num_inference_steps=30,
+#     generator=torch.Generator(device="cuda").manual_seed(42),
+# ).frames[0]
+
+# export_to_video(video, "sana_video.mp4", fps=16)
+
 
 class SanaVideoCustomPipeline(SanaVideoPipeline):
     @torch.no_grad()
@@ -259,6 +265,35 @@ class SanaVideoCustomPipeline(SanaVideoPipeline):
         # 6. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
+        # --- ADDED: INPAINTING PREPARATION ---
+        init_latents = None
+        mask = None
+        if video is not None and mask_video is not None and inpainting_coeff > 0:
+            # 1. Preprocess and Encode the reference video
+            # Assuming video input is [B, C, F, H, W]
+            video_input = video.to(device=device, dtype=self.vae.dtype)
+            
+            # Encode and scale based on VAE config
+            latents_mean = torch.tensor(self.vae.config.latents_mean).view(1, -1, 1, 1, 1).to(device, self.vae.dtype)
+            latents_std = torch.tensor(self.vae.config.latents_std).view(1, -1, 1, 1, 1).to(device, self.vae.dtype)
+            
+            init_latents = self.vae.encode(video_input, return_dict=False)[0].sample()
+            init_latents = (init_latents - latents_mean) / latents_std
+
+            # 2. Prepare the mask
+            # Resize mask to latent dimensions [F_lat, H_lat, W_lat]
+            mask = torch.nn.functional.interpolate(
+                mask_video.to(device=device, dtype=torch.float32), 
+                size=init_latents.shape[-3:], 
+                mode="nearest"
+            )
+            # Ensure the mask is used as a blending coefficient
+            mask = mask * inpainting_coeff
+            
+            # 3. Prepare fixed background noise
+            background_noise = torch.randn_like(init_latents)
+        # --------------------------------------
+
         # 7. Denoising loop
         num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
         self._num_timesteps = len(timesteps)
@@ -297,6 +332,20 @@ class SanaVideoCustomPipeline(SanaVideoPipeline):
                 # compute previous image: x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
 
+                # --- ADDED: INPAINTING RE-INJECTION ---
+                if init_latents is not None and mask is not None:
+                    # Determine noise level for the background. 
+                    # We should match the noise level of the NEXT step's latents.
+                    if i < len(timesteps) - 1:
+                        noise_timestep = timesteps[i+1]
+                        init_latents_proper = self.scheduler.add_noise(init_latents, background_noise, noise_timestep.view(-1))
+                    else:
+                        init_latents_proper = init_latents
+                    
+                    # Blend: Generated where mask is 1, Original where mask is 0
+                    latents = (latents * mask) + (init_latents_proper * (1.0 - mask))
+                # --------------------------------------
+
                 if callback_on_step_end is not None:
                     callback_kwargs = {}
                     for k in callback_on_step_end_tensor_inputs:
@@ -313,6 +362,10 @@ class SanaVideoCustomPipeline(SanaVideoPipeline):
 
                 if XLA_AVAILABLE:
                     xm.mark_step()
+
+        # Final blend to ensure unmasked areas are perfectly preserved
+        if init_latents is not None and mask is not None:
+            latents = (latents * mask) + (init_latents * (1.0 - mask))
 
         if output_type == "latent":
             video = latents
@@ -354,3 +407,50 @@ class SanaVideoCustomPipeline(SanaVideoPipeline):
             return (video,)
 
         return SanaVideoPipelineOutput(frames=video)
+
+
+image = Image.open("image.png").convert("RGB")
+image = np.array(image)
+print(image.shape)
+image_video = np.stack([image] * 16)
+print(image_video.shape)
+image_video = image_video.transpose(3, 0, 1, 2)
+image_video = (image_video / 127.5) - 1.0
+print(image_video.shape)
+image_video = torch.from_numpy(image_video).to(torch.float32).unsqueeze(0)
+print(image_video.shape)
+
+mask_video = np.zeros((16, 512, 512))
+mask_video[:, 256:] = 1
+mask_video = torch.from_numpy(mask_video).to(torch.float32).unsqueeze(0).unsqueeze(0)
+
+
+pipe: SanaVideoPipeline = SanaVideoCustomPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16)
+pipe.vae.to(torch.float32)
+pipe.text_encoder.to(torch.bfloat16)
+pipe.to("cuda")
+motion_score = 30
+
+prompt = "nicki minaj"
+negative_prompt = ""
+motion_prompt = f" motion score: {motion_score}."
+prompt = prompt + motion_prompt
+
+
+video = pipe(
+    prompt=prompt,
+    negative_prompt=negative_prompt,
+    height=512,
+    width=512,
+    frames=16,
+    guidance_scale=6,
+    use_resolution_binning=False,  # Add this line
+    num_inference_steps=30,
+    generator=torch.Generator(device="cuda").manual_seed(42),
+    video=image_video,
+    mask_video=mask_video,
+    inpainting_coeff=0.99,
+
+).frames[0]
+
+export_to_video(video, "sana_video.mp4", fps=16)

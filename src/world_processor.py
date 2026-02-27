@@ -1,0 +1,282 @@
+from pathlib import Path
+import shutil
+import subprocess
+import time
+import os
+import re
+import json
+import blosc2
+import logging
+from typing import List, Tuple, Optional
+import numpy as np
+
+# Ensure src is in path for imports if run as main
+import sys
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
+from src.world_wrapper import WorldWrapper
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class WorldProcessor:
+    """
+    Processes Minecraft worlds through a conversion and extraction pipeline:
+    1. MCR to MCA conversion (really old versions -> Minecraft 1.6.4)
+    2. Version update to 1.19.2 (Chunker)
+    3. Extraction of MCA, level.data, metadata and 3D volumes (WorldWrapper)
+    4. Rendering screenshots (mcmap)
+    """
+    def __init__(
+        self, 
+        server_dir: str = "tmp/third-party/server",
+        chunker_bin: str = "tmp/third-party/chunker-cli/bin/chunker-cli",
+        mcmap_bin: str = "tmp/third-party/mcmap/build/bin/mcmap",
+        output_dir: str = "tmp/processed_worlds"
+    ):
+        self.project_root = project_root
+        self.server_dir = (self.project_root / server_dir).absolute()
+        self.chunker_bin = (self.project_root / chunker_bin).absolute()
+        self.mcmap_bin = (self.project_root / mcmap_bin).absolute()
+        self.output_dir = (self.project_root / output_dir).absolute()
+        
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def process_world(self, world_path: Path, world_name: str, remove_tmp_dirs: bool = False):
+        """Orchestrates the processing of a single world."""
+        world_path = Path(world_path).absolute()
+        logger.info(f"--- Starting processing for world: {world_name} ---")
+
+        try:
+            # 1. Convert MCR to MCA using 1.6.4 server
+            converted_world_path = self._convert_mcr_to_mca(world_path, world_name)
+            
+            # 2. Update version to 1.19.2 using Chunker
+            version_updated_path = self.output_dir / "versions" / world_name / "1_19_2"
+            self._update_with_chunker(converted_world_path, version_updated_path)
+
+            # 3. Extract regions and volumes
+            cleansed_dir = self.output_dir / "cleansed" / world_name
+            extracted_regions, world_metadata = self._extract_world_data(version_updated_path, cleansed_dir)
+
+            # 4. Generate screenshots
+            screenshots_dir = cleansed_dir / "screenshots"
+            screenshots_dir.mkdir(parents=True, exist_ok=True)
+            self._generate_screenshots(cleansed_dir, screenshots_dir, extracted_regions, world_metadata["extracted_regions"])
+
+            if remove_tmp_dirs:
+                shutil.rmtree(world_path)
+                shutil.rmtree(converted_world_path)
+                shutil.rmtree(version_updated_path)
+
+            logger.info(f"--- Finished processing world: {world_name} ---")
+            return {
+                "status": "success",
+                "world_name": world_name,
+                "output_dir": str(cleansed_dir),
+                "cleansed_dir": str(cleansed_dir)
+            }
+        except Exception as e:
+            logger.error(f"Failed to process world {world_name}: {e}")
+            return {
+                "status": "failed",
+                "world_name": world_name,
+                "error": str(e)
+            }
+
+    def _convert_mcr_to_mca(self, world_path: Path, world_name: str) -> Path:
+        """Copies world to server dir, converts it, and returns the path to converted world."""
+        if not list(world_path.glob("region/*.mcr")):
+            logger.info(f"World {world_name} does not contain .mcr files. Skipping conversion.")
+            return world_path
+            
+        logger.info(f"Step 1: Converting {world_name} from MCR to MCA using 1.6.4 server...")
+        
+        # Target path in server directory
+        server_world_path = self.server_dir / world_name
+        if server_world_path.exists():
+            shutil.rmtree(server_world_path)
+        
+        shutil.copytree(world_path, server_world_path)
+
+        # Update server.properties
+        props_path = self.server_dir / "server.properties"
+        if props_path.exists():
+            with open(props_path, "r") as f:
+                content = f.read()
+            
+            # Replace level-name
+            content = re.sub(r"level-name=.*", f"level-name={world_name}", content)
+            
+            with open(props_path, "w") as f:
+                f.write(content)
+        else:
+            logger.warning(f"server.properties not found at {props_path}")
+
+        # Run server
+        # nogui is essential. We monitor logs for completion.
+        process = subprocess.Popen(
+            ["java", "-Xmx1G", "-Xms1G", "-jar", "server.jar", "nogui"],
+            cwd=self.server_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+
+        logger.info("Server started, waiting for conversion signal...")
+        try:
+            # We wait for "Done" or "Preparing spawn area"
+            # 1.6.4 often shows "Preparing spawn area" or "Done (X.Xs)!"
+            # We timeout after 30 minutes just in case.
+            start_time = time.time()
+            for line in iter(process.stdout.readline, ""):
+                line_str = line.strip()
+                if line_str:
+                    logger.info(f"[Server] {line_str}")
+                
+                if "Done" in line_str or "Preparing spawn area" in line_str:
+                    logger.info("Conversion trigger detected. Stopping server.")
+                    break
+                
+                if time.time() - start_time > 1800: # 30 min timeout
+                    logger.warning("Server startup timed out. Proceeding anyway.")
+                    break
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+
+        return server_world_path
+
+    def _update_with_chunker(self, input_dir: Path, output_dir: Path):
+        """Updates world version to 1.19.2 using chunker-cli."""
+        logger.info(f"Step 2: Updating world version to 1.19.2 at {output_dir}...")
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        settings = {
+            "customIdentifiers": False,
+            "blockConnections": False,
+            "itemConversion": False,
+            "lootTableConversion": False,
+            "mapConversion": False
+        }
+        
+        cmd = [
+            str(self.chunker_bin),
+            "--inputDirectory", str(input_dir),
+            "--outputDirectory", str(output_dir),
+            "--outputFormat", "JAVA_1_19_2",
+            "--converterSettings", json.dumps(settings, separators=(',', ':'))
+        ]
+        
+        logger.info(f"Running Chunker: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error(f"Chunker failed: {result.stderr}")
+            raise RuntimeError(f"Chunker failed with exit code {result.returncode}")
+        
+        logger.info("Chunker conversion successful.")
+
+    def _extract_world_data(self, world_path: Path, output_dir: Path) -> List[Tuple[int, int]]:
+        """Extracts MCA files and region volumes. Returns list of region coordinates."""
+        logger.info(f"Step 3: Extracting world data (MCA and volumes) to {output_dir}...")
+        
+
+        # 1. Extract volumes using WorldWrapper
+        extracted_regions = []
+        try:
+            wrapper = WorldWrapper(world_path)
+            volumes_dir = output_dir / "volumes"
+            volumes_dir.mkdir(parents=True, exist_ok=True)
+            
+            coords = wrapper.mca_coords
+            logger.info(f"Found {len(coords)} regions to extract.")
+            
+            for rx, rz in coords:
+                logger.info(f"Extracting volume for region r.{rx}.{rz}.mca")
+                try:
+                    volume, _ = wrapper.get_region_volume(rx, rz, get_biomes=False)
+
+                    # Save volume
+                    compressed_region = blosc2.pack_array2(np.ascontiguousarray(volume), chunksize=512**3)
+                    with open(volumes_dir / f"r.{rx}.{rz}.b2frame", "wb") as f:
+                        f.write(compressed_region)
+                    
+                    extracted_regions.append((rx, rz))
+                except Exception as ve:
+                    logger.error(f"Failed to extract region ({rx}, {rz}): {ve}")
+                    
+            wrapper.unload()
+        except Exception as e:
+            logger.error(f"Error initializing WorldWrapper: {e}")
+            raise
+
+        # 2. Extract MCA and level.dat to cleansed directory (for mcmap)
+        region_dir = world_path / "region"
+        cleansed_mca_dir = output_dir / "region"
+        cleansed_mca_dir.mkdir(parents=True, exist_ok=True)
+        
+        if region_dir.exists():
+            for mca_file in wrapper.mca_paths:
+                shutil.copy(mca_file, cleansed_mca_dir)
+        else:
+            logger.warning(f"Region directory not found in updated world: {region_dir}")
+
+        level_dat_path = world_path / "level.dat"
+        if level_dat_path.exists():
+            shutil.copy(level_dat_path, output_dir / "level.dat")
+        else:
+            logger.warning(f"level.dat not found in updated world: {level_dat_path}")
+
+        # 3. Save world metadata
+        with open(output_dir / "metadata.json", "w") as f:
+            json.dump(wrapper.metadata, f, indent=4)
+            
+        return extracted_regions, wrapper.metadata
+
+    def _generate_screenshots(self, world_path: Path, output_dir: Path, region_coords: List[Tuple[int, int]], regions_metadata: dict):
+        """Generates screenshots for regions using mcmap."""
+        logger.info(f"Step 4: Generating screenshots for {len(region_coords)} regions...")
+        
+        for rx, rz in region_coords:
+            # MCA region (rx, rz) spans 512x512 blocks.
+            # mcmap takes coordinates in blocks.
+            x_from, z_from = rx * 512, rz * 512
+            x_to, z_to = x_from + 512, z_from + 512
+            y_from, y_to = regions_metadata[f"{rx},{rz}"]["y_range"]
+            
+            screenshot_path = output_dir / f"r.{rx}.{rz}.png"
+            
+            cmd = [
+                str(self.mcmap_bin),
+                "-from", str(x_from), str(z_from),
+                "-to", str(x_to), str(z_to),
+                "-min", str(y_from),
+                "-max", str(y_to),
+                "-fragment", "512",
+                "-padding", "0",
+                "-dim", "overworld",
+                "-nobeacons",
+                "-shading",
+                # "-lighting",
+                "-file", str(screenshot_path),
+
+                str(world_path)
+            ]
+            
+            logger.info(f"Running mcmap for r.{rx}.{rz}: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.warning(f"mcmap failed for r.{rx}.{rz}: {result.stderr}")
+            else:
+                logger.info(f"Screenshot saved to {screenshot_path}")
+
+if __name__ == "__main__":
+    processor = WorldProcessor()
+    processor.process_world(Path("/home/kyre/repos/minecraft-world-generator/tmp/Spectre Village - Beta v1.1.1"), "spectre_village_beta_v1_1_1")

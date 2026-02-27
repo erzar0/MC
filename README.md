@@ -27,7 +27,7 @@ cd minecraft-world-generator
 uv sync
 ```
 
-## Third party tools (not included in code)
+## Third party tools
 
 - [mcmap](https://github.com/spoutn1k/mcmap) - Rendering of Minecraft maps
 - [chunker](https://www.chunker.app/) - Translation of Minecraft world versions
