@@ -7,7 +7,7 @@ import re
 import json
 import blosc2
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 import numpy as np
 
 # Ensure src is in path for imports if run as main
@@ -16,6 +16,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
+from src import config
 from src.world_wrapper import WorldWrapper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -31,16 +32,16 @@ class WorldProcessor:
     """
     def __init__(
         self, 
-        server_dir: str = "tmp/third-party/server",
-        chunker_bin: str = "tmp/third-party/chunker-cli/bin/chunker-cli",
-        mcmap_bin: str = "tmp/third-party/mcmap/build/bin/mcmap",
-        output_dir: str = "tmp/processed_worlds"
+        server_dir: Union[str, Path] = config.SERVER_DIR,
+        chunker_bin: Union[str, Path] = config.CHUNKER_BIN,
+        mcmap_bin: Union[str, Path] = config.MCMAP_BIN,
+        output_dir: Union[str, Path] = config.PROCESSED_WORLDS_DIR
     ):
-        self.project_root = project_root
-        self.server_dir = (self.project_root / server_dir).absolute()
-        self.chunker_bin = (self.project_root / chunker_bin).absolute()
-        self.mcmap_bin = (self.project_root / mcmap_bin).absolute()
-        self.output_dir = (self.project_root / output_dir).absolute()
+        self.project_root = config.PROJECT_ROOT
+        self.server_dir = Path(server_dir).absolute()
+        self.chunker_bin = Path(chunker_bin).absolute()
+        self.mcmap_bin = Path(mcmap_bin).absolute()
+        self.output_dir = Path(output_dir).absolute()
         
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -94,11 +95,17 @@ class WorldProcessor:
             
         logger.info(f"Step 1: Converting {world_name} from MCR to MCA using 1.6.4 server...")
         
+        if not (self.server_dir / "server.jar").exists():
+            logger.warning(f"server.jar not found in {self.server_dir}. Skipping MCR to MCA conversion.")
+            return world_path
+
         # Target path in server directory
         server_world_path = self.server_dir / world_name
         if server_world_path.exists():
             shutil.rmtree(server_world_path)
         
+        # Ensure server directory exists before copying
+        self.server_dir.mkdir(parents=True, exist_ok=True)
         shutil.copytree(world_path, server_world_path)
 
         # Update server.properties
@@ -167,6 +174,11 @@ class WorldProcessor:
             "mapConversion": False
         }
         
+        if not self.chunker_bin.exists():
+            logger.warning(f"Chunker CLI not found at {self.chunker_bin}. Skipping version update and copying files directly.")
+            shutil.copytree(input_dir, output_dir, dirs_exist_ok=True)
+            return
+            
         cmd = [
             str(self.chunker_bin),
             "--inputDirectory", str(input_dir),
@@ -244,6 +256,10 @@ class WorldProcessor:
         """Generates screenshots for regions using mcmap."""
         logger.info(f"Step 4: Generating screenshots for {len(region_coords)} regions...")
         
+        if not self.mcmap_bin.exists():
+            logger.warning(f"mcmap binary not found at {self.mcmap_bin}. Skipping screenshot generation.")
+            return
+
         for rx, rz in region_coords:
             # MCA region (rx, rz) spans 512x512 blocks.
             # mcmap takes coordinates in blocks.
@@ -279,4 +295,4 @@ class WorldProcessor:
 
 if __name__ == "__main__":
     processor = WorldProcessor()
-    processor.process_world(Path("/home/kyre/repos/minecraft-world-generator/tmp/Spectre Village - Beta v1.1.1"), "spectre_village_beta_v1_1_1")
+    processor.process_world(config.DEFAULT_WORLD_SOURCE, config.DEFAULT_WORLD_NAME)

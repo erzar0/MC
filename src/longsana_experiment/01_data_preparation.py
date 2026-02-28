@@ -1,40 +1,41 @@
-import numpy as np
+from pathlib import Path
 import os
-import cv2
-import json
+import sys
 
-def prepare_data(rgb_cube: np.ndarray, prompt: str, output_dir: str, name: str):
-    """
-    Stage 1: Converts a Minecraft 3D rgb_cube of shape (X, Z, Y, 3) 
-    into a Video tensor of shape (Time, Height, Width, Channels)
-    where Time = Y, Height = X, Width = Z.
-    """
-    os.makedirs(output_dir, exist_ok=True)
+# Ensure src is in the path for importing
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
+from src import config
+from src.world_processor import WorldProcessor
+from src.generate_captions import process_screenshots_folder
+
+def main():
+    # 1. Process World using WorldProcessor
+    world_source_path = config.DEFAULT_WORLD_SOURCE
+    world_name = config.DEFAULT_WORLD_NAME
     
-    # Transpose to (Y, X, Z, 3) where Y is Time/Frames
-    video_frames = np.transpose(rgb_cube, (2, 0, 1, 3))
+    processor = WorldProcessor()
+    print(f"Starting world processing for {world_name}...")
+    result = processor.process_world(world_source_path, world_name)
     
-    # Save as numpy array for training
-    npy_path = os.path.join(output_dir, f"{name}.npy")
-    np.save(npy_path, video_frames)
-    
-    # Save as MP4 for visualization
-    video_path = os.path.join(output_dir, f"{name}.mp4")
-    out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), 1, (video_frames.shape[2], video_frames.shape[1]))
-    for frame in video_frames:
-        out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-    out.release()
-    print(f"Saved visualization MP4 (1 FPS) to {video_path}")
-    
-    # Save text conditioning prompt
-    metadata = {"prompt": prompt, "frames": video_frames.shape[0]}
-    with open(os.path.join(output_dir, f"{name}.json"), "w") as f:
-        json.dump(metadata, f)
+    if result.get("status") == "success":
+        cleansed_dir = Path(result["cleansed_dir"])
+        screenshots_dir = cleansed_dir / "screenshots"
+        captions_dir = cleansed_dir / "captions"
         
-    print(f"Saved {name} with {video_frames.shape[0]} frames.")
+        # 2. Generate Captions
+        if screenshots_dir.exists():
+            print(f"Processing screenshots from: {screenshots_dir}")
+            print(f"Saving captions to: {captions_dir}")
+            
+            process_screenshots_folder(str(screenshots_dir), str(captions_dir))
+        else:
+            print(f"Screenshots directory not found at {screenshots_dir}. Skipping caption generation.")
+    else:
+        print(f"World processing failed: {result.get('error')}")
 
 if __name__ == "__main__":
-    # Mock usage:
-    # mock_rgb_cube = np.random.randint(0, 255, (256, 256, 80, 3), dtype=np.uint8)
-    # prepare_castle_data(mock_rgb_cube, "A stone castle.", "./data", "castle_001")
-    pass
+    main()
+
