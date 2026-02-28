@@ -9810,3 +9810,5 @@ universal_minecraft:redstone_wire[east="up",north="none",power="0",south="up",we
 universal_minecraft:redstone_wire[east="up",north="up",power="0",south="up",west="side"]
 universal_minecraft:stairs[facing="south",half="bottom",material="diorite",shape="inner_left"]{universal_minecraft:water[falling="false",flowing="false",level="0"]}
 universal_minecraft:stairs[facing="south",half="bottom",material="diorite",shape="inner_right"]{universal_minecraft:water[falling="false",flowing="false",level="0"]}
+universal_minecraft:tripwire[attached="false",disarmed="false",east="false",north="false",powered="false",south="false",suspended="false",west="false"]
+universal_minecraft:farmland[moisture="6"]

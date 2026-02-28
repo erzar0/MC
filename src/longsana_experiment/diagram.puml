@@ -9,27 +9,31 @@ skinparam arrowColor #2B547E
 
 title **Minecraft Castle Diffusion Generation**\n(LongSANA Text-to-Video Architecture Strategy)
 
-package "Stage 1: Core Voxel Data Pipeline" {
-    [Minecraft .mca Files\n(Curated Castles)] as RawData
-    [region_extractor.py\n(WorldWrapper)] as Extractor
-    [3D Voxel Grid\nShape: (X, Z, Y, 3)] as VoxelGrid
-    [01_data_preparation.py] as TransposePrep
+package "Stage 1 & 1b: Data Preparation Workflow\n[01_data_preparation.py Orchestrator]" {
+    [Minecraft Worlds\n(Curated Builds)] as RawData
+    
+    node "Data Extraction (world_processor.py)" {
+        [WorldWrapper\n(MCA Extraction)] as Extractor
+        [mcmap\n(Screenshot Renderer)] as MCMap
+    }
+
+    [3D Compressed Volumes\n(.b2frame)] as VoxelGrid
+    [Top-Down 2D Screenshots\n(.png)] as IsoImages
+    
+    node "Caption Generation (generate_captions.py)" {
+        [Local vLLM\n(Qwen-VL-4B)] as VLM
+    }
+    
     [Video Tensor .npy\nShape: (Y, X, Z, 3)] as VideoTensor
+    [Text Caption .txt\n"A massive stone castle..."] as Caption
 
-    RawData --> Extractor : Scrape & Load
-    Extractor --> VoxelGrid : Extract RGB Blocks
-    VoxelGrid --> TransposePrep : Transpose Y Axis to Time
-    TransposePrep --> VideoTensor : Save Frames
-}
-
-package "Stage 1b: VLM Captioning Pipeline" {
-    [PyVista Renderer] as PyVista
-    [Isometric 2D Images\n(Views of Castle)] as IsoImages
-    [VLM (LLaVA/GPT-4V)] as VLM
-    [Text Caption .json\n"A massive stone castle"] as Caption
-
-    VoxelGrid --> PyVista : 3D Point Cloud Data
-    PyVista --> IsoImages : Render Screenshots
+    RawData --> Extractor : Scrape & Load MCA
+    RawData --> MCMap : Render World Regions
+    
+    Extractor --> VoxelGrid : Save Binary Volumes
+    MCMap --> IsoImages : Save Screenshots
+    
+    VoxelGrid --> VideoTensor : Transpose Y to Time
     IsoImages --> VLM : Visual Context Input
     VLM --> Caption : Generate Description
 }
@@ -49,8 +53,12 @@ package "Stage 2 & 3: Model Training Loop" {
         [Loss Calculation\n(MSE)] as Loss
     }
 
-    VideoTensor --> DataLoader : Load Video Frame Arrays
-    Caption --> DataLoader : Load Text Condition
+    [Dataset Folder\n(Video Tensor .npy + Text Caption .txt)] as DatasetFolder
+    
+    VideoTensor --> DatasetFolder
+    Caption --> DatasetFolder
+    
+    DatasetFolder --> DataLoader : Load Batched Pairs
 
     DataLoader --> VAE_Enc : Raw Video Tensors
     DataLoader --> TextEnc : Text Prompts
