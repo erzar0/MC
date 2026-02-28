@@ -227,3 +227,4 @@ mcmap
 mcmap/*
 
 .idea/
+block_embeddings.npy
