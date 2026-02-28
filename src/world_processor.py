@@ -294,5 +294,12 @@ class WorldProcessor:
                 logger.info(f"Screenshot saved to {screenshot_path}")
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Process a Minecraft world.")
+    parser.add_argument("world_source_path", help="Path to the world source directory.")
+    parser.add_argument("world_name", help="Name of the world.", nargs="?", default="")
+    args = parser.parse_args()
+    
+    world_name = args.world_name or Path(args.world_source_path).name
     processor = WorldProcessor()
-    processor.process_world(config.DEFAULT_WORLD_SOURCE, config.DEFAULT_WORLD_NAME)
+    processor.process_world(Path(args.world_source_path), world_name)
