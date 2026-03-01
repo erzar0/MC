@@ -68,6 +68,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "traitlets==5.14.3",
     "transformers>=5.0.0",
+    "triton>=3.6.0",
     "tzdata==2025.2",
     "undetected-chromedriver>=3.5.5",
     "uv==0.9.11",
