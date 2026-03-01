@@ -8,56 +8,80 @@ from typing import Optional, Tuple
 from pathlib import Path
 from tqdm import tqdm
 
-# Efficient Triton kernel for fused SGNS update
+# Efficient Triton kernel for fused Skip-Gram with Negative Sampling (SGNS) update
 @triton.jit
 def block2vec_sgns_kernel(
-    embedding_in_ptr,
-    embedding_out_ptr,
-    center_ids_ptr,
-    context_ids_ptr,
-    negative_ids_ptr,
-    learning_rate,
-    n_elements,
-    n_negatives,
-    embedding_dim: tl.constexpr,
-    BLOCK_SIZE_N: tl.constexpr,
+    center_embeddings_ptr,    # Pointer to embedding_in (v_c)
+    context_embeddings_ptr,   # Pointer to embedding_out (u_ctx / u_neg)
+    center_ids_ptr,           # Pointer to center block IDs
+    context_ids_ptr,          # Pointer to positive context block IDs
+    negative_ids_ptr,         # Pointer to negative context block IDs
+    learning_rate,            # Learning rate (alpha)
+    n_elements,               # Total number of pairs in this batch
+    n_negatives,              # Number of negative samples per positive sample
+    embedding_dim: tl.constexpr, # Dimensionality of the embeddings
+    BLOCK_SIZE_N: tl.constexpr,  # Number of pairs processed per thread block
 ):
     pid = tl.program_id(0)
-    offsets_n = pid * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
-    mask_n = offsets_n < n_elements
-
-    offsets_d = tl.arange(0, embedding_dim)
-
-    c_ids = tl.load(center_ids_ptr + offsets_n, mask=mask_n, other=0)
-    ctx_ids = tl.load(context_ids_ptr + offsets_n, mask=mask_n, other=0)
-
-    c_offs = c_ids[:, None] * embedding_dim + offsets_d[None, :]
-    ctx_offs = ctx_ids[:, None] * embedding_dim + offsets_d[None, :]
     
-    v_c = tl.load(embedding_in_ptr + c_offs, mask=mask_n[:, None], other=0.0)
-    u_ctx = tl.load(embedding_out_ptr + ctx_offs, mask=mask_n[:, None], other=0.0)
+    # Calculate global element indices for this thread block
+    element_offsets = pid * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
+    element_mask = element_offsets < n_elements
 
-    pos_dot = tl.sum(v_c * u_ctx, axis=1)
-    pos_sigm = tl.sigmoid(pos_dot)
-    g_pos = (pos_sigm - 1.0) * learning_rate
+    # Offsets for embedding dimensions
+    dim_offsets = tl.arange(0, embedding_dim)
 
-    grad_vc = g_pos[:, None] * u_ctx
-    tl.store(embedding_out_ptr + ctx_offs, u_ctx - g_pos[:, None] * v_c, mask=mask_n[:, None])
+    # Load center and positive context IDs
+    center_ids = tl.load(center_ids_ptr + element_offsets, mask=element_mask, other=0)
+    context_ids = tl.load(context_ids_ptr + element_offsets, mask=element_mask, other=0)
 
-    for k in range(n_negatives):
-        neg_ids = tl.load(negative_ids_ptr + offsets_n * n_negatives + k, mask=mask_n, other=0)
-        neg_offs = neg_ids[:, None] * embedding_dim + offsets_d[None, :]
+    # Calculate memory offsets for embeddings
+    center_emb_offsets = center_ids[:, None] * embedding_dim + dim_offsets[None, :]
+    context_emb_offsets = context_ids[:, None] * embedding_dim + dim_offsets[None, :]
+    
+    # Load center (v_c) and positive context (u_ctx) embeddings
+    center_vecs = tl.load(center_embeddings_ptr + center_emb_offsets, mask=element_mask[:, None], other=0.0)
+    pos_context_vecs = tl.load(context_embeddings_ptr + context_emb_offsets, mask=element_mask[:, None], other=0.0)
+
+    # Positive sample interaction: maximize dot product
+    pos_dot_product = tl.sum(center_vecs * pos_context_vecs, axis=1)
+    pos_prob = tl.sigmoid(pos_dot_product)
+    
+    # Gradient of log(sigmoid(dot)) wrt dot product = (1 - sigmoid(dot))
+    # We negate it because we want to maximize, and SGD is subtraction: g_pos = (sigmoid - 1) * lr
+    pos_grad_coeff = (pos_prob - 1.0) * learning_rate
+
+    # Accumulate the gradient for the center vector (v_c)
+    center_grad_accum = pos_grad_coeff[:, None] * pos_context_vecs
+    
+    # Update positive context vector (u_ctx) immediately
+    tl.store(context_embeddings_ptr + context_emb_offsets, pos_context_vecs - pos_grad_coeff[:, None] * center_vecs, mask=element_mask[:, None])
+
+    # Negative sample interactions
+    for neg_idx in range(n_negatives):
+        # Load negative sample ID
+        neg_ids = tl.load(negative_ids_ptr + element_offsets * n_negatives + neg_idx, mask=element_mask, other=0)
+        neg_emb_offsets = neg_ids[:, None] * embedding_dim + dim_offsets[None, :]
         
-        u_neg = tl.load(embedding_out_ptr + neg_offs, mask=mask_n[:, None], other=0.0)
+        # Load negative context (u_neg) embedding
+        neg_context_vecs = tl.load(context_embeddings_ptr + neg_emb_offsets, mask=element_mask[:, None], other=0.0)
         
-        neg_dot = tl.sum(v_c * u_neg, axis=1)
-        neg_sigm = tl.sigmoid(neg_dot)
-        g_neg = neg_sigm * learning_rate
+        # Negative sample interaction: minimize dot product
+        neg_dot_product = tl.sum(center_vecs * neg_context_vecs, axis=1)
+        neg_prob = tl.sigmoid(neg_dot_product)
+        
+        # Gradient of log(sigmoid(-dot)) wrt dot product = -sigmoid(dot)
+        # We negate it for gradient descent: g_neg = sigmoid(dot) * lr
+        neg_grad_coeff = neg_prob * learning_rate
 
-        grad_vc += g_neg[:, None] * u_neg
-        tl.store(embedding_out_ptr + neg_offs, u_neg - g_neg[:, None] * v_c, mask=mask_n[:, None])
+        # Accumulate the gradient for the center vector (v_c)
+        center_grad_accum += neg_grad_coeff[:, None] * neg_context_vecs
+        
+        # Update negative context vector (u_neg) immediately
+        tl.store(context_embeddings_ptr + neg_emb_offsets, neg_context_vecs - neg_grad_coeff[:, None] * center_vecs, mask=element_mask[:, None])
 
-    tl.store(embedding_in_ptr + c_offs, v_c - grad_vc, mask=mask_n[:, None])
+    # Apply all accumulated gradients to the center vector (v_c)
+    tl.store(center_embeddings_ptr + center_emb_offsets, center_vecs - center_grad_accum, mask=element_mask[:, None])
 
 class Block2Vec(nn.Module):
     def __init__(self, vocab_size: int, embedding_dim: int = 128, n_negatives: int = 5):
@@ -66,10 +90,12 @@ class Block2Vec(nn.Module):
         self.embedding_dim = embedding_dim
         self.n_negatives = n_negatives
         
+        # embedding_in corresponds to the center block vectors (v_c)
         self.embedding_in = nn.Parameter(torch.randn(vocab_size, embedding_dim) * 0.05)
+        # embedding_out corresponds to the context/negative block vectors (u_ctx / u_neg)
         self.embedding_out = nn.Parameter(torch.zeros(vocab_size, embedding_dim))
         
-    def train_step(self, center_ids, context_ids, negative_ids, lr: float):
+    def train_step(self, center_ids, context_ids, negative_ids, learning_rate: float):
         n_elements = center_ids.numel()
         grid = lambda meta: (triton.cdiv(n_elements, meta['BLOCK_SIZE_N']),)
         
@@ -79,7 +105,7 @@ class Block2Vec(nn.Module):
             center_ids,
             context_ids,
             negative_ids,
-            lr,
+            learning_rate,
             n_elements,
             self.n_negatives,
             embedding_dim=self.embedding_dim,
@@ -113,38 +139,46 @@ class MinecraftDataset:
         self.window_size = window_size
         self.dim_x, self.dim_y, self.dim_z = region_volume.shape
         
-        unique, counts = np.unique(region_volume, return_counts=True)
-        self.vocab_counts = dict(zip(unique, counts))
-        self.vocab_size = max(unique) + 1 if len(unique) > 0 else 65536
+        # Calculate block ID frequencies
+        unique_ids, counts = np.unique(region_volume, return_counts=True)
+        self.vocab_counts = dict(zip(unique_ids, counts))
+        # Keep vocab size large enough for any potential block ID
+        self.vocab_size = max(unique_ids) + 1 if len(unique_ids) > 0 else 65536
         
-        probs = np.zeros(self.vocab_size)
-        for i, c in self.vocab_counts.items():
-            if i < self.vocab_size:
-                probs[i] = c ** 0.75
-        probs /= probs.sum()
-        self.neg_table = probs
+        # Word2Vec negative sampling distribution (frequency ^ 0.75)
+        neg_sample_probs = np.zeros(self.vocab_size)
+        for block_id, count in self.vocab_counts.items():
+            if block_id < self.vocab_size:
+                neg_sample_probs[block_id] = count ** 0.75
+        neg_sample_probs /= neg_sample_probs.sum()
+        self.neg_sample_table = neg_sample_probs
 
     def sample_batch(self, batch_size: int, n_negatives: int):
         ws = self.window_size
-        xs = np.random.randint(ws, self.dim_x - ws, batch_size)
-        ys = np.random.randint(ws, self.dim_y - ws, batch_size)
-        zs = np.random.randint(ws, self.dim_z - ws, batch_size)
         
-        center_ids = self.volume[xs, ys, zs]
+        # Randomly select center block coordinates, avoiding the boundaries
+        center_x = np.random.randint(ws, self.dim_x - ws, batch_size)
+        center_y = np.random.randint(ws, self.dim_y - ws, batch_size)
+        center_z = np.random.randint(ws, self.dim_z - ws, batch_size)
         
-        dx = np.random.randint(-ws, ws + 1, batch_size)
-        dy = np.random.randint(-ws, ws + 1, batch_size)
-        dz = np.random.randint(-ws, ws + 1, batch_size)
+        center_ids = self.volume[center_x, center_y, center_z]
         
-        mask_zeros = (dx == 0) & (dy == 0) & (dz == 0)
-        dx[mask_zeros] = 1 
+        # Randomly determine context offset within the window size
+        offset_x = np.random.randint(-ws, ws + 1, batch_size)
+        offset_y = np.random.randint(-ws, ws + 1, batch_size)
+        offset_z = np.random.randint(-ws, ws + 1, batch_size)
         
-        context_ids = self.volume[xs + dx, ys + dy, zs + dz]
+        # Ensure we don't pick the center block as its own context
+        zero_offset_mask = (offset_x == 0) & (offset_y == 0) & (offset_z == 0)
+        offset_x[zero_offset_mask] = 1 
         
+        context_ids = self.volume[center_x + offset_x, center_y + offset_y, center_z + offset_z]
+        
+        # Sample negative context blocks based on the negative sampling distribution
         negative_ids = np.random.choice(
             self.vocab_size, 
             size=(batch_size, n_negatives), 
-            p=self.neg_table
+            p=self.neg_sample_table
         )
         
         return (

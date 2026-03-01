@@ -48,6 +48,7 @@ class WorldWrapper:
         
         self._mca_coord_to_path = {(x, z): path for (x, z), path in zip(self._mca_coords, self._mca_files)}
         self._mca_coords = set(self._mca_coords)
+        self._mca_coords_rejected = set()
         self._metadata = {"total_regions": len(self._mca_files), "extracted_regions": {}} 
         self._chunks_coords = set(self._world.all_chunk_coords("minecraft:overworld"))
 
@@ -80,8 +81,9 @@ class WorldWrapper:
     @property
     def mca_paths(self, include_rejected=False):
         if include_rejected:
-            return [self._mca_coord_to_path[coord] for coord in self._rejected_coords]
-        return list(self._mca_coord_to_path.values())
+            return list(self._mca_coord_to_path.values())
+        return [path for coord, path in self._mca_coord_to_path.items() if coord not in self._mca_coords_rejected]
+            
 
     @property
     def chunk_coords(self) -> List[Tuple[int, int]]:
@@ -110,7 +112,7 @@ class WorldWrapper:
             region_z: The Z coordinate of the region.
         """
         if (region_x, region_z) in self._mca_coords:
-            self._mca_coords.remove((region_x, region_z))
+            self._mca_coords_rejected.add((region_x, region_z))
             self._metadata["rejected_regions"] = self._metadata.get("rejected_regions", 0) + 1
     
     def get_region_volume(self, region_x: int, region_z: int, get_biomes: bool = False) -> Tuple[np.ndarray, Optional[np.ndarray]]:
