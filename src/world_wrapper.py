@@ -7,6 +7,7 @@ import os
 import glob 
 import numpy as np
 import re
+from tqdm import tqdm
 
 
 class WorldWrapper:
@@ -53,7 +54,9 @@ class WorldWrapper:
         self._chunks_coords = set(self._world.all_chunk_coords("minecraft:overworld"))
 
         # Filter out regions that are incomplete (missing chunks)
-        for mca_coord in tuple(self._mca_coords):
+        pbar = tqdm(tuple(self._mca_coords), desc="Checking regions")
+        for mca_coord in pbar:
+            pbar.set_postfix({"region": f"r.{mca_coord[0]}.{mca_coord[1]}"})
             exit_loop = False
             for cz in range(32):
                 for cx in range(32):
@@ -158,8 +161,10 @@ class WorldWrapper:
         # x_b, z_b = chunk_b["x"] * 16 + 16, chunk_b["z"] * 16 + 16
         # print(f"-from {x_a} {z_a} -to {x_b} {z_b}")
 
+        pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
         for rx in range(32):
             for rz in range(32):
+                pbar.update(1)
                 chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
                 try:
                     chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
@@ -179,6 +184,7 @@ class WorldWrapper:
                         z_start, z_end = rz * 16, (rz + 1) * 16
                         tmp = self._biomes.to_global_ids(chunk.biomes._2d, chunk.biome_palette)
                         biomes[x_start:x_end, z_start:z_end] = tmp
+        pbar.close()
                     
         # Transpose and reshape 6D array to 3D (512, 512, height)
         data = volume_6d.transpose(0, 3, 1, 5, 2, 4)

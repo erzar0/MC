@@ -9,6 +9,7 @@ import blosc2
 import logging
 from typing import List, Tuple, Optional, Union
 import numpy as np
+from tqdm import tqdm
 
 # Ensure src is in path for imports if run as main
 import sys
@@ -68,9 +69,8 @@ class WorldProcessor:
             self._generate_screenshots(cleansed_dir, screenshots_dir, extracted_regions, world_metadata["extracted_regions"])
 
             if remove_tmp_dirs:
-                shutil.rmtree(world_path)
-                shutil.rmtree(converted_world_path)
-                shutil.rmtree(version_updated_path)
+                shutil.rmtree(converted_world_path) if converted_world_path != world_path else None
+                shutil.rmtree(version_updated_path.parent)
 
             logger.info(f"--- Finished processing world: {world_name} ---")
             return {
@@ -89,11 +89,11 @@ class WorldProcessor:
 
     def _convert_mcr_to_mca(self, world_path: Path, world_name: str) -> Path:
         """Copies world to server dir, converts it, and returns the path to converted world."""
+        logger.info(f"Step 1: Converting {world_name} from MCR to MCA using 1.6.4 server...")
+        
         if not list(world_path.glob("region/*.mcr")):
             logger.info(f"World {world_name} does not contain .mcr files. Skipping conversion.")
             return world_path
-            
-        logger.info(f"Step 1: Converting {world_name} from MCR to MCA using 1.6.4 server...")
         
         if not (self.server_dir / "server.jar").exists():
             logger.warning(f"server.jar not found in {self.server_dir}. Skipping MCR to MCA conversion.")
@@ -210,8 +210,9 @@ class WorldProcessor:
             coords = wrapper.mca_coords
             logger.info(f"Found {len(coords)} regions to extract.")
             
-            for rx, rz in coords:
-                logger.info(f"Extracting volume for region r.{rx}.{rz}.mca")
+            pbar = tqdm(coords, desc="Extracting regions")
+            for rx, rz in pbar:
+                pbar.set_postfix({"region": f"r.{rx}.{rz}"})
                 try:
                     volume, _ = wrapper.get_region_volume(rx, rz, get_biomes=False)
 
@@ -260,7 +261,9 @@ class WorldProcessor:
             logger.warning(f"mcmap binary not found at {self.mcmap_bin}. Skipping screenshot generation.")
             return
 
-        for rx, rz in region_coords:
+        pbar = tqdm(region_coords, desc="Generating screenshots")
+        for rx, rz in pbar:
+            pbar.set_postfix({"region": f"r.{rx}.{rz}"})
             # MCA region (rx, rz) spans 512x512 blocks.
             # mcmap takes coordinates in blocks.
             x_from, z_from = rx * 512, rz * 512
@@ -286,20 +289,17 @@ class WorldProcessor:
                 str(world_path)
             ]
             
-            logger.info(f"Running mcmap for r.{rx}.{rz}: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 logger.warning(f"mcmap failed for r.{rx}.{rz}: {result.stderr}")
-            else:
-                logger.info(f"Screenshot saved to {screenshot_path}")
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Process a Minecraft world.")
     parser.add_argument("world_source_path", help="Path to the world source directory.")
-    parser.add_argument("world_name", help="Name of the world.", nargs="?", default="new_world")
+    parser.add_argument("world_name", help="Name of the world.", nargs="?", default="greenfield")
     args = parser.parse_args()
     
     world_name = args.world_name or Path(args.world_source_path).name
     processor = WorldProcessor()
-    processor.process_world(Path(args.world_source_path), world_name)
+    processor.process_world(Path(args.world_source_path), world_name, remove_tmp_dirs=True)

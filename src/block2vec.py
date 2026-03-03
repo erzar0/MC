@@ -1,4 +1,5 @@
 import torch
+import os
 import torch.nn as nn
 import triton
 import triton.language as tl
@@ -70,8 +71,7 @@ def block2vec_sgns_kernel(
         neg_dot_product = tl.sum(center_vecs * neg_context_vecs, axis=1)
         neg_prob = tl.sigmoid(neg_dot_product)
         
-        # Gradient of log(sigmoid(-dot)) wrt dot product = -sigmoid(dot)
-        # We negate it for gradient descent: g_neg = sigmoid(dot) * lr
+        # g_neg = sigmoid(dot) * lr
         neg_grad_coeff = neg_prob * learning_rate
 
         # Accumulate the gradient for the center vector (v_c)
@@ -118,11 +118,15 @@ class Block2Vec(nn.Module):
     def most_similar(self, block_id: int, top_n: int = 10, id_to_name: dict = None):
         emb = self.embedding_in[block_id].unsqueeze(0)
         norms = torch.norm(self.embedding_in, p=2, dim=1, keepdim=True)
-        norm_emb = emb / (torch.norm(emb) + 1e-9)
-        norm_all = self.embedding_in / (norms + 1e-9)
+        norm_emb = emb / (torch.norm(emb) + 1e-12)
+        norm_all = self.embedding_in / (norms + 1e-12)
         
+        # Check if vectors are finite before performing similarity
+        if not torch.isfinite(norm_emb).all():
+            return [("NaN Embeddings - Training Failed", 0.0)]
+            
         sims = torch.mm(norm_emb, norm_all.t()).squeeze(0)
-        top_indices = torch.topk(sims, top_n + 1).indices[1:].cpu().tolist()
+        top_indices = torch.topk(sims, min(top_n + 1, self.vocab_size)).indices[1:].cpu().tolist()
         
         results = []
         for idx in top_indices:
@@ -132,156 +136,140 @@ class Block2Vec(nn.Module):
 
 class MinecraftDataset:
     """
-    A dataset that samples 3D context from Minecraft regions for Block2Vec training.
+    A dataset that samples sequential pairs from flattened Minecraft volumes for Block2Vec training.
     """
-    def __init__(self, region_volume: np.ndarray, window_size: int = 2):
-        self.volume = region_volume  # Shape: (X, Y, Z)
+    def __init__(self, region_volume: np.ndarray, negative_buffer: torch.Tensor, window_size: int = 2):
+        # Flatten the volume to treat it as a sequential tape of blocks
+        self.total_size = region_volume.size
         self.window_size = window_size
-        self.dim_x, self.dim_y, self.dim_z = region_volume.shape
+        self.current_idx = 0
         
-        # Calculate block ID frequencies
-        unique_ids, counts = np.unique(region_volume, return_counts=True)
-        self.vocab_counts = dict(zip(unique_ids, counts))
-        # Keep vocab size large enough for any potential block ID
-        self.vocab_size = max(unique_ids) + 1 if len(unique_ids) > 0 else 65536
+        # Flatten the volume and strictly keep as uint16
+        flat_vol_np = region_volume.flatten().astype(np.uint16)
+        # Move to GPU as int32 tensor (PyTorch requirement for indexing)
+        self.flat_volume = torch.from_numpy(flat_vol_np.astype(np.int32)).cuda()
         
-        # Word2Vec negative sampling distribution (frequency ^ 0.75)
-        neg_sample_probs = np.zeros(self.vocab_size)
-        for block_id, count in self.vocab_counts.items():
-            if block_id < self.vocab_size:
-                neg_sample_probs[block_id] = count ** 0.75
-        neg_sample_probs /= neg_sample_probs.sum()
-        self.neg_sample_table = neg_sample_probs
+        # Negative sampling (strictly pre-sampled frequency-based)
+        self.shuffled_volume = negative_buffer.cuda()
+        self.buffer_size = self.shuffled_volume.size(0)
+        self.shuffled_idx = 0
+        
+        # Pre-compute window offsets as a tensor
+        self.offsets = torch.tensor(
+            [i for i in range(-self.window_size, self.window_size + 1) if i != 0], 
+            device='cuda', 
+            dtype=torch.int32
+        )
 
     def sample_batch(self, batch_size: int, n_negatives: int):
-        ws = self.window_size
+        # 1. Center Blocks
+        center_idx_range = torch.arange(self.current_idx, self.current_idx + batch_size, device='cuda') % self.total_size
+        center_ids = self.flat_volume[center_idx_range]
         
-        # Randomly select center block coordinates, avoiding the boundaries
-        center_x = np.random.randint(ws, self.dim_x - ws, batch_size)
-        center_y = np.random.randint(ws, self.dim_y - ws, batch_size)
-        center_z = np.random.randint(ws, self.dim_z - ws, batch_size)
+        # 2. Context Blocks
+        # Offsets + Center Indices with modulo bounds checking natively on GPU
+        ctx_idx_ranges = (center_idx_range.unsqueeze(0) + self.offsets.unsqueeze(1)) % self.total_size
+        final_context_ids = self.flat_volume[ctx_idx_ranges].flatten().contiguous()
+        final_center_ids = center_ids.repeat(len(self.offsets)).contiguous()
         
-        center_ids = self.volume[center_x, center_y, center_z]
+        self.current_idx = (self.current_idx + batch_size) % self.total_size
         
-        # Randomly determine context offset within the window size
-        offset_x = np.random.randint(-ws, ws + 1, batch_size)
-        offset_y = np.random.randint(-ws, ws + 1, batch_size)
-        offset_z = np.random.randint(-ws, ws + 1, batch_size)
+        # 3. Negative Samples
+        total_pairs = batch_size * len(self.offsets)
+        needed_neg = total_pairs * n_negatives
+        neg_idx_range = torch.arange(self.shuffled_idx, self.shuffled_idx + needed_neg, device='cuda') % self.buffer_size
+        negative_ids = self.shuffled_volume[neg_idx_range].view(total_pairs, n_negatives).contiguous()
         
-        # Ensure we don't pick the center block as its own context
-        zero_offset_mask = (offset_x == 0) & (offset_y == 0) & (offset_z == 0)
-        offset_x[zero_offset_mask] = 1 
+        self.shuffled_idx = (self.shuffled_idx + needed_neg) % self.buffer_size
         
-        context_ids = self.volume[center_x + offset_x, center_y + offset_y, center_z + offset_z]
-        
-        # Sample negative context blocks based on the negative sampling distribution
-        negative_ids = np.random.choice(
-            self.vocab_size, 
-            size=(batch_size, n_negatives), 
-            p=self.neg_sample_table
-        )
-        
-        return (
-            torch.from_numpy(center_ids.astype(np.int32)).cuda(),
-            torch.from_numpy(context_ids.astype(np.int32)).cuda(),
-            torch.from_numpy(negative_ids.astype(np.int32)).cuda()
-        )
+        return final_center_ids, final_context_ids, negative_ids
 
-def train_block2vec_from_volumes(volumes_dir: str, embedding_dim: int = 128, epochs: int = 10, batch_size: int = 4096):
+def train_block2vec_from_volumes(volumes_dir: str, embedding_dim: int = 128, epochs: int = 10, batch_size: int = 4096, window_size: int = 2, negative_buffer_path: Optional[str] = None):
     volumes_path = Path(volumes_dir)
-    b2frames = list(volumes_path.glob("*.b2frame"))
+    b2frames = list(volumes_path.rglob("*.b2frame"))
     
     if not b2frames:
         print(f"No .b2frame files found in {volumes_dir}!")
         return
     
+    if not negative_buffer_path or not os.path.exists(negative_buffer_path):
+        raise ValueError(f"Negative sampling buffer path required! Got: {negative_buffer_path}")
+    
+    print(f"Loading negative sampling buffer from {negative_buffer_path}...")
+    negative_buffer = torch.load(negative_buffer_path)
+
     print(f"Found {len(b2frames)} volumes. Initializing model...")
     model = Block2Vec(vocab_size=65536, embedding_dim=embedding_dim).cuda()
-    lr = 0.025
+    initial_lr = 0.025
+    num_volumes = len(b2frames)
     
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}/{epochs}")
-        total_batches_per_volume = 500
         
         # Shuffle volumes each epoch
         np.random.shuffle(b2frames)
         
-        for b2_file in b2frames:
+        vbar = tqdm(enumerate(b2frames), total=num_volumes, desc=f"Epoch {epoch+1} Volumes")
+        for volume_idx, b2_file in vbar:
             try:
                 # Load volume from blosc2 frame
                 with open(b2_file, "rb") as f:
                     data = f.read()
                 volume = blosc2.unpack_array2(data)
                 
-                dataset = MinecraftDataset(volume)
+                dataset = MinecraftDataset(volume, window_size=window_size, negative_buffer=negative_buffer)
+                num_batches = dataset.total_size // batch_size
                 
-                pbar = tqdm(range(total_batches_per_volume), desc=f"Volume {b2_file.name}")
-                for _ in pbar:
+                if num_batches == 0:
+                    continue
+
+                pbar = tqdm(range(num_batches), desc=f" {b2_file.name}", leave=False)
+                for batch_idx in pbar:
                     c_ids, ctx_ids, neg_ids = dataset.sample_batch(batch_size, model.n_negatives)
-                    model.train_step(c_ids, ctx_ids, neg_ids, lr)
                     
-                    # Decay learning rate
-                    lr = max(0.0001, lr * 0.99999)
+                    # Calculate linear decaying learning rate
+                    volumes_completed = epoch * num_volumes + volume_idx
+                    total_volumes_to_train = epochs * num_volumes
+                    
+                    # Current progress is (completed volumes + fractional progress in current volume) / total volumes
+                    progress = (volumes_completed + (batch_idx / num_batches)) / total_volumes_to_train
+                    lr = max(0.0001, initial_lr * (1.0 - progress))
+
+                    model.train_step(c_ids, ctx_ids, neg_ids, lr)
                     pbar.set_postfix({"lr": f"{lr:.6f}"})
             except Exception as e:
                 print(f"Error processing volume {b2_file}: {e}")
                 
     return model
 
-def train_block2vec(world_path: str, embedding_dim: int = 128, epochs: int = 10, batch_size: int = 1024):
-    from src.world_wrapper import WorldWrapper
-    from pathlib import Path
-    
-    wrapper = WorldWrapper(Path(world_path))
-    regions = wrapper.mca_coords()
-    
-    if not regions:
-        print("No regions found in world!")
-        return
-    
-    model = Block2Vec(vocab_size=65536, embedding_dim=embedding_dim).cuda()
-    lr = 0.025
-    
-    for epoch in range(epochs):
-        print(f"Epoch {epoch+1}/{epochs}")
-        total_batches = 1000  
-        
-        for rx, rz in regions:
-            try:
-                volume = wrapper.get_region_volume(rx, rz)
-                dataset = MinecraftDataset(volume)
-                
-                pbar = tqdm(range(total_batches), desc=f"Region ({rx}, {rz})")
-                for _ in pbar:
-                    c_ids, ctx_ids, neg_ids = dataset.sample_batch(batch_size, model.n_negatives)
-                    model.train_step(c_ids, ctx_ids, neg_ids, lr)
-                    lr = max(0.0001, lr * 0.99999)
-                    pbar.set_postfix({"lr": f"{lr:.6f}"})
-            except Exception as e:
-                print(f"Error processing region {rx}, {rz}: {e}")
-                
-    return model
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--volumes", type=str, default="/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/greenfield/volumes")
+    parser.add_argument("--volumes", type=str, default="/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/")
     parser.add_argument("--dim", type=int, default=128)
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--window", type=int, default=2)
+    parser.add_argument("--epochs", type=int, default=1)   
+    parser.add_argument("--batch_size", type=int, default=4096)
+    parser.add_argument("--neg_buffer", type=str, required=True, help="Path to pre-sampled negative IDs (.pt file)")
     args = parser.parse_args()
 
     if Path(args.volumes).exists():
-        model = train_block2vec_from_volumes(args.volumes, embedding_dim=args.dim, epochs=args.epochs)
+        model = train_block2vec_from_volumes(
+            args.volumes, 
+            embedding_dim=args.dim, 
+            epochs=args.epochs,
+            window_size=args.window,
+            batch_size=args.batch_size,
+            negative_buffer_path=args.neg_buffer
+        )
         if model:
             embeddings = model.get_embeddings()
-            np.save("block_embeddings.npy", embeddings)
-            print("Embeddings saved to block_embeddings.npy")
+            np.save("tmp/block_embeddings.npy", embeddings)
+            print("Embeddings saved to tmp/block_embeddings.npy")
             
             # Simple test similarity
-            # Assuming 1 is stone, 2 is grass, etc. but it depends on the world mapping
-            # Just showing it works
-            print("\nSimilarity test for ID 1:")
-            sims = model.most_similar(1)
+            print("\nSimilarity test for ID 11: dirt")
+            sims = model.most_similar(11)
             for name, score in sims:
                 print(f"  {name}: {score:.4f}")
     else:
