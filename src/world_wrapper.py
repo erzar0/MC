@@ -171,11 +171,15 @@ class WorldWrapper:
                 except Exception:
                     continue
 
+                y_offset_sections = -(bounds.min_y // 16)
                 y_sections = sorted(chunk.blocks.sections)
-                for i, y in enumerate(y_sections[:max_sections]):
+                for y in y_sections:
+                    sec_idx = y + y_offset_sections
+                    if sec_idx < 0 or sec_idx >= max_sections:
+                        continue
                     sub_chunk = chunk.blocks.get_sub_chunk(y)
                     palette = chunk._block_palette
-                    volume_6d[rx, rz, i] = self._blockstates.to_global_ids(sub_chunk, palette)
+                    volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, palette)
 
                 if get_biomes:
                     chunk.biomes.convert_to_2d()

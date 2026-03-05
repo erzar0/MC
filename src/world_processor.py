@@ -222,6 +222,9 @@ class WorldProcessor:
                         f.write(compressed_region)
                     
                     extracted_regions.append((rx, rz))
+                    
+                    # Clear Amulet chunk cache to prevent OOM
+                    wrapper.unload()
                 except Exception as ve:
                     logger.error(f"Failed to extract region ({rx}, {rz}): {ve}")
                     

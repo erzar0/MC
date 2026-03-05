@@ -138,14 +138,15 @@ class MinecraftDataset:
     """
     A dataset that samples sequential pairs from flattened Minecraft volumes for Block2Vec training.
     """
-    def __init__(self, region_volume: np.ndarray, negative_buffer: torch.Tensor, window_size: int = 2):
+    def __init__(self, region_volume: np.ndarray, negative_buffer: torch.Tensor, window_size: int = 2, flatten_order: str = 'C'):
         # Flatten the volume to treat it as a sequential tape of blocks
         self.total_size = region_volume.size
         self.window_size = window_size
         self.current_idx = 0
         
         # Flatten the volume and strictly keep as uint16
-        flat_vol_np = region_volume.flatten().astype(np.uint16)
+        # 'C' order = Y-fast (vertical), 'F' order = X-fast (horizontal)
+        flat_vol_np = region_volume.flatten(order=flatten_order).astype(np.uint16)
         # Move to GPU as int32 tensor (PyTorch requirement for indexing)
         self.flat_volume = torch.from_numpy(flat_vol_np.astype(np.int32)).cuda()
         
@@ -203,42 +204,42 @@ def train_block2vec_from_volumes(volumes_dir: str, embedding_dim: int = 128, epo
     initial_lr = 0.025
     num_volumes = len(b2frames)
     
+    total_volume_steps = epochs * num_volumes
+    vbar = tqdm(total=total_volume_steps, desc="Training")
+    
     for epoch in range(epochs):
-        print(f"Epoch {epoch+1}/{epochs}")
-        
         # Shuffle volumes each epoch
         np.random.shuffle(b2frames)
         
-        vbar = tqdm(enumerate(b2frames), total=num_volumes, desc=f"Epoch {epoch+1} Volumes")
-        for volume_idx, b2_file in vbar:
+        for b2_file in b2frames:
+            # Exponential decay based only on the number of volumes processed across all epochs
+            progress = vbar.n / total_volume_steps
+            lr = max(0.0001, initial_lr * (0.01 ** progress))
+            
+            # Randomly alternate between 'C' (Vertical/Y-fast) and 'F' (Horizontal/X-fast) flattening
+            order = np.random.choice(['C', 'F'])
+            vbar.set_description(f"Epoch {epoch+1}/{epochs} | {b2_file.name} [{order}]")
+            vbar.set_postfix({"lr": f"{lr:.6f}"})
+            
             try:
                 # Load volume from blosc2 frame
                 with open(b2_file, "rb") as f:
-                    data = f.read()
-                volume = blosc2.unpack_array2(data)
+                    volume = blosc2.unpack_array2(f.read())
                 
-                dataset = MinecraftDataset(volume, window_size=window_size, negative_buffer=negative_buffer)
+                dataset = MinecraftDataset(volume, window_size=window_size, negative_buffer=negative_buffer, flatten_order=order)
                 num_batches = dataset.total_size // batch_size
                 
-                if num_batches == 0:
-                    continue
-
-                pbar = tqdm(range(num_batches), desc=f" {b2_file.name}", leave=False)
-                for batch_idx in pbar:
-                    c_ids, ctx_ids, neg_ids = dataset.sample_batch(batch_size, model.n_negatives)
-                    
-                    # Calculate linear decaying learning rate
-                    volumes_completed = epoch * num_volumes + volume_idx
-                    total_volumes_to_train = epochs * num_volumes
-                    
-                    # Current progress is (completed volumes + fractional progress in current volume) / total volumes
-                    progress = (volumes_completed + (batch_idx / num_batches)) / total_volumes_to_train
-                    lr = max(0.0001, initial_lr * (1.0 - progress))
-
-                    model.train_step(c_ids, ctx_ids, neg_ids, lr)
-                    pbar.set_postfix({"lr": f"{lr:.6f}"})
+                if num_batches > 0:
+                    # Provide inner visual feedback for current volume progress
+                    pbar = tqdm(range(num_batches), desc="  Batches", leave=False)
+                    for _ in pbar:
+                        c_ids, ctx_ids, neg_ids = dataset.sample_batch(batch_size, model.n_negatives)
+                        model.train_step(c_ids, ctx_ids, neg_ids, lr)
+                        pbar.set_postfix({"lr": f"{lr:.6f}"})
             except Exception as e:
-                print(f"Error processing volume {b2_file}: {e}")
+                print(f"\nError processing volume {b2_file.name}: {e}")
+            
+            vbar.update(1)
                 
     return model
 
