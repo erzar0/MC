@@ -201,7 +201,7 @@ def train_block2vec_from_volumes(volumes_dir: str, embedding_dim: int = 128, epo
 
     print(f"Found {len(b2frames)} volumes. Initializing model...")
     model = Block2Vec(vocab_size=65536, embedding_dim=embedding_dim).cuda()
-    initial_lr = 0.025
+    lr = 0.025
     num_volumes = len(b2frames)
     
     total_volume_steps = epochs * num_volumes
@@ -213,8 +213,7 @@ def train_block2vec_from_volumes(volumes_dir: str, embedding_dim: int = 128, epo
         
         for b2_file in b2frames:
             # Exponential decay based only on the number of volumes processed across all epochs
-            progress = vbar.n / total_volume_steps
-            lr = max(0.0001, initial_lr * (0.01 ** progress))
+            lr = max(0.0001, lr * 0.99999)
             
             # Randomly alternate between 'C' (Vertical/Y-fast) and 'F' (Horizontal/X-fast) flattening
             order = np.random.choice(['C', 'F'])

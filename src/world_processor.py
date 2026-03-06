@@ -280,7 +280,7 @@ class WorldProcessor:
                 "-from", str(x_from), str(z_from),
                 "-to", str(x_to), str(z_to),
                 "-min", str(y_from),
-                "-max", str(y_to),
+                "-max", str(384),
                 "-fragment", "512",
                 "-padding", "0",
                 "-dim", "overworld",
