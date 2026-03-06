@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from pathlib import Path
 from src.world_wrapper import WorldWrapper, BlockStates
-from src.fast_region_extractor import FastRegionParser
+from src.fast_volume_extractor import FastVolumeParser
 
 @pytest.fixture
 def test_world_path():
@@ -13,9 +13,9 @@ def test_world_path():
 def test_mca_path():
     return Path(__file__).parent / "resources" / "test_world" / "region" / "r.0.0.mca"
 
-def test_fast_region_parser(test_mca_path):
+def test_fast_volume_parser(test_mca_path):
     blockstates = BlockStates()
-    parser = FastRegionParser(test_mca_path, blockstates)
+    parser = FastVolumeParser(test_mca_path, blockstates)
     volume = parser.extract_volume(min_y=-64, height=384)
     assert volume.shape[0] == 512
     assert volume.shape[1] == 512
@@ -27,9 +27,9 @@ def test_extractors_comparison(test_world_path, test_mca_path):
     wrapper = WorldWrapper(test_world_path)
     ww_volume, _ = wrapper.get_region_volume(0, 0)
     
-    # 2. FastRegionParser extraction
+    # 2. FastVolumeParser extraction
     blockstates = BlockStates()
-    parser = FastRegionParser(test_mca_path, blockstates)
+    parser = FastVolumeParser(test_mca_path, blockstates)
     fr_volume = parser.extract_volume(min_y=-64, height=384)
     parser.close()
     

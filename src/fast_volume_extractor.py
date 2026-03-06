@@ -43,7 +43,7 @@ except ImportError:
         # If it's passed as an argument, we just need the type hint to work
         BlockStates = Any
 
-class FastRegionParser:
+class FastVolumeParser:
     def __init__(self, region_path: Path, blockstates: BlockStates, translator=None):
         self.region_path = region_path
         self._blockstates = blockstates
@@ -231,7 +231,7 @@ class FastRegionParser:
                                     # Single-block palette without data means the whole section is that block
                                     volume[cx, cz, sec_idx] = global_palette[0]
                 except Exception as e:
-                    print(f"FastRegionParser Error @ {cx},{cz}: {e}")
+                    print(f"FastVolumeParser Error @ {cx},{cz}: {e}")
                     continue
                     
         data = volume.transpose(0, 3, 1, 5, 2, 4)
