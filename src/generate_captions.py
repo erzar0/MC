@@ -125,18 +125,28 @@ def generate_caption(img_path: str):
     print(f"Warning: OpenAI fallback for generate_caption is not fully implemented for {img_path}.")
     return "A Minecraft scene."
 
-def process_screenshots_folder(screenshot_dir: str, output_dir: str):
+def process_screenshots_folder(screenshot_dir: str, output_dir: str) -> dict:
     """
     Reads all screenshots in a directory, generates captions using local vLLM (if available), 
     and saves them as text files in the output directory.
+    Returns a dictionary with processing statistics.
     """
+    stats = {
+        "total": 0,
+        "generated": 0,
+        "skipped": 0,
+        "failed": 0
+    }
+    
     os.makedirs(output_dir, exist_ok=True)
     
     screenshot_paths = glob.glob(os.path.join(screenshot_dir, "*.png"))
     if not screenshot_paths:
         print(f"No PNG screenshots found in {screenshot_dir}")
-        return
+        return stats
         
+    stats["total"] = len(screenshot_paths)
+    
     to_process = []
     for img_path in screenshot_paths:
         base_name = os.path.splitext(os.path.basename(img_path))[0]
@@ -146,10 +156,11 @@ def process_screenshots_folder(screenshot_dir: str, output_dir: str):
             to_process.append((img_path, out_path, base_name))
         else:
             print(f"Caption already exists for {base_name}, skipping.")
+            stats["skipped"] += 1
             
     if not to_process:
         print("All captions are already generated!")
-        return
+        return stats
 
     if VLLM_AVAILABLE:
         print(f"Initializing vLLM model for {len(to_process)} images...")
@@ -194,19 +205,32 @@ def process_screenshots_folder(screenshot_dir: str, output_dir: str):
         for i, out in enumerate(outputs):
             _, out_path, base_name = to_process[i]
             caption = out.outputs[0].text.strip()
-            with open(out_path, "w", encoding="utf-8") as f:
-                f.write(caption)
-            print(f"Saved caption to {out_path}")
+            try:
+                with open(out_path, "w", encoding="utf-8") as f:
+                    f.write(caption)
+                print(f"Saved caption to {out_path}")
+                stats["generated"] += 1
+            except Exception as e:
+                print(f"Failed to save caption {out_path}: {e}")
+                stats["failed"] += 1
             
+        return stats
     else:
         # Fallback to OpenAI sequential calls
         print(f"Processing {len(to_process)} images sequentially with OpenAI API fallback...")
         for img_path, out_path, base_name in to_process:
             print(f"Generating caption for {base_name}...")
-            caption = generate_caption(img_path)
-            with open(out_path, "w", encoding="utf-8") as f:
-                f.write(caption)
-            print(f"Saved caption to {out_path}")
+            try:
+                caption = generate_caption(img_path)
+                with open(out_path, "w", encoding="utf-8") as f:
+                    f.write(caption)
+                print(f"Saved caption to {out_path}")
+                stats["generated"] += 1
+            except Exception as e:
+                print(f"Failed to generate caption for {out_path}: {e}")
+                stats["failed"] += 1
+                
+        return stats
 
 if __name__ == "__main__":
     import sys
