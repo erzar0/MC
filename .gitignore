@@ -227,3 +227,6 @@ mcmap
 mcmap/*
 
 .idea/
+
+.agent
+openspec
