@@ -8,7 +8,12 @@ import glob
 import numpy as np
 import re
 from tqdm import tqdm
+import anvil
 
+try:
+    from .fast_volume_extractor import FastVolumeParser
+except ImportError:
+    from fast_volume_extractor import FastVolumeParser
 
 class WorldWrapper:
     """A wrapper around the Amulet library to extract region data from Minecraft worlds.
@@ -24,10 +29,6 @@ class WorldWrapper:
 
         Args:
             world_path: Path to the Minecraft world directory (containing level.dat).
-
-        Raises:
-            ValueError: If the world height exceeds 384 blocks.
-            FileNotFoundError: If the region directory is missing.
         """
         self._world = amulet.load_level(world_path) 
 
@@ -118,7 +119,52 @@ class WorldWrapper:
             self._mca_coords_rejected.add((region_x, region_z))
             self._metadata["rejected_regions"] = self._metadata.get("rejected_regions", 0) + 1
     
-    def get_region_volume(self, region_x: int, region_z: int, get_biomes: bool = False) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    def _post_process_volume(self, volume: np.ndarray, height: int = 384) -> np.ndarray:
+        """Transposes, reshapes and trims vertical space to only include non-air blocks."""
+        data = volume.transpose(0, 3, 1, 5, 2, 4)
+        data = data.reshape(512, 512, -1)
+        
+        has_content = np.any(data != 0, axis=(0, 1))
+        if not np.any(has_content):
+            return data[:,:,-height:]
+        
+        indices = np.where(has_content)[0]
+        trimmed = data[:, :, indices[0] : indices[-1] + 1][:,:,-height:]
+        return trimmed
+
+    def get_region_biomes(self, region_x: int, region_z: int) -> np.ndarray:
+        """Extracts a 2D array of global biome IDs for a specified region.
+
+        Args:
+            region_x: X coordinate of the region.
+            region_z: Z coordinate of the region.
+
+        Returns:
+            A 2D numpy array (uint16) of shape (512, 512).
+        """
+        if (region_x, region_z) not in self._mca_coords:
+            raise ValueError(f"Region ({region_x}, {region_z}) not found or was rejected.")
+
+        biomes = np.zeros((512, 512), dtype=np.uint16)
+        pbar = tqdm(total=1024, desc=f"Biomes r.{region_x}.{region_z}", leave=False)
+        for rx in range(32):
+            for rz in range(32):
+                pbar.update(1)
+                chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
+                try:
+                    chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                    chunk.biomes.convert_to_2d()
+                    if chunk.biomes._2d is not None and chunk.biome_palette is not None:
+                        x_start, x_end = rx * 16, (rx + 1) * 16
+                        z_start, z_end = rz * 16, (rz + 1) * 16
+                        tmp = self._biomes.to_global_ids(chunk.biomes._2d, chunk.biome_palette)
+                        biomes[x_start:x_end, z_start:z_end] = tmp
+                except Exception:
+                    continue
+        pbar.close()
+        return biomes
+
+    def get_region_volume(self, region_x: int, region_z: int, use_fast_extractor: bool = False) -> np.ndarray:
         """Extracts a 3D volume of global block IDs for a specified region.
 
         The volume is returned as a 512x512xH array, where H is the trimmed height
@@ -127,79 +173,62 @@ class WorldWrapper:
         Args:
             region_x: X coordinate of the region.
             region_z: Z coordinate of the region.
-            get_biomes: Whether to also extract and return biome data.
+            use_fast_extractor: Whether to use the FastVolumeParser for speed.
 
         Returns:
-            A tuple (volume, biomes). 
-            - volume: A 3D numpy array (uint16) of shape (512, 512, height).
-            - biomes: A 2D numpy array (uint16) of shape (512, 512) if get_biomes is True, else None.
+            A 3D numpy array (uint16) of shape (512, 512, height).
 
         Raises:
             ValueError: If the region coordinates are not valid for this world.
         """
-        def _trim_y_axis(volume: np.ndarray) -> np.ndarray:
-            """Helper to trim vertical space to only include non-air blocks, max 384."""
-            has_content = np.any(volume != 0, axis=(0, 1))
-            if not np.any(has_content):
-                return volume[:,:,-384:]
-            
-            indices = np.where(has_content)[0]
-            return volume[:, :, indices[0] : indices[-1] + 1][:,:,-384:]
-
         if (region_x, region_z) not in self._mca_coords:
             raise ValueError(f"Region ({region_x}, {region_z}) not found or was rejected.")
 
         bounds = self._world.bounds("minecraft:overworld")
-        height = (bounds.max_y - bounds.min_y)
-        max_sections = (height // 16 + 1)
-        volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
-        biomes = np.zeros((512, 512), dtype=np.uint16) if get_biomes else None
-
-        # chunk_a = self.to_chunk_coords(region_x, region_z, 0, 0)
-        # chunk_b = self.to_chunk_coords(region_x, region_z, 31, 31)
-        # x_a, z_a = chunk_a["x"] * 16, chunk_a["z"] * 16
-        # x_b, z_b = chunk_b["x"] * 16 + 16, chunk_b["z"] * 16 + 16
-        # print(f"-from {x_a} {z_a} -to {x_b} {z_b}")
-
-        pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
-        for rx in range(32):
-            for rz in range(32):
-                pbar.update(1)
-                chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
+        data = None
+        
+        # 1. Try Fast Extraction (Blocks only)
+        if use_fast_extractor:
+            mca_path = self._mca_coord_to_path.get((region_x, region_z))
+            if mca_path:
                 try:
-                    chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
-                except Exception:
-                    continue
+                    parser = FastVolumeParser(Path(mca_path), self._blockstates)
+                    volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384)
+                    data = self._post_process_volume(volume_6d, height=384)
+                    parser.close()
+                except Exception as e:
+                    print(f"FastVolumeParser failed for r.{region_x}.{region_z}, falling back to Amulet: {e}")
+                    data = None
 
-                y_offset_sections = -(bounds.min_y // 16)
-                y_sections = sorted(chunk.blocks.sections)
-                for y in y_sections:
-                    sec_idx = y + y_offset_sections
-                    if sec_idx < 0 or sec_idx >= max_sections:
+        # 2. Get Blocks (via Amulet fallback)
+        if data is None:
+            height = (bounds.max_y - bounds.min_y)
+            max_sections = (height // 16 + 1)
+            volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
+        
+            pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
+            for rx in range(32):
+                for rz in range(32):
+                    pbar.update(1)
+                    chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
+                    try:
+                        chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                        y_offset_sections = -(bounds.min_y // 16)
+                        for y in sorted(chunk.blocks.sections):
+                            sec_idx = y + y_offset_sections
+                            if 0 <= sec_idx < max_sections:
+                                sub_chunk = chunk.blocks.get_sub_chunk(y)
+                                volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, chunk._block_palette)
+                    except Exception:
                         continue
-                    sub_chunk = chunk.blocks.get_sub_chunk(y)
-                    palette = chunk._block_palette
-                    volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, palette)
-
-                if get_biomes:
-                    chunk.biomes.convert_to_2d()
-                    if chunk.biomes._2d is not None and chunk.biome_palette is not None:
-                        x_start, x_end = rx * 16, (rx + 1) * 16
-                        z_start, z_end = rz * 16, (rz + 1) * 16
-                        tmp = self._biomes.to_global_ids(chunk.biomes._2d, chunk.biome_palette)
-                        biomes[x_start:x_end, z_start:z_end] = tmp
-        pbar.close()
-                    
-        # Transpose and reshape 6D array to 3D (512, 512, height)
-        data = volume_6d.transpose(0, 3, 1, 5, 2, 4)
-        data = _trim_y_axis(data.reshape(512, 512, -1))
+            data = self._post_process_volume(volume_6d, height=384)
 
         self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
             "y_range": (bounds.min_y, int(data.shape[2]) + bounds.min_y),
             "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True))},
         }
 
-        return data, biomes
+        return data
     
     def get_heightmap(self, region_x: int, region_z: int, transparent_ids: List[int] = [0]) -> np.ndarray:
         """Generates a 512x512 heightmap for a given region.
@@ -215,7 +244,7 @@ class WorldWrapper:
         Returns:
             A 2D numpy array (uint16) of shape (512, 512) representing heights.
         """
-        volume, _ = self.get_region_volume(region_x, region_z, False)
+        volume = self.get_region_volume(region_x, region_z, use_fast_extractor=True)
         
         is_solid = ~np.isin(volume, transparent_ids)
         

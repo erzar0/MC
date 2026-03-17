@@ -126,15 +126,6 @@ class FastVolumeParser:
         amulet_block = amulet.api.block.Block(namespace, base_name, properties)
         universal_b, extra_b, _ = self._version.block.to_universal(amulet_block)
 
-        # Patch for waterlogged blocks if to_universal didn't catch it
-        if extra_b is None and "waterlogged" in properties:
-            if properties["waterlogged"].py_str == "true":
-                extra_b = amulet.api.block.Block("universal_minecraft", "water", {
-                    "falling": amulet_nbt.StringTag("false"),
-                    "flowing": amulet_nbt.StringTag("false"),
-                    "level": amulet_nbt.StringTag("0")
-                })
-
         def _get_clean_str(b):
             if b is None: return None
             return str(b)
@@ -234,13 +225,5 @@ class FastVolumeParser:
                     print(f"FastVolumeParser Error @ {cx},{cz}: {e}")
                     continue
                     
-        data = volume.transpose(0, 3, 1, 5, 2, 4)
-        data = data.reshape(512, 512, -1)
-        
-        has_content = np.any(data != 0, axis=(0, 1))
-        if not np.any(has_content):
-            return data[:,:,-height:]
-            
-        indices = np.where(has_content)[0]
-        trimmed = data[:, :, indices[0] : indices[-1] + 1][:,:,-height:]
-        return trimmed
+        return volume
+

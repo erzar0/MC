@@ -214,7 +214,7 @@ class WorldProcessor:
             for rx, rz in pbar:
                 pbar.set_postfix({"region": f"r.{rx}.{rz}"})
                 try:
-                    volume, _ = wrapper.get_region_volume(rx, rz, get_biomes=False)
+                    volume = wrapper.get_region_volume(rx, rz, True)
 
                     # Save volume
                     compressed_region = blosc2.pack_array2(np.ascontiguousarray(volume), chunksize=512**3)

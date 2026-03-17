@@ -12,7 +12,7 @@ import os
 
 def load_data():
     project_root = Path(__file__).parent.parent.parent
-    embeddings_path = project_root / "tmp/block_embeddings.npy"
+    embeddings_path = project_root / "tmp/checkpoints/block_embeddings_ckpt_280.npy"
     states_path = project_root / "assets/block_states.txt"
 
     print(f"Loading embeddings from {embeddings_path}...")
@@ -37,10 +37,20 @@ def reduce_dimensions(embeddings):
     reduced_scaled = scaler.fit_transform(reduced)
     return reduced_scaled
 
-def get_base_name(full_name):
-    # Handle both [ and { for base name extraction
+def get_group_key(full_name):
+    """Extract base name + material property for grouping.
+    e.g. 'universal_minecraft:stairs[facing="south",material="quartz",shape="straight"]'
+      -> 'universal_minecraft:stairs|quartz'
+    """
     import re
-    return re.split(r'[\[\{]', full_name)[0]
+    base = re.split(r'[\[\{]', full_name)[0]
+    mat = re.search(r'material="([^"]*)"', full_name)
+    if mat:
+        return f"{base}|{mat.group(1)}"
+    color = re.search(r'color="([^"]*)"', full_name)
+    if color:
+        return f"{base}|{color.group(1)}"
+    return base
 
 def get_representative_colors(block_names, reduced_scaled):
     """
@@ -53,7 +63,7 @@ def get_representative_colors(block_names, reduced_scaled):
     # Group indices by base name
     groups = defaultdict(list)
     for i, name in enumerate(block_names):
-        base = get_base_name(name)
+        base = get_group_key(name)
         groups[base].append(i)
         
     base_to_representative_color = {}
@@ -66,7 +76,7 @@ def get_representative_colors(block_names, reduced_scaled):
     # Assign the group color to all members
     final_colors = []
     for i, name in enumerate(block_names):
-        base = get_base_name(name)
+        base = get_group_key(name)
         final_colors.append(base_to_representative_color[base])
         
     return np.array(final_colors)
@@ -123,7 +133,7 @@ def visualize_2d_seaborn(data, names, colors, title="2D Projection", filename="o
     ax.scatter(data[:, d1], data[:, d2], c=np.clip(colors, 0, 1), s=15, alpha=0.5)
     
     for idx in label_indices:
-        name_clean = get_base_name(names[idx]).replace('universal_minecraft:', '')
+        name_clean = get_group_key(names[idx]).replace('universal_minecraft:', '')
         ax.text(data[idx, d1], data[idx, d2], name_clean, fontsize=8, alpha=0.8)
     
     ax.set_facecolor('white')
@@ -145,8 +155,37 @@ def main():
         print(f"Error loading data: {e}")
         return
 
-    # PaCMAP 3D reduction
+    # Compute raw norms before normalization (for untrained block filtering)
+    raw_norms = np.linalg.norm(embeddings, axis=1)
+    
+    # Pre-process embeddings: mean subtraction + L2 normalization
+    embeddings = embeddings - embeddings.mean(axis=0)
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    embeddings = embeddings / (norms + 1e-12)
+    
+    # PaCMAP 3D reduction on ALL embeddings (preserves global structure)
     pacmap_3d = reduce_dimensions(embeddings)
+
+    # Filter out untrained blocks AFTER PaCMAP (using raw norms)
+    keep_mask = raw_norms > 1.0
+    
+    # Also remove spatial outliers in PaCMAP space (IQR method)
+    for dim in range(pacmap_3d.shape[1]):
+        q1, q3 = np.percentile(pacmap_3d[:, dim], [20, 80])
+        # q1, q3 = np.percentile(pacmap_3d[:, dim], [0, 100])
+        iqr = q3 - q1
+        lower, upper = q1 - 2.0 * iqr, q3 + 2.0 * iqr
+        keep_mask &= (pacmap_3d[:, dim] >= lower) & (pacmap_3d[:, dim] <= upper)
+    
+    n_filtered = (~keep_mask).sum()
+    print(f"Filtered {n_filtered} blocks (untrained + spatial outliers). Keeping {keep_mask.sum()}/{len(names)}.")
+    
+    pacmap_3d = pacmap_3d[keep_mask]
+    names = [n for n, k in zip(names, keep_mask) if k]
+    
+    # Re-normalize to [0, 1] after filtering, then apply sqrt to spread dense regions
+    scaler = MinMaxScaler()
+    pacmap_3d = scaler.fit_transform(pacmap_3d)
 
     # Mode 1: Individual Coloring (Every state is unique)
     print("\n--- Mode 1: Individual State Colors ---")
