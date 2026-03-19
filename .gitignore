@@ -227,6 +227,8 @@ mcmap
 mcmap/*
 
 .idea/
-
+block_embeddings.npy
+.html
+config/
 .agent
 openspec
