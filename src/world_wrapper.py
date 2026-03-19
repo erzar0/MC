@@ -54,20 +54,14 @@ class WorldWrapper:
         self._metadata = {"total_regions": len(self._mca_files), "extracted_regions": {}} 
         self._chunks_coords = set(self._world.all_chunk_coords("minecraft:overworld"))
 
-        # Filter out regions that are incomplete (missing chunks)
+        # Filter out regions that are missing any chunks (Stage 1 rejection)
         pbar = tqdm(tuple(self._mca_coords), desc="Checking regions")
         for mca_coord in pbar:
             pbar.set_postfix({"region": f"r.{mca_coord[0]}.{mca_coord[1]}"})
-            exit_loop = False
-            for cz in range(32):
-                for cx in range(32):
-                    chunk_coords = self.to_chunk_coords(mca_coord[0], mca_coord[1], cx, cz)
-                    if (chunk_coords["x"], chunk_coords["z"]) not in self._chunks_coords:
-                        self.reject_region(mca_coord[0], mca_coord[1])
-                        exit_loop = True
-                        break
-                if exit_loop:
-                    break
+            reg_x_base, reg_z_base = mca_coord[0] * 32, mca_coord[1] * 32
+            if any((reg_x_base + cx, reg_z_base + cz) not in self._chunks_coords
+                   for cz in range(32) for cx in range(32)):
+                self.reject_region(mca_coord[0], mca_coord[1])
         
         self._blockstates = BlockStates()
         self._biomes = Biomes()
@@ -75,7 +69,7 @@ class WorldWrapper:
     @property
     def mca_coords(self) -> List[Tuple[int, int]]:
         """Returns a list of (region_x, region_z) tuples for all valid regions."""
-        return list(self._mca_coords)
+        return list(self._mca_coords - self._mca_coords_rejected)
     
     @property
     def metadata(self) -> dict:
@@ -142,7 +136,7 @@ class WorldWrapper:
         Returns:
             A 2D numpy array (uint16) of shape (512, 512).
         """
-        if (region_x, region_z) not in self._mca_coords:
+        if (region_x, region_z) not in self._mca_coords or (region_x, region_z) in self._mca_coords_rejected:
             raise ValueError(f"Region ({region_x}, {region_z}) not found or was rejected.")
 
         biomes = np.zeros((512, 512), dtype=np.uint16)
@@ -181,7 +175,7 @@ class WorldWrapper:
         Raises:
             ValueError: If the region coordinates are not valid for this world.
         """
-        if (region_x, region_z) not in self._mca_coords:
+        if (region_x, region_z) not in self._mca_coords or (region_x, region_z) in self._mca_coords_rejected:
             raise ValueError(f"Region ({region_x}, {region_z}) not found or was rejected.")
 
         bounds = self._world.bounds("minecraft:overworld")
@@ -223,6 +217,17 @@ class WorldWrapper:
                         continue
             data = self._post_process_volume(volume_6d, height=384)
 
+        # Stage 2: Reject if more than 90% of the top-down view is air/sponge
+        content_ratio = np.sum(np.any(data > 1, axis=2)) / (512 * 512)
+        if content_ratio < 0.10:
+            self.reject_region(region_x, region_z)
+            raise ValueError(f"Region ({region_x}, {region_z}) rejected: {(1.0 - content_ratio) * 100:.1f}% filled with air/sponge.")
+
+        world_thickness = data.shape[2]
+        if world_thickness < 5:
+            self.reject_region(region_x, region_z)
+            raise ValueError(f"Region ({region_x}, {region_z}) rejected: non-air span is only {world_thickness} blocks high.")
+
         self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
             "y_range": (bounds.min_y, int(data.shape[2]) + bounds.min_y),
             "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True))},
@@ -230,7 +235,7 @@ class WorldWrapper:
 
         return data
     
-    def get_heightmap(self, region_x: int, region_z: int, transparent_ids: List[int] = [0]) -> np.ndarray:
+    def get_heightmap(self, region_x: int, region_z: int, transparent_ids: List[int] = [0, 1]) -> np.ndarray:
         """Generates a 512x512 heightmap for a given region.
 
         The heightmap represents the highest non-transparent block at each (x, z) 
@@ -239,7 +244,7 @@ class WorldWrapper:
         Args:
             region_x: X coordinate of the region.
             region_z: Z coordinate of the region.
-            transparent_ids: List of global IDs to treat as transparent (default [0] for air).
+            transparent_ids: List of global IDs to treat as transparent (default [0, 1] for air/sponge).
 
         Returns:
             A 2D numpy array (uint16) of shape (512, 512) representing heights.
@@ -271,7 +276,7 @@ class WorldWrapper:
             A 32x32 numpy array (int64) of inhabited times in seconds.
         """
         path = self._mca_coord_to_path.get((region_x, region_z))
-        if not path:
+        if not path or (region_x, region_z) in self._mca_coords_rejected:
             return np.zeros((32, 32), dtype=np.int64)
 
         data = np.zeros((32, 32), dtype=np.int64)
@@ -401,7 +406,7 @@ class BlockStates:
         """
         palette_translation = []
         
-        marker_block = 'universal_minecraft:wool[color="magenta"]'
+        marker_block = 'universal_minecraft:sponge[wet="false"]'
 
         for i in range(len(block_palette)):
             block_obj = block_palette._index_to_block[i]
@@ -409,6 +414,7 @@ class BlockStates:
             
             # Filter out numerical blocks (legacy format) and use a marker
             if "minecraft:numerical" in block_str:
+                logger.warning(f"Intercepted legacy block: {block_str}")
                 global_id = self.get_global_id_by_block(marker_block)
             else:
                 global_id = self.get_global_id_by_block(block_str)
@@ -425,12 +431,18 @@ class BlockStates:
             id: The global ID of the blockstate.
 
         Returns:
-            The blockstate string, or a default 'air' block if the ID is out of bounds.
+            The blockstate string, or a default 'sponge' block if the ID is out of bounds.
         """
         if 0 <= id < len(self._blockstates):
             return self._blockstates[id]
-        return 'universal_minecraft:wool[color="magenta"]'
+        return 'universal_minecraft:sponge[wet="false"]'
     
+    def _sanitize_mod_block(self, block_str: str) -> str:
+        """Converts modded blocks into a distinct vanilla marker block."""
+        if block_str.startswith("universal_minecraft:"):
+            return block_str
+        return 'universal_minecraft:sponge[wet="false"]'
+
     def get_global_id_by_block(self, blockstate: str) -> int:
         """Retrieves the global ID corresponding to a given blockstate string.
 
@@ -443,6 +455,7 @@ class BlockStates:
         Returns:
             The global ID for the blockstate.
         """
+        blockstate = self._sanitize_mod_block(blockstate)
         if blockstate not in self._blockstates_dict:
             return self._add_blockstate(blockstate)
         return self._blockstates_dict[blockstate]

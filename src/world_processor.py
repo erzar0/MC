@@ -218,6 +218,7 @@ class WorldProcessor:
 
                     # Save volume
                     compressed_region = blosc2.pack_array2(np.ascontiguousarray(volume), chunksize=512**3)
+                    logger.info(f"Compressed size for r.{rx}.{rz}: {len(compressed_region) / (1024**2):.2f} MB. Compression ratio: {volume.nbytes / len(compressed_region):.2f}x. Shape: {volume.shape}. Array type: {volume.dtype}. ")
                     with open(volumes_dir / f"r.{rx}.{rz}.b2frame", "wb") as f:
                         f.write(compressed_region)
                     
@@ -286,7 +287,7 @@ class WorldProcessor:
                 "-dim", "overworld",
                 "-nobeacons",
                 "-shading",
-                # "-lighting",
+                "-lighting",
                 "-file", str(screenshot_path),
 
                 str(world_path)

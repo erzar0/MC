@@ -7,6 +7,12 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+members = [
+    "mcrender-env",
+    "minecraft-world-generator",
+]
+
 [[package]]
 name = "accelerate"
 version = "1.12.0"
@@ -2231,6 +2237,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/5e/06/631743256d1b909cd
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/66/5758c195acdb6d7e2fc4fbd0088e1d58db3c93ffe9fc42208d68ea1d0f5d/mcrender-2.0.0-py3-none-any.whl", hash = "sha256:3963faee3de204d3e3a768d28475b79494e6f2d98ecfb7e6756415d55d9d7f04", size = 158442, upload-time = "2024-08-05T22:57:47.921Z" },
 ]
+
+[[package]]
+name = "mcrender-env"
+version = "0.1.0"
+source = { virtual = "mcrender_env" }
 
 [[package]]
 name = "mdurl"

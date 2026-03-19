@@ -146,7 +146,7 @@ class FastVolumeParser:
         max_sections = (height // 16 + 1)
         volume = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
         
-        marker_id = self._blockstates.get_global_id_by_block('universal_minecraft:wool[color="magenta"]')
+        marker_id = self._blockstates.get_global_id_by_block('universal_minecraft:sponge[wet="false"]')
         air_id = self._blockstates.get_global_id_by_block('universal_minecraft:air')
         
         # Consistent with Amulet: if min_y is -64, section -4 maps to index 0
