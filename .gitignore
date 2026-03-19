@@ -230,3 +230,5 @@ mcmap/*
 block_embeddings.npy
 .html
 config/
+.agent
+openspec

@@ -68,6 +68,9 @@ class WorldProcessor:
             screenshots_dir.mkdir(parents=True, exist_ok=True)
             self._generate_screenshots(cleansed_dir, screenshots_dir, extracted_regions, world_metadata["extracted_regions"])
 
+            volumes_count = len(list((cleansed_dir / "volumes").glob("*.b2frame"))) if (cleansed_dir / "volumes").exists() else 0
+            screenshots_count = len(list(screenshots_dir.glob("*.png"))) if screenshots_dir.exists() else 0
+
             if remove_tmp_dirs:
                 shutil.rmtree(converted_world_path) if converted_world_path != world_path else None
                 shutil.rmtree(version_updated_path.parent)
@@ -77,7 +80,9 @@ class WorldProcessor:
                 "status": "success",
                 "world_name": world_name,
                 "output_dir": str(cleansed_dir),
-                "cleansed_dir": str(cleansed_dir)
+                "cleansed_dir": str(cleansed_dir),
+                "volumes_count": volumes_count,
+                "screenshots_count": screenshots_count
             }
         except Exception as e:
             logger.error(f"Failed to process world {world_name}: {e}")
