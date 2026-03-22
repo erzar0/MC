@@ -151,9 +151,24 @@ class DownloadProcessor:
             result = self.processor.process_world(world_root, map_id, remove_tmp_dirs=True)
 
             if result["status"] == "success":
-                self.state.mark_done(map_id, result["output_dir"])
-                log.info(f"[{map_id}] ✓ Successfully processed")
-                done += 1
+                import shutil
+                output_dir = Path(result["output_dir"])
+                screenshots_dir = output_dir / "screenshots"
+                
+                if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
+                    zero_regions_dir = output_dir.parent / "0_regions" / map_id
+                    zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
+                    if zero_regions_dir.exists():
+                        shutil.rmtree(zero_regions_dir)
+                    shutil.move(str(output_dir), str(zero_regions_dir))
+                    
+                    self.state.mark_failed(map_id, "0 screenshots generated")
+                    log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
+                    failed += 1
+                else:
+                    self.state.mark_done(map_id, result["output_dir"])
+                    log.info(f"[{map_id}] ✓ Successfully processed")
+                    done += 1
             else:
                 self.state.mark_failed(map_id, result["error"])
                 log.error(f"[{map_id}] ✗ Failed to process: {result['error']}")

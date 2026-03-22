@@ -230,3 +230,5 @@ mcmap/*
 block_embeddings.npy
 .html
 config/
+!assets/grid.png
+!assets/bottom.png

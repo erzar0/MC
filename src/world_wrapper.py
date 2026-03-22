@@ -113,18 +113,25 @@ class WorldWrapper:
             self._mca_coords_rejected.add((region_x, region_z))
             self._metadata["rejected_regions"] = self._metadata.get("rejected_regions", 0) + 1
     
-    def _post_process_volume(self, volume: np.ndarray, height: int = 384) -> np.ndarray:
-        """Transposes, reshapes and trims vertical space to only include non-air blocks."""
+    def _post_process_volume(self, volume: np.ndarray) -> Tuple[np.ndarray, int]:
+        """Transposes, reshapes and trims vertical space to only include non-air blocks.
+        
+        Returns:
+            Tuple of (trimmed_volume, start_y_offset)
+        """
         data = volume.transpose(0, 3, 1, 5, 2, 4)
         data = data.reshape(512, 512, -1)
         
         has_content = np.any(data != 0, axis=(0, 1))
         if not np.any(has_content):
-            return data[:,:,-height:]
+            return data[:, :, :0], 0
         
         indices = np.where(has_content)[0]
-        trimmed = data[:, :, indices[0] : indices[-1] + 1][:,:,-height:]
-        return trimmed
+        start_y = int(indices[0])
+        end_y = int(indices[-1] + 1)
+            
+        trimmed = data[:, :, start_y : end_y]
+        return trimmed, start_y
 
     def get_region_biomes(self, region_x: int, region_z: int) -> np.ndarray:
         """Extracts a 2D array of global biome IDs for a specified region.
@@ -158,11 +165,11 @@ class WorldWrapper:
         pbar.close()
         return biomes
 
-    def get_region_volume(self, region_x: int, region_z: int, use_fast_extractor: bool = False) -> np.ndarray:
+    def get_region_volume(self, region_x: int, region_z: int, use_fast_extractor: bool = True) -> np.ndarray:
         """Extracts a 3D volume of global block IDs for a specified region.
 
         The volume is returned as a 512x512xH array, where H is the trimmed height
-        of the world content (up to 384).
+        of the world content.
 
         Args:
             region_x: X coordinate of the region.
@@ -180,24 +187,25 @@ class WorldWrapper:
 
         bounds = self._world.bounds("minecraft:overworld")
         data = None
+        start_y_offset = 0
         
-        # 1. Try Fast Extraction (Blocks only)
         if use_fast_extractor:
             mca_path = self._mca_coord_to_path.get((region_x, region_z))
-            if mca_path:
-                try:
-                    parser = FastVolumeParser(Path(mca_path), self._blockstates)
-                    volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384)
-                    data = self._post_process_volume(volume_6d, height=384)
-                    parser.close()
-                except Exception as e:
-                    print(f"FastVolumeParser failed for r.{region_x}.{region_z}, falling back to Amulet: {e}")
-                    data = None
-
-        # 2. Get Blocks (via Amulet fallback)
-        if data is None:
+            if not mca_path:
+                self.reject_region(region_x, region_z)
+                raise FileNotFoundError(f"MCA file not found for region ({region_x}, {region_z}).")
+                
+            try:
+                parser = FastVolumeParser(Path(mca_path), self._blockstates)
+                volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384 + 16)
+                parser.close()
+            except Exception as e:
+                self.reject_region(region_x, region_z)
+                raise RuntimeError(f"FastVolumeParser failed for region ({region_x}, {region_z}): {e}") from e
+        else:
+            # Get Blocks (via Amulet extractor)
             height = (bounds.max_y - bounds.min_y)
-            max_sections = (height // 16 + 1)
+            max_sections = (height // 16 + 1) + 1 # Add 1 and check later if region is too high
             volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
         
             pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
@@ -215,7 +223,17 @@ class WorldWrapper:
                                 volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, chunk._block_palette)
                     except Exception:
                         continue
-            data = self._post_process_volume(volume_6d, height=384)
+
+        data, start_y_offset = self._post_process_volume(volume_6d)
+
+        # Reject if the non-air span is too thin
+        if data.shape[2] < 5:
+            self.reject_region(region_x, region_z)
+            raise ValueError(f"Region ({region_x}, {region_z}) rejected: non-air span is only {data.shape[2]} blocks high.")
+
+        if data.shape[2] > 384:
+            self.reject_region(region_x, region_z)
+            raise ValueError(f"Region ({region_x}, {region_z}) rejected: height exceeds 384 blocks.")
 
         # Stage 2: Reject if more than 90% of the top-down view is air/sponge
         content_ratio = np.sum(np.any(data > 1, axis=2)) / (512 * 512)
@@ -223,14 +241,28 @@ class WorldWrapper:
             self.reject_region(region_x, region_z)
             raise ValueError(f"Region ({region_x}, {region_z}) rejected: {(1.0 - content_ratio) * 100:.1f}% filled with air/sponge.")
 
-        world_thickness = data.shape[2]
-        if world_thickness < 5:
-            self.reject_region(region_x, region_z)
-            raise ValueError(f"Region ({region_x}, {region_z}) rejected: non-air span is only {world_thickness} blocks high.")
+        # Calculate Average Surface Elevation (Heightmap based)
+        mask = data > 1
+        has_solid = np.any(mask, axis=2)
+        
+        if np.any(has_solid):
+            # Find the highest block by looking from the top down (reversing the Y axis)
+            flipped_mask = mask[:, :, ::-1]
+            highest_indices = data.shape[2] - 1 - np.argmax(flipped_mask, axis=2)
+            
+            # Average the elevation ONLY for columns that have at least one block
+            # USING MEDIAN prevents tall structures or deep holes from skewing the plane
+            avg_surface_local = float(np.median(highest_indices[has_solid]))
+        else:
+            avg_surface_local = 320
+            
+        actual_min_y = bounds.min_y + start_y_offset
+        avg_surface_pos = round(avg_surface_local + actual_min_y, 2)
 
         self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
-            "y_range": (bounds.min_y, int(data.shape[2]) + bounds.min_y),
+            "y_range": (-64, min(320, int(data.shape[2]) + actual_min_y)),
             "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True))},
+            "avg_surface_y": avg_surface_pos,
         }
 
         return data

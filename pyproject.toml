@@ -55,6 +55,7 @@ dependencies = [
     "pymctranslate==1.2.36",
     "pympler>=1.1",
     "pyproject-hooks==1.2.0",
+    "pytest>=9.0.2",
     "python-dateutil==2.9.0.post0",
     "pytz==2025.2",
     "pyzmq==27.1.0",
