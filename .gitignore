@@ -232,3 +232,5 @@ block_embeddings.npy
 config/
 .agent
 openspec
+!assets/grid.png
+!assets/bottom.png

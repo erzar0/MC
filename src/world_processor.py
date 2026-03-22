@@ -45,6 +45,18 @@ class WorldProcessor:
         self.output_dir = Path(output_dir).absolute()
         
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Preload the grid overlay to memory to avoid reloading during every screenshot iteration
+        self.overlay_img = None
+        overlay_path = self.project_root / "assets" / "grid.png"
+        if overlay_path.exists():
+            try:
+                from PIL import Image
+                self.overlay_img = Image.open(overlay_path).convert("RGBA")
+            except ImportError:
+                logger.warning("Pillow (PIL) is not installed. Skipping grid overlay.")
+            except Exception as e:
+                logger.warning(f"Failed to load grid overlay: {e}")
 
     def process_world(self, world_path: Path, world_name: str, remove_tmp_dirs: bool = False):
         """Orchestrates the processing of a single world."""
@@ -301,6 +313,34 @@ class WorldProcessor:
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 logger.warning(f"mcmap failed for r.{rx}.{rz}: {result.stderr}")
+            else:
+                # Add Grid Overlay and Compress to AVIF Q50
+                try:
+                    import pillow_avif
+                    from PIL import Image
+                    with Image.open(screenshot_path) as img:
+                        base_img = img.convert("RGBA")
+                    
+                    if getattr(self, "overlay_img", None) is not None:
+                        avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
+                        
+                        # -64 -> 1149 offset, 320 -> 0 offset
+                        offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
+                        
+                        # Center exactly if widths differ, otherwise it will just be 0
+                        offset_x = (base_img.width - self.overlay_img.width) // 2
+                        
+                        # Paste using overlay image as the alpha mask
+                        base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
+                    
+                    avif_path = screenshot_path.with_suffix('.avif')
+                    base_img.save(avif_path, "avif", quality=50, speed=4)
+                    
+                    # Delete the original PNG image
+                    if screenshot_path.exists():
+                        os.remove(screenshot_path)
+                except Exception as e:
+                    logger.warning(f"Failed to process screenshot for r.{rx}.{rz}: {e}")
 
 if __name__ == "__main__":
     import argparse
