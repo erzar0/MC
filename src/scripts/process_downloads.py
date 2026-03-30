@@ -81,9 +81,12 @@ class DownloadProcessor:
         signal.signal(signal.SIGTERM, self._handle_exit)
 
     def _handle_exit(self, signum, frame):
-        log.info("Interrupt received – saving state and exiting…")
-        self.state.save()
-        self.running = False
+        if self.running:
+            log.info("Interrupt received – finishing current world before exit...")
+            self.running = False
+        else:
+            log.warning("Second interrupt – exiting immediately.")
+            sys.exit(1)
 
     def _find_world_root(self, map_dir: Path) -> Optional[Path]:
         """Locates the directory containing level.dat"""

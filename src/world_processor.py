@@ -10,7 +10,11 @@ import logging
 from typing import List, Tuple, Optional, Union
 import numpy as np
 from tqdm import tqdm
-
+from PIL import Image
+try:
+    import pillow_jxl
+except ImportError:
+    pass
 # Ensure src is in path for imports if run as main
 import sys
 project_root = Path(__file__).parent.parent
@@ -235,7 +239,7 @@ class WorldProcessor:
 
                     # Save volume
                     compressed_region = blosc2.pack_array2(np.ascontiguousarray(volume), chunksize=512**3)
-                    logger.info(f"Compressed size for r.{rx}.{rz}: {len(compressed_region) / (1024**2):.2f} MB. Compression ratio: {volume.nbytes / len(compressed_region):.2f}x. Shape: {volume.shape}. Array type: {volume.dtype}. ")
+                    logger.debug(f"Compressed size for r.{rx}.{rz}: {len(compressed_region) / (1024**2):.2f} MB. Compression ratio: {volume.nbytes / len(compressed_region):.2f}x. Shape: {volume.shape}. Array type: {volume.dtype}. ")
                     with open(volumes_dir / f"r.{rx}.{rz}.b2frame", "wb") as f:
                         f.write(compressed_region)
                     
@@ -306,41 +310,40 @@ class WorldProcessor:
                 "-shading",
                 "-lighting",
                 "-file", str(screenshot_path),
-
                 str(world_path)
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 logger.warning(f"mcmap failed for r.{rx}.{rz}: {result.stderr}")
-            else:
-                # Add Grid Overlay and Compress to AVIF Q50
-                try:
-                    import pillow_avif
-                    from PIL import Image
-                    with Image.open(screenshot_path) as img:
-                        base_img = img.convert("RGBA")
+                return
+                
+            # Add Grid Overlay and Compress to AVIF Q50
+            try:
+                with Image.open(screenshot_path) as img:
+                    base_img = img.convert("RGBA")
+                
+                if getattr(self, "overlay_img", None) is not None:
+                    avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
                     
-                    if getattr(self, "overlay_img", None) is not None:
-                        avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
-                        
-                        # -64 -> 1149 offset, 320 -> 0 offset
-                        offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
-                        
-                        # Center exactly if widths differ, otherwise it will just be 0
-                        offset_x = (base_img.width - self.overlay_img.width) // 2
-                        
-                        # Paste using overlay image as the alpha mask
-                        base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
+                    # -64 -> 1149 offset, 320 -> 0 offset
+                    offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
                     
-                    avif_path = screenshot_path.with_suffix('.avif')
-                    base_img.save(avif_path, "avif", quality=50, speed=4)
+                    # Center exactly if widths differ, otherwise it will just be 0
+                    offset_x = (base_img.width - self.overlay_img.width) // 2
                     
-                    # Delete the original PNG image
-                    if screenshot_path.exists():
-                        os.remove(screenshot_path)
-                except Exception as e:
-                    logger.warning(f"Failed to process screenshot for r.{rx}.{rz}: {e}")
+                    # Paste using overlay image as the alpha mask
+                    base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
+                
+                jxl_path = screenshot_path.with_suffix('.jxl')
+                # Using JXL for ML Datasets
+                base_img.save(jxl_path, quality=70, effort=3)
+                
+                # Delete the original PNG image
+                if screenshot_path.exists():
+                    os.remove(screenshot_path)
+            except Exception as e:
+                logger.warning(f"Failed to process screenshot for r.{rx}.{rz}: {e}")
 
 if __name__ == "__main__":
     import argparse

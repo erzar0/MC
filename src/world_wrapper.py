@@ -231,11 +231,12 @@ class WorldWrapper:
             self.reject_region(region_x, region_z)
             raise ValueError(f"Region ({region_x}, {region_z}) rejected: non-air span is only {data.shape[2]} blocks high.")
 
+        # Reject if the non-air span is too high
         if data.shape[2] > 384:
             self.reject_region(region_x, region_z)
             raise ValueError(f"Region ({region_x}, {region_z}) rejected: height exceeds 384 blocks.")
 
-        # Stage 2: Reject if more than 90% of the top-down view is air/sponge
+        # Reject if more than 90% of the top-down view is air/sponge
         content_ratio = np.sum(np.any(data > 1, axis=2)) / (512 * 512)
         if content_ratio < 0.10:
             self.reject_region(region_x, region_z)
@@ -252,7 +253,19 @@ class WorldWrapper:
             
             # Average the elevation ONLY for columns that have at least one block
             # USING MEDIAN prevents tall structures or deep holes from skewing the plane
-            avg_surface_local = float(np.median(highest_indices[has_solid]))
+            solid_heights = highest_indices[has_solid]
+            avg_surface_local = float(np.median(solid_heights))
+            
+            # Reject if the height map is completely flat AND uniform (e.g. superflat or artificial platform)
+            if np.ptp(solid_heights) == 0:
+                # Since it's perfectly flat, all surface blocks are at the exact same vertical index
+                h = solid_heights[0]
+                surface_blocks = data[:, :, h][has_solid]
+                
+                # Only reject if every single block on the flat surface is identical
+                if np.ptp(surface_blocks) == 0:
+                    self.reject_region(region_x, region_z)
+                    raise ValueError(f"Region ({region_x}, {region_z}) rejected: heightmap is completely flat and uniform.")
         else:
             avg_surface_local = 320
             

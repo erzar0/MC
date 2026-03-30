@@ -12,7 +12,7 @@ import os
 
 def load_data():
     project_root = Path(__file__).parent.parent.parent
-    embeddings_path = project_root / "tmp/checkpoints/block_embeddings_ckpt_280.npy"
+    embeddings_path = project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_1000.npy"
     states_path = project_root / "assets/block_states.txt"
 
     print(f"Loading embeddings from {embeddings_path}...")
@@ -32,10 +32,7 @@ def reduce_dimensions(embeddings):
     print("Reducing dimensions using PaCMAP to 3D...")
     reducer = pacmap.PaCMAP(n_components=3, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
     reduced = reducer.fit_transform(embeddings, init="pca")
-        
-    scaler = MinMaxScaler()
-    reduced_scaled = scaler.fit_transform(reduced)
-    return reduced_scaled
+    return reduced
 
 def get_group_key(full_name):
     """Extract base name + material property for grouping.
@@ -158,32 +155,29 @@ def main():
     # Compute raw norms before normalization (for untrained block filtering)
     raw_norms = np.linalg.norm(embeddings, axis=1)
     
-    # Pre-process embeddings: mean subtraction + L2 normalization
+    # Pre-process embeddings: mean subtraction
+    print("Centering raw embeddings...")
     embeddings = embeddings - embeddings.mean(axis=0)
-    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-    embeddings = embeddings / (norms + 1e-12)
     
     # PaCMAP 3D reduction on ALL embeddings (preserves global structure)
     pacmap_3d = reduce_dimensions(embeddings)
 
     # Filter out untrained blocks AFTER PaCMAP (using raw norms)
-    keep_mask = raw_norms > 1.0
-    
-    # Also remove spatial outliers in PaCMAP space (IQR method)
-    for dim in range(pacmap_3d.shape[1]):
-        q1, q3 = np.percentile(pacmap_3d[:, dim], [20, 80])
-        # q1, q3 = np.percentile(pacmap_3d[:, dim], [0, 100])
-        iqr = q3 - q1
-        lower, upper = q1 - 2.0 * iqr, q3 + 2.0 * iqr
-        keep_mask &= (pacmap_3d[:, dim] >= lower) & (pacmap_3d[:, dim] <= upper)
+    keep_mask = raw_norms > 0.0
     
     n_filtered = (~keep_mask).sum()
-    print(f"Filtered {n_filtered} blocks (untrained + spatial outliers). Keeping {keep_mask.sum()}/{len(names)}.")
+    print(f"Filtered {n_filtered} blocks (untrained). Keeping {keep_mask.sum()}/{len(names)}.")
     
     pacmap_3d = pacmap_3d[keep_mask]
     names = [n for n, k in zip(names, keep_mask) if k]
     
-    # Re-normalize to [0, 1] after filtering, then apply sqrt to spread dense regions
+    # Center the 3D embeddings and clamp outliers to 3 standard deviations
+    print("Centering and clamping 3D coordinates (3 sigma)...")
+    pacmap_3d = pacmap_3d - pacmap_3d.mean(axis=0)
+    std_3d = pacmap_3d.std(axis=0)
+    pacmap_3d = np.clip(pacmap_3d, -2 * std_3d, 2 * std_3d)
+
+    # Re-normalize to [0, 1] after filtering and clamping
     scaler = MinMaxScaler()
     pacmap_3d = scaler.fit_transform(pacmap_3d)
 

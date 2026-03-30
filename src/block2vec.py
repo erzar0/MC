@@ -339,7 +339,7 @@ def train_block2vec_from_volumes(
     subsample_t: float = 1e-5,
     neighbor_mode: str = 'cube26',
     save_dir: Optional[str] = None,
-    save_every: int = 10,
+    save_every: int = 100,
     block_states_path: Optional[str] = None,
 ):
     volumes_path = Path(volumes_dir)
@@ -447,7 +447,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_lr", type=float, default=0.0001, help="Minimum learning rate")
     parser.add_argument("--subsample_t", type=float, default=1e-5, help="Subsampling threshold (higher = more aggressive)")
     parser.add_argument("--neighbor_mode", type=str, default="cube26", choices=["face6", "cube26"], help="3D neighbor sampling mode")
-    parser.add_argument("--save_dir", type=str, default=None, help="Directory to save checkpoints")
+    parser.add_argument("--save_dir", type=str, default="tmp/checkpoints", help="Directory to save checkpoints")
     parser.add_argument("--save_every", type=int, default=10, help="Save checkpoint every N volumes")
     parser.add_argument("--block_states", type=str, default=None, help="Path to block_states.txt")
     args = parser.parse_args()
