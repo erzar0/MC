@@ -12,7 +12,7 @@ import os
 
 def load_data():
     project_root = Path(__file__).parent.parent.parent
-    embeddings_path = project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_1000.npy"
+    embeddings_path = project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_22000.npy"
     states_path = project_root / "assets/block_states.txt"
 
     print(f"Loading embeddings from {embeddings_path}...")
@@ -93,12 +93,36 @@ def visualize_3d_plotly(data, names, colors, title="3D Embedding Visualization",
         )
     )])
     
+    # RGB gradient indicators along axis edges
+    n_grad = 40
+    t = np.linspace(0, 1, n_grad)
+    axis_cfg = [
+        # (x, y, z, R, G, B) — each axis gets its channel ramping, others at 0
+        (t, np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad)),       # X=Red
+        (np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad)),       # Y=Green
+        (np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad), t),       # Z=Blue
+    ]
+    labels = ['R', 'G', 'B']
+    for (gx, gy, gz, gr, gg, gb), label in zip(axis_cfg, labels):
+        fig.add_trace(go.Scatter3d(
+            x=gx, y=gy, z=gz,
+            mode='markers',
+            marker=dict(
+                size=4,
+                color=['rgb({},{},{})'.format(int(r*255), int(g*255), int(b*255)) for r, g, b in zip(gr, gg, gb)],
+                opacity=1.0,
+            ),
+            name=label,
+            hoverinfo='skip',
+            showlegend=False,
+        ))
+    
     fig.update_layout(
         title=title,
         scene=dict(
-            xaxis_title='Dim 1',
-            yaxis_title='Dim 2',
-            zaxis_title='Dim 3',
+            xaxis_title='R',
+            yaxis_title='G',
+            zaxis_title='B',
             xaxis=dict(backgroundcolor="white", gridcolor="lightgrey", showbackground=True),
             yaxis=dict(backgroundcolor="white", gridcolor="lightgrey", showbackground=True),
             zaxis=dict(backgroundcolor="white", gridcolor="lightgrey", showbackground=True),
@@ -146,6 +170,8 @@ def visualize_2d_seaborn(data, names, colors, title="2D Projection", filename="o
     print(f"2D plot saved to {output_path}")
 
 def main():
+    SQUISH_OUTLIERS = True
+
     try:
         embeddings, names = load_data()
     except Exception as e:
@@ -171,16 +197,43 @@ def main():
     pacmap_3d = pacmap_3d[keep_mask]
     names = [n for n, k in zip(names, keep_mask) if k]
     
-    # Center the 3D embeddings and clamp outliers to 3 standard deviations
-    print("Centering and clamping 3D coordinates (3 sigma)...")
+    # Center the 3D embeddings
+    print("Centering 3D coordinates...")
     pacmap_3d = pacmap_3d - pacmap_3d.mean(axis=0)
-    std_3d = pacmap_3d.std(axis=0)
-    pacmap_3d = np.clip(pacmap_3d, -2 * std_3d, 2 * std_3d)
 
-    # Re-normalize to [0, 1] after filtering and clamping
+    # 1. Align main point cloud variances to RGB axes via PCA
+    # This removes diagonal correlation, so the point cloud fills the axis-aligned RGB box
+    # print("Decorrelating axes with PCA to fill color space...")
+    from sklearn.decomposition import PCA
+    pacmap_3d = PCA(n_components=3).fit_transform(pacmap_3d)
+
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.preprocessing._data")
+
+    # 2. Advanced Adaptive Squishing: Histogram Equalization (QuantileTransformer)
+    # This non-linear algorithm maps the empirical CDF of each axis perfectly to [0, 1].
+    # Dense clusters are entirely expanded to reveal their internal structure, and 
+    # sparse outlier tails are smoothly, tightly compressed, yielding ZERO empty space.
+    if SQUISH_OUTLIERS:
+        print("Applying advanced Quantile Transformation (Histogram Equalization)...")
+        from sklearn.preprocessing import QuantileTransformer
+        # High n_quantiles ensures smooth color gradients across the vocabulary
+        scaler = QuantileTransformer(n_quantiles=100000, output_distribution='uniform', subsample=1000000)
+        pacmap_3d = scaler.fit_transform(pacmap_3d)
+
     scaler = MinMaxScaler()
     pacmap_3d = scaler.fit_transform(pacmap_3d)
 
+    # Reconstruct the full vocabulary array including the unfiltered blocks
+    # Untrained blocks will default to [0, 0, 0] (black)
+    full_colors = np.zeros((len(keep_mask), 3), dtype=np.float32)
+    full_colors[keep_mask] = pacmap_3d
+    
+    # Save the mapped colors as a 0-255 uint8 NumPy array for use as a LUT
+    lut_uint8 = (full_colors * 255).astype(np.uint8)
+    lut_path = Path("tmp/block_embeddings_rgb.npy")
+    np.save(lut_path, lut_uint8)
+    print(f"Saved {len(lut_uint8)} RGB colors to {lut_path} for use as LUT.")
     # Mode 1: Individual Coloring (Every state is unique)
     print("\n--- Mode 1: Individual State Colors ---")
     visualize_3d_plotly(pacmap_3d, names, pacmap_3d, title="PaCMAP Individual Colors", filename="pacmap_individual_3d.html")

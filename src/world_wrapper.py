@@ -223,9 +223,8 @@ class WorldWrapper:
                                 volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, chunk._block_palette)
                     except Exception:
                         continue
-
+                    
         data, start_y_offset = self._post_process_volume(volume_6d)
-
         # Reject if the non-air span is too thin
         if data.shape[2] < 5:
             self.reject_region(region_x, region_z)

@@ -1,7 +1,12 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import torch
 import time
 import numpy as np
-from src.block2vec import Block2Vec, SpatialMinecraftDataset
+from tqdm import tqdm
+from block2vec import Block2Vec, SpatialMinecraftDataset
 
 def benchmark_volume_processing():
     embedding_dim = 128
@@ -12,7 +17,7 @@ def benchmark_volume_processing():
     VOLUME_SHAPE = (512, 256, 512)
     TOTAL_VOLUME_SIZE = VOLUME_SHAPE[0] * VOLUME_SHAPE[1] * VOLUME_SHAPE[2]
     
-    batch_sizes = [2 ** i for i in range(24, 25)]
+    batch_sizes = [2 ** i for i in range(16, 29)]
     
     print(f"--- Volume Processing Speed Test (3D Spatial Sampling) ---")
     print(f"Target: One Full Standard Region ({TOTAL_VOLUME_SIZE/1e6:.1f}M blocks)")
@@ -31,14 +36,10 @@ def benchmark_volume_processing():
     lr = 0.025
     results = []
 
-    print(f"{'Batch Size':>10} | {'Num Batches':>12} | {'Time/Volume':>15} | {'Throughput':>15}")
+    print(f"{'Batch Size':>10} | {'Num Batches':>12} | {'Time/Volume':>15} | {'Throughput':>15} ")
     print("-" * 65)
 
     for bs in batch_sizes:
-        num_batches = TOTAL_VOLUME_SIZE // bs
-        if num_batches == 0:
-            continue
-
         dataset = SpatialMinecraftDataset(
             dummy_volume,
             neg_buffer_gpu=neg_buffer_gpu,
@@ -47,17 +48,33 @@ def benchmark_volume_processing():
             neighbor_mode='face6',
             batch_size=bs,
         )
+        
+        num_batches = dataset.num_batches()
+        if num_batches == 0:
+            continue
 
-        for _ in range(warmup_steps):
-            c_ids, ctx_ids, neg_ids = dataset.sample_batch(bs, n_negatives)
+        # Warmup
+        for i in tqdm(range(min(warmup_steps, num_batches)), desc=f"  Warmup bs={bs}", leave=False):
+            c_ids, ctx_ids, neg_ids = dataset.get_batch(i, n_negatives)
             model.train_step(c_ids, ctx_ids, neg_ids, lr)
+        
+        # Re-create dataset to reset state for a clean benchmark run
+        dataset = SpatialMinecraftDataset(
+            dummy_volume,
+            neg_buffer_gpu=neg_buffer_gpu,
+            neg_idx=0,
+            subsample_threshold=1e-5,
+            neighbor_mode='face6',
+            batch_size=bs,
+        )
+        num_batches = dataset.num_batches()
         
         torch.cuda.synchronize()
         start_time = time.perf_counter()
         
         total_pairs = 0
-        for _ in range(num_batches):
-            c_ids, ctx_ids, neg_ids = dataset.sample_batch(bs, n_negatives)
+        for i in tqdm(range(num_batches), desc=f"  Bench  bs={bs}", leave=False):
+            c_ids, ctx_ids, neg_ids = dataset.get_batch(i, n_negatives)
             model.train_step(c_ids, ctx_ids, neg_ids, lr)
             total_pairs += c_ids.numel()
             
