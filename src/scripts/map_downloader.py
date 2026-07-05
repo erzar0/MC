@@ -66,6 +66,30 @@ log = logging.getLogger("map_downloader")
 
 ARCHIVE_EXTENSIONS = (".zip", ".rar", ".7z", ".tar.gz", ".tgz", ".tar.bz2", ".tar", ".gz")
 
+# Stop downloading when tmp/downloads exceeds this size
+MAX_DOWNLOAD_DIR_BYTES = 50 * 1024**3
+
+# Only these PMC categories contain worlds worth extracting
+ALLOWED_CATEGORIES = {
+    "Environment | Landscaping Map",
+    "Complex Map",
+    "Complex",
+    "Land Structure Map",
+    "Land Structure",
+    "Underground Structure Map",
+    "Underground Structure",
+    "Water Structure Map",
+    "Water Structure",
+}
+
+
+def _dir_size(path: Path) -> int:
+    """Total size in bytes of all files under `path` (0 if it doesn't exist)."""
+    if not path.exists():
+        return 0
+    return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+
+
 # ---------------------------------------------------------------------------
 # Shared HTTP session
 # ---------------------------------------------------------------------------
@@ -563,47 +587,16 @@ class MapDownloader:
             sys.exit(1)
 
         DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-        with open(INPUT_CSV, newline="", encoding="utf-8") as fh:
-            rows = list(csv.DictReader(fh))
-
-        allowed_categories = {
-            "Environment | Landscaping Map",
-            "Complex Map",
-            "Complex",
-            "Land Structure Map",
-            "Land Structure",
-            "Underground Structure Map",
-            "Underground Structure",
-            "Water Structure Map",
-            "Water Structure",
-        }
-
-        rows = [r for r in rows if r.get("category", "").strip() in allowed_categories]
-
-        def get_downloads(r):
-            try:
-                return int(r.get("downloads", 0) or 0)
-            except ValueError:
-                return 0
-
-        rows.sort(key=get_downloads, reverse=True)
-
-        log.info(f"Loaded {len(rows)} rows from {INPUT_CSV.name} after filtering and sorting")
+        rows = self._load_candidate_rows()
 
         done = failed = skipped = processed = 0
-
-        def get_dir_size(path: Path) -> int:
-            if not path.exists():
-                return 0
-            return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
 
         for row in rows:
             if not self.running or (limit and processed >= limit):
                 break
 
-            current_dir_size = get_dir_size(DOWNLOAD_DIR)
-            if current_dir_size > 50 * 1024**3:
+            current_dir_size = _dir_size(DOWNLOAD_DIR)
+            if current_dir_size > MAX_DOWNLOAD_DIR_BYTES:
                 log.warning(
                     f"Downloads directory exceeded 50GB limit (Current size: {current_dir_size / 1024**3:.2f}GB). Stopping."
                 )
@@ -612,39 +605,12 @@ class MapDownloader:
             map_id = row["id"].strip()
             mirrors = row.get("download_mirrors", "").strip()
 
-            # Date filtering
-            if year is not None or year_from is not None or year_to is not None:
-                updated_at = row.get("updated_at", "").strip()
-                if not updated_at:
-                    continue
-                try:
-                    # Parse YYYY from YYYY-MM-DD HH:MM:SS
-                    row_year = int(updated_at[:4])
-                except ValueError:
-                    continue
-
-                if year is not None and row_year != year:
-                    continue
-                if year_from is not None and row_year < year_from:
-                    continue
-                if year_to is not None and row_year > year_to:
-                    continue
-
-            status = self.state._data.get(map_id, {}).get("status")
-
-            if skip_done and status == "done":
-                skipped += 1
+            if not self._matches_year_filter(row, year, year_from, year_to):
                 continue
 
-            if status == "failed" and not retry_failed:
+            if self._should_skip(map_id, skip_done=skip_done, retry_failed=retry_failed):
                 skipped += 1
                 continue
-
-            if not skip_done and status == "done":
-                self.state._data[map_id]["attempted_urls"] = []
-
-            if retry_failed and status == "failed":
-                self.state._data[map_id]["attempted_urls"] = []
 
             if not mirrors:
                 self.state.mark_failed(map_id, "no mirrors")
@@ -653,11 +619,10 @@ class MapDownloader:
             status = self._process_map(map_id, mirrors, skip_done=skip_done, retry_failed=retry_failed)
             self.state.save()
             processed += 1
-            (done if status == "done" else failed).__class__  # just a tick
 
             if status == "done":
                 done += 1
-                new_size = get_dir_size(DOWNLOAD_DIR)
+                new_size = _dir_size(DOWNLOAD_DIR)
                 log.info(f"[{map_id}] Current downloads directory size: {new_size / 1024**3:.2f}GB / 50.00GB")
             else:
                 failed += 1
@@ -666,6 +631,64 @@ class MapDownloader:
                 time.sleep(0.5)
 
         log.info(f"\nFinished. done={done}  failed={failed}  skipped(already-done)={skipped}")
+
+    def _load_candidate_rows(self) -> list[dict]:
+        """Loads CSV rows, keeps allowed categories, sorts by download count (desc)."""
+        with open(INPUT_CSV, newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+
+        rows = [r for r in rows if r.get("category", "").strip() in ALLOWED_CATEGORIES]
+
+        def get_downloads(r):
+            try:
+                return int(r.get("downloads", 0) or 0)
+            except ValueError:
+                return 0
+
+        rows.sort(key=get_downloads, reverse=True)
+        log.info(f"Loaded {len(rows)} rows from {INPUT_CSV.name} after filtering and sorting")
+        return rows
+
+    @staticmethod
+    def _matches_year_filter(row: dict, year: Optional[int], year_from: Optional[int], year_to: Optional[int]) -> bool:
+        """Applies the optional updated_at year filters to a CSV row."""
+        if year is None and year_from is None and year_to is None:
+            return True
+
+        updated_at = row.get("updated_at", "").strip()
+        if not updated_at:
+            return False
+        try:
+            # Parse YYYY from YYYY-MM-DD HH:MM:SS
+            row_year = int(updated_at[:4])
+        except ValueError:
+            return False
+
+        if year is not None and row_year != year:
+            return False
+        if year_from is not None and row_year < year_from:
+            return False
+        if year_to is not None and row_year > year_to:
+            return False
+        return True
+
+    def _should_skip(self, map_id: str, *, skip_done: bool, retry_failed: bool) -> bool:
+        """Decides whether to skip a map based on its recorded state.
+
+        Also resets attempted URLs when re-processing done/failed entries.
+        """
+        status = self.state.get(map_id).get("status")
+
+        if skip_done and status == "done":
+            return True
+        if status == "failed" and not retry_failed:
+            return True
+
+        if not skip_done and status == "done":
+            self.state.get(map_id)["attempted_urls"] = []
+        if retry_failed and status == "failed":
+            self.state.get(map_id)["attempted_urls"] = []
+        return False
 
     def run_ids(self, map_ids: list[str], retry_failed: bool = False, skip_done: bool = True) -> None:
         """Process only the specified map IDs."""
@@ -680,20 +703,12 @@ class MapDownloader:
                 log.warning(f"ID {map_id} not found in CSV")
                 continue
 
-            status = self.state._data.get(map_id, {}).get("status")
-
-            if skip_done and status == "done":
+            if self.state.is_done(map_id) and skip_done:
                 log.info(f"[{map_id}] already done, skipping.")
                 continue
 
-            if status == "failed" and not retry_failed:
+            if self._should_skip(map_id, skip_done=skip_done, retry_failed=retry_failed):
                 continue
-
-            if not skip_done and status == "done":
-                self.state._data[map_id]["attempted_urls"] = []
-
-            if retry_failed and status == "failed":
-                self.state._data[map_id]["attempted_urls"] = []
 
             self._process_map(map_id, row.get("download_mirrors", ""), skip_done=skip_done, retry_failed=retry_failed)
             self.state.save()
@@ -704,7 +719,7 @@ class MapDownloader:
 
     def _process_map(self, map_id: str, mirror_field: str, skip_done: bool = True, retry_failed: bool = False) -> str:
         """Try every URL; return 'done' or 'failed'."""
-        status = self.state._data.get(map_id, {}).get("status")
+        status = self.state.get(map_id).get("status")
 
         if skip_done and status == "done":
             return "done"
