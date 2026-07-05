@@ -412,48 +412,77 @@ class WorldWrapper:
         return {"x": chunk_x, "z": chunk_z}
 
 
-class BlockStates:
+class _StringRegistry:
+    """Append-only mapping between strings and global numerical IDs.
+
+    Loads the existing mapping from a text file (line index == global ID) and
+    appends new entries to that file as they are encountered, so IDs stay
+    consistent across runs. Base class for `BlockStates` and `Biomes`.
+    """
+
+    #: File name (inside the asset directory) holding the persisted mapping.
+    REGISTRY_FILENAME: str = ""
+    #: String returned for out-of-bounds ID lookups.
+    FALLBACK_ENTRY: str = ""
+
+    def __init__(self, asset_path: Optional[Path] = None) -> None:
+        """Initializes the registry.
+
+        Args:
+            asset_path: Optional path to the directory where the registry file is
+                        stored. Defaults to the 'assets' directory in the project root.
+        """
+        if asset_path is None:
+            asset_path = Path(__file__).parent.parent / "assets"
+
+        asset_path.mkdir(parents=True, exist_ok=True)
+        self._file_path = asset_path / self.REGISTRY_FILENAME
+        self._file_path.touch(exist_ok=True)
+
+        with open(self._file_path, "r") as f:
+            lines = f.read().splitlines()
+            self._entries = lines
+            self._entries_dict = {entry: i for i, entry in enumerate(lines)}
+
+    def _add_entry(self, entry: str) -> int:
+        """Assigns a new global ID to an entry and persists it.
+
+        Args:
+            entry: The string to add.
+
+        Returns:
+            The newly assigned global ID.
+        """
+        new_id = len(self._entries)
+        self._entries.append(entry)
+        self._entries_dict[entry] = new_id
+
+        with open(self._file_path, "a") as f:
+            f.write(f"{entry}\n")
+        return new_id
+
+    def _get_entry_by_id(self, id: int) -> str:
+        """Returns the string for a global ID, or FALLBACK_ENTRY when out of bounds."""
+        if 0 <= id < len(self._entries):
+            return self._entries[id]
+        return self.FALLBACK_ENTRY
+
+    def _get_id_by_entry(self, entry: str) -> int:
+        """Returns the global ID for a string, registering it first if unknown."""
+        if entry not in self._entries_dict:
+            return self._add_entry(entry)
+        return self._entries_dict[entry]
+
+
+class BlockStates(_StringRegistry):
     """Manages the mapping between Minecraft blockstate strings and global IDs.
 
     This class ensures that blockstates are consistently mapped to numerical IDs
     across different chunks and regions. The mapping is persisted to a text file.
     """
 
-    def __init__(self, asset_path: Optional[Path] = None) -> None:
-        """Initializes the BlockStates manager.
-
-        Args:
-            asset_path: Optional path to the directory where block_states.txt is stored.
-                        Defaults to the 'assets' directory in the project root.
-        """
-        if asset_path is None:
-            asset_path = Path(__file__).parent.parent / "assets"
-
-        asset_path.mkdir(parents=True, exist_ok=True)
-        self._file_path = asset_path / "block_states.txt"
-        self._file_path.touch(exist_ok=True)
-
-        with open(self._file_path, "r") as f:
-            lines = f.read().splitlines()
-            self._blockstates = lines
-            self._blockstates_dict = {state: i for i, state in enumerate(lines)}
-
-    def _add_blockstate(self, blockstate: str) -> int:
-        """Assigns a new global ID to a blockstate and persists it.
-
-        Args:
-            blockstate: The blockstate string to add.
-
-        Returns:
-            The newly assigned global ID.
-        """
-        new_id = len(self._blockstates)
-        self._blockstates.append(blockstate)
-        self._blockstates_dict[blockstate] = new_id
-
-        with open(self._file_path, "a") as f:
-            f.write(f"{blockstate}\n")
-        return new_id
+    REGISTRY_FILENAME = "block_states.txt"
+    FALLBACK_ENTRY = 'universal_minecraft:sponge[wet="false"]'
 
     def to_global_ids(self, blocks_array: np.ndarray, block_palette: BlockManager) -> np.ndarray:
         """Translates a local chunk palette to global IDs.
@@ -494,9 +523,7 @@ class BlockStates:
         Returns:
             The blockstate string, or a default 'sponge' block if the ID is out of bounds.
         """
-        if 0 <= id < len(self._blockstates):
-            return self._blockstates[id]
-        return 'universal_minecraft:sponge[wet="false"]'
+        return self._get_entry_by_id(id)
 
     def _sanitize_mod_block(self, block_str: str) -> str:
         """Converts modded blocks into a distinct vanilla marker block."""
@@ -516,54 +543,18 @@ class BlockStates:
         Returns:
             The global ID for the blockstate.
         """
-        blockstate = self._sanitize_mod_block(blockstate)
-        if blockstate not in self._blockstates_dict:
-            return self._add_blockstate(blockstate)
-        return self._blockstates_dict[blockstate]
+        return self._get_id_by_entry(self._sanitize_mod_block(blockstate))
 
 
-class Biomes:
+class Biomes(_StringRegistry):
     """Manages the mapping between Minecraft biome strings and global IDs.
 
     Similar to BlockStates, this class provides consistent numerical IDs for biomes
     and persists them to a text file.
     """
 
-    def __init__(self, asset_path: Optional[Path] = None) -> None:
-        """Initializes the Biomes manager.
-
-        Args:
-            asset_path: Optional path to the directory where biomes.txt is stored.
-                        Defaults to the 'assets' directory in the project root.
-        """
-        if asset_path is None:
-            asset_path = Path(__file__).parent.parent / "assets"
-
-        asset_path.mkdir(parents=True, exist_ok=True)
-        self._file_path = asset_path / "biomes.txt"
-        self._file_path.touch(exist_ok=True)
-
-        with open(self._file_path, "r") as f:
-            lines = f.read().splitlines()
-            self._biomes = lines
-            self._biomes_dict = {biome: i for i, biome in enumerate(lines)}
-
-    def _add_biome(self, biome_str: str) -> int:
-        """Assigns a new global ID to a biome and persists it.
-
-        Args:
-            biome_str: The biome string to add.
-
-        Returns:
-            The newly assigned global ID.
-        """
-        new_id = len(self._biomes)
-        self._biomes.append(biome_str)
-        self._biomes_dict[biome_str] = new_id
-
-        with open(self._file_path, "a") as f:
-            f.write(f"{biome_str}\n")
-        return new_id
+    REGISTRY_FILENAME = "biomes.txt"
+    FALLBACK_ENTRY = "universal_minecraft:plains"
 
     def to_global_ids(self, biome_indices: np.ndarray, biome_palette: list) -> np.ndarray:
         """Translates local biome indices to global IDs.
@@ -592,11 +583,9 @@ class Biomes:
             id: The global ID of the biome.
 
         Returns:
-            The biome string, or a default 'ocean' biome if the ID is out of bounds.
+            The biome string, or a default 'plains' biome if the ID is out of bounds.
         """
-        if 0 <= id < len(self._biomes):
-            return self._biomes[id]
-        return "universal_minecraft:plains"
+        return self._get_entry_by_id(id)
 
     def get_global_id_by_biome(self, biome_str: str) -> int:
         """Retrieves the global ID corresponding to a given biome string.
@@ -610,6 +599,4 @@ class Biomes:
         Returns:
             The global ID for the biome string.
         """
-        if biome_str not in self._biomes_dict:
-            return self._add_biome(biome_str)
-        return self._biomes_dict[biome_str]
+        return self._get_id_by_entry(biome_str)
