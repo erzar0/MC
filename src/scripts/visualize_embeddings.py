@@ -83,7 +83,9 @@ def get_representative_colors(block_names, reduced_scaled):
     return np.array([base_to_representative_color[get_group_key(name)] for name in block_names])
 
 
-def visualize_3d_plotly(data, names, colors, output_dir: Path, title="3D Embedding Visualization", filename="output.html"):
+def visualize_3d_plotly(
+    data, names, colors, output_dir: Path, title="3D Embedding Visualization", filename="output.html"
+):
     logger.info(f"Creating 3D Plotly visualization: {title}...")
     fig = go.Figure(
         data=[
@@ -283,20 +285,40 @@ def main():
     # Mode 1: Individual Coloring (Every state is unique)
     logger.info("--- Mode 1: Individual State Colors ---")
     visualize_3d_plotly(
-        pacmap_3d, names, pacmap_3d, args.output_dir, title="PaCMAP Individual Colors", filename="pacmap_individual_3d.html"
+        pacmap_3d,
+        names,
+        pacmap_3d,
+        args.output_dir,
+        title="PaCMAP Individual Colors",
+        filename="pacmap_individual_3d.html",
     )
     visualize_2d_seaborn(
-        pacmap_3d, names, pacmap_3d, args.output_dir, title="PaCMAP Individual Colors", filename="pacmap_individual_2d.svg"
+        pacmap_3d,
+        names,
+        pacmap_3d,
+        args.output_dir,
+        title="PaCMAP Individual Colors",
+        filename="pacmap_individual_2d.svg",
     )
 
     # Mode 2: Grouped Representative Coloring (Grouped by base name)
     logger.info("--- Mode 2: Grouped Representative Colors ---")
     grouped_colors = get_representative_colors(names, pacmap_3d)
     visualize_3d_plotly(
-        pacmap_3d, names, grouped_colors, args.output_dir, title="PaCMAP Grouped Colors", filename="pacmap_grouped_3d.html"
+        pacmap_3d,
+        names,
+        grouped_colors,
+        args.output_dir,
+        title="PaCMAP Grouped Colors",
+        filename="pacmap_grouped_3d.html",
     )
     visualize_2d_seaborn(
-        pacmap_3d, names, grouped_colors, args.output_dir, title="PaCMAP Grouped Colors", filename="pacmap_grouped_2d.svg"
+        pacmap_3d,
+        names,
+        grouped_colors,
+        args.output_dir,
+        title="PaCMAP Grouped Colors",
+        filename="pacmap_grouped_2d.svg",
     )
 
 

@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import multiprocessing
 import random
@@ -9,7 +8,7 @@ import signal
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 # Ensure src is in path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -17,6 +16,7 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from src import config
+from src.scripts.resumable_state import JsonStateStore
 from src.world_processor import WorldProcessor
 
 # Setup Logging
@@ -55,30 +55,13 @@ def _worker_task(map_id: str, world_root: Path) -> tuple[str, dict]:
     return map_id, processor.process_world(world_root, map_id, remove_tmp_dirs=True)
 
 
-class ProcessState:
+class ProcessState(JsonStateStore):
     """Manages the process_state.json file for tracking progress."""
 
+    DEFAULT_ENTRY = {"status": "pending", "error": None, "output_dir": None}
+
     def __init__(self, path: Path = STATE_FILE):
-        self._path = path
-        self._data: Dict[str, dict] = self._load()
-
-    def _load(self) -> dict:
-        if self._path.exists():
-            try:
-                with open(self._path, "r", encoding="utf-8") as fh:
-                    return json.load(fh)
-            except Exception as e:
-                log.warning(f"Failed to load state file: {e}. Starting fresh.")
-        return {}
-
-    def _ensure(self, map_id: str) -> dict:
-        return self._data.setdefault(map_id, {"status": "pending", "error": None, "output_dir": None})
-
-    def is_done(self, map_id: str) -> bool:
-        return self._ensure(map_id).get("status") == "done"
-
-    def is_failed(self, map_id: str) -> bool:
-        return self._ensure(map_id).get("status") == "failed"
+        super().__init__(path)
 
     def mark_done(self, map_id: str, output_dir: str) -> None:
         entry = self._ensure(map_id)
@@ -91,11 +74,6 @@ class ProcessState:
         entry["status"] = "failed"
         entry["error"] = reason
         entry["output_dir"] = None
-
-    def save(self) -> None:
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self._path, "w", encoding="utf-8") as fh:
-            json.dump(self._data, fh, indent=2)
 
 
 class DownloadProcessor:

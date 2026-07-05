@@ -4,15 +4,22 @@ import base64
 import csv
 import io
 import logging
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
 from PIL import Image
 from tqdm.asyncio import tqdm
 
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from openai import AsyncOpenAI
+
+from src.scripts.llm_utils import make_async_vllm_client, strip_thinking_tags
+
 try:
-    import pillow_jxl
+    # Registers the JXL codec with PIL as an import side effect
+    import pillow_jxl  # noqa: F401
 except ImportError:
     pass
 
@@ -29,13 +36,13 @@ System Role: You are an expert computer vision data annotator generating natural
 
 Task: You will be provided with an image of a Minecraft terrain region. Alongside the image, you receive a metadata block containing its id, title, tags, and description. Your job is to synthesize the metadata context with the visual evidence to output a single, comprehensive description of the terrain, structures, and biomes shown.
 
-CRITICAL INSTRUCTION: There is a pink grid overlay with large colored letters and numbers (A1, B2, etc.) baked into the image. YOU MUST COMPLETELY IGNORE THIS OVERLAY. Treat it as invisible. 
+CRITICAL INSTRUCTION: There is a pink grid overlay with large colored letters and numbers (A1, B2, etc.) baked into the image. YOU MUST COMPLETELY IGNORE THIS OVERLAY. Treat it as invisible.
 - NEVER use the word "grid", "overlay", "sections", "alphanumeric", "labels", or "letters".
 - NEVER describe the grid lines or the glowing letters as physical objects (e.g. do not call them "glowing barriers", "neon signs", "colored sections").
 - If you mention the grid or the letters in your description, you fail the task. Describe ONLY the underlying Minecraft terrain, nature, and buildings.
 
 Step 1: Contextualize via Metadata
-Read the provided Title, Tags, and Description for context. CRITICAL: This metadata describes the ENTIRE Minecraft world, NOT necessarily the specific chunk shown in the image. 
+Read the provided Title, Tags, and Description for context. CRITICAL: This metadata describes the ENTIRE Minecraft world, NOT necessarily the specific chunk shown in the image.
 - You MUST prioritize visual evidence.
 - If the metadata mentions cities, skyscrapers, or underground stations, but you only see flat grass or empty terrain, DO NOT INVENT THE CITY. Describe ONLY what is visible in the image.
 - Never hallucinate functional or lore details.
@@ -44,13 +51,13 @@ Step 2: Visual Extraction Rules
 Provide a highly accurate description of what is ACTUALLY visible in the region. Write in MULTIPLE, separate sentences ending in periods. Do NOT use semicolons.
 
 Anti-Hallucination Constraints:
-1. The image background outside the terrain is a dark void. DO NOT MISTAKE THE VOID FOR "DARK ASPHALT", "WATER", OR "NIGHT SKY". Ignore the void completely. 
+1. The image background outside the terrain is a dark void. DO NOT MISTAKE THE VOID FOR "DARK ASPHALT", "WATER", OR "NIGHT SKY". Ignore the void completely.
 2. Do not explicitly list geological layers (like "dirt, stone, and ores") just because they are visible on the cross-section edges.
 3. Do NOT mention that the image is an "isometric", "3D", or "cross-section" view. Describe the scene natively.
 
 Empty Regions: If the image is 100% transparent and contains absolutely NO Minecraft terrain (no blocks, no grass, no water, no stone), you MUST output exactly the word "Empty". NOTE: If the image contains even a flat square of water or grass blocks, it is NOT empty.
 
-Features & Structures: Be exhaustive and visually precise about what is actually present. If the image is just a flat, featureless expanse, describe its actual color and texture simply (e.g., "A flat expanse of dark stone"). Do NOT invent buildings, vegetation, or features just to make the description longer. 
+Features & Structures: Be exhaustive and visually precise about what is actually present. If the image is just a flat, featureless expanse, describe its actual color and texture simply (e.g., "A flat expanse of dark stone"). Do NOT invent buildings, vegetation, or features just to make the description longer.
 - If structures are present, detail their architectural styles, exact visible colors, specific materials, and spatial arrangement ("top-left", "foreground"). Do NOT use cardinal directions (North, South, East, West).
 
 Underground: If underground areas are visible, describe them naturally. If not visible, do not mention them.
@@ -63,15 +70,6 @@ Strict Output Format:
 Do not include any conversational filler. Output exactly in this single-line format:
 [Region]: [Holistic description or "Empty"]
 """
-
-
-def strip_thinking_tags(text: str) -> str:
-    text = text.strip()
-    if "<think>" in text:
-        think_end = text.find("</think>")
-        if think_end != -1:
-            text = text[think_end + len("</think>") :].strip()
-    return text
 
 
 def encode_image_base64(image_path: Path, save_debug: bool = False) -> str:
@@ -225,8 +223,7 @@ async def main_async():
         logger.info("Done!")
         return
 
-    # Use a dummy API key just to satisfy the SDK requirement, connecting exclusively to your localhost vLLM server
-    client = AsyncOpenAI(api_key="vllm-local", base_url=args.base_url)
+    client = make_async_vllm_client(args.base_url)
     sem = asyncio.Semaphore(args.concurrency)
 
     coroutines = [

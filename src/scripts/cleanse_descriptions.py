@@ -14,12 +14,17 @@ Usage:
 
 import argparse
 import csv
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from openai import OpenAI
 from tqdm import tqdm
+
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from src.scripts.llm_utils import make_vllm_client, strip_thinking_tags
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -86,7 +91,7 @@ DESCRIPTION_SYSTEM_PROMPT = """\
 You extract clean world descriptions from raw Minecraft map descriptions. Your ONLY job is to output what the world physically is, looks like, and what the player does in it.
 
 ### CRITICAL TWO-STEP PROCESS:
-1. MENTAL DELETION: Before writing anything, mentally delete ALL sentences that contain: 
+1. MENTAL DELETION: Before writing anything, mentally delete ALL sentences that contain:
    - Installation instructions or technical requirements (Forge, Fabric, Optifine, Bedrock, version numbers).
    - In-game video settings or setup (e.g., render distance, brightness, command block enablement).
    - Software/Tool names (WorldPainter, Geyser, MCEdit).
@@ -114,14 +119,6 @@ RESPOND WITH ONLY the cleaned description text. No JSON, no quotes, no explanati
 # ---------------------------------------------------------------------------
 # Parsing helpers
 # ---------------------------------------------------------------------------
-def strip_thinking_tags(text: str) -> str:
-    """Remove <think>...</think> tags from Qwen3 model output."""
-    text = text.strip()
-    if "<think>" in text:
-        think_end = text.find("</think>")
-        if think_end != -1:
-            text = text[think_end + len("</think>") :].strip()
-    return text
 
 
 # ---------------------------------------------------------------------------
@@ -299,10 +296,7 @@ def main():
     print("Note:        3 LLM calls per row (title, tags, description)")
 
     # Initialise OpenAI client pointing at local vLLM server
-    client = OpenAI(
-        api_key="token-is-ignored",
-        base_url=args.base_url,
-    )
+    client = make_vllm_client(args.base_url)
 
     # Load input
     print("Loading input CSV...")
@@ -333,9 +327,7 @@ def main():
     for batch_start in tqdm(range(0, len(rows), batch_size), total=num_batches, desc="Batches"):
         batch = rows[batch_start : batch_start + batch_size]
 
-        t0 = time.time()
         results = process_batch(client, batch, model_name=args.model, concurrency=args.concurrency)
-        elapsed = time.time() - t0
 
         write_results(OUTPUT_CSV, results, append=(batch_start > 0 or args.resume))
         total_processed += len(results)

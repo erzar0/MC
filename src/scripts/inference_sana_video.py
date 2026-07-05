@@ -8,14 +8,18 @@ Usage:
 """
 
 import argparse
-import csv
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
 import torch
 from diffusers import SanaVideoPipeline
 from scipy.spatial import cKDTree
+
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src.block_colors import load_block_states, load_id2rgb
 
 
 def parse_args():
@@ -102,29 +106,8 @@ def main():
 
     # 5. Snap continuous RGB colors back to discrete Minecraft Block IDs
     print("Mapping generated colors back to discrete block IDs via KDTree...")
-    # Determine asset paths
-    project_root = Path(__file__).parent.parent.parent
-    block_states_path = args.block_states or str(project_root / "assets" / "block_states.txt")
-    block_state2rgb_path = args.block_state2rgb or str(project_root / "assets" / "block_state2rgb.csv")
-
-    # Load block states list
-    with open(block_states_path, "r") as f:
-        states = [line.strip() for line in f]
-
-    # Load state -> RGB mapping
-    state2rgb = {}
-    with open(block_state2rgb_path, "r") as f:
-        reader = csv.reader(f)
-        next(reader)
-        for row in reader:
-            if len(row) >= 2:
-                state2rgb[row[0]] = [int(val) for val in row[1].split("|")]
-
-    # Construct lookup array
-    id2rgb = np.zeros((len(states), 3), dtype=np.uint8)
-    for idx, state in enumerate(states):
-        if state in state2rgb:
-            id2rgb[idx] = state2rgb[state]
+    states = load_block_states(args.block_states)
+    id2rgb, _ = load_id2rgb(args.block_states, args.block_state2rgb)
 
     # Perform KDTree nearest neighbor snapping
     flat_cube = spatial_cube.reshape(-1, 3)

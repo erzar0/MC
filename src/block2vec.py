@@ -113,8 +113,10 @@ class Block2Vec(nn.Module):
         n_elements = center_ids.numel()
         if n_elements == 0:
             return
+
         def grid(meta):
             return (triton.cdiv(n_elements, meta["BLOCK_SIZE_N"]),)
+
         _sgns_kernel[grid](
             self.embedding_in,
             self.embedding_out,
@@ -464,7 +466,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Train Block2Vec embeddings from Minecraft volumes")
-    parser.add_argument("--volumes", type=str, default=str(Path(__file__).parent.parent / "tmp/processed_worlds/cleansed"))
+    parser.add_argument(
+        "--volumes", type=str, default=str(Path(__file__).parent.parent / "tmp/processed_worlds/cleansed")
+    )
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=2**23)

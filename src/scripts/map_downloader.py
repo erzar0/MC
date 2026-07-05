@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
-import json
 import logging
 import re
 import shutil
@@ -43,6 +42,10 @@ import rarfile
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from tqdm import tqdm
+
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.scripts.resumable_state import JsonStateStore
 
 # ---------------------------------------------------------------------------
 # Paths & logging
@@ -393,7 +396,7 @@ class Extractor:
 # ---------------------------------------------------------------------------
 
 
-class DownloadState:
+class DownloadState(JsonStateStore):
     """
     Persists per-map download state to a JSON file.
 
@@ -407,19 +410,18 @@ class DownloadState:
         }
     """
 
+    DEFAULT_ENTRY = {
+        "status": "pending",
+        "attempted_urls": [],
+        "error": None,
+        "file": None,
+    }
+
     def __init__(self, path: Path = STATE_FILE):
-        self._path = path
-        self._data: dict = self._load()
-
-    # ------------------------------------------------------------------
-    # Public interface
-    # ------------------------------------------------------------------
-
-    def is_done(self, map_id: str) -> bool:
-        return self._data.get(map_id, {}).get("status") == "done"
+        super().__init__(path)
 
     def get_attempted_urls(self, map_id: str) -> list[str]:
-        return self._data.get(map_id, {}).get("attempted_urls", [])
+        return self.get(map_id).get("attempted_urls", [])
 
     def mark_downloading(self, map_id: str, url: str) -> None:
         entry = self._ensure(map_id)
@@ -438,34 +440,6 @@ class DownloadState:
         entry["status"] = "failed"
         entry["error"] = reason
         entry["file"] = None
-
-    def save(self) -> None:
-        with open(self._path, "w", encoding="utf-8") as fh:
-            json.dump(self._data, fh, indent=2)
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _load(self) -> dict:
-        if self._path.exists():
-            try:
-                with open(self._path, "r", encoding="utf-8") as fh:
-                    return json.load(fh)
-            except Exception:
-                pass
-        return {}
-
-    def _ensure(self, map_id: str) -> dict:
-        return self._data.setdefault(
-            map_id,
-            {
-                "status": "pending",
-                "attempted_urls": [],
-                "error": None,
-                "file": None,
-            },
-        )
 
 
 # ---------------------------------------------------------------------------

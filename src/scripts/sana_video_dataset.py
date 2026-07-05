@@ -9,9 +9,9 @@ The frame/spatial layout matches `inference_sana_video.py`, which transposes
 generated video (F, H, W, 3) back to a (X, Z, Y, 3) spatial grid.
 """
 
-import csv
 import json
 import random
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -20,46 +20,9 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-# Project root (this file lives in src/scripts/)
-_PROJECT_ROOT = Path(__file__).parent.parent.parent
-
-
-def load_id2rgb(
-    block_states_path: Optional[str] = None,
-    block_state2rgb_path: Optional[str] = None,
-):
-    """Builds the global-block-ID -> RGB lookup table.
-
-    Mirrors the color mapping used in `inference_sana_video.py` so training
-    targets and inference decoding share the same palette.
-
-    Returns:
-        Tuple of (id2rgb (vocab_size, 3) uint8 array, air block ID array).
-    """
-    block_states_path = block_states_path or str(_PROJECT_ROOT / "assets" / "block_states.txt")
-    block_state2rgb_path = block_state2rgb_path or str(_PROJECT_ROOT / "assets" / "block_state2rgb.csv")
-
-    with open(block_states_path, "r") as f:
-        states = [line.strip() for line in f]
-
-    state2rgb = {}
-    with open(block_state2rgb_path, "r") as f:
-        reader = csv.reader(f)
-        next(reader)  # header
-        for row in reader:
-            if len(row) >= 2:
-                state2rgb[row[0]] = [int(val) for val in row[1].split("|")]
-
-    id2rgb = np.zeros((len(states), 3), dtype=np.uint8)
-    air_ids = []
-    for idx, state in enumerate(states):
-        if state in state2rgb:
-            id2rgb[idx] = state2rgb[state]
-        base_name = state.split("[")[0]
-        if base_name.endswith(("air", "void_air", "cave_air")):
-            air_ids.append(idx)
-
-    return id2rgb, np.asarray(air_ids, dtype=np.int64)
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src.block_colors import load_id2rgb
 
 
 class MinecraftVideoDataset(Dataset):
