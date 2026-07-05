@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from pathlib import Path
@@ -8,6 +9,8 @@ import anvil
 import numpy as np
 from amulet.api.registry import BlockManager
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 try:
     from .fast_volume_extractor import FastVolumeParser
@@ -42,14 +45,15 @@ class WorldWrapper:
             raise FileNotFoundError(f"Region directory not found at {region_dir}")
 
         self._mca_files = [f.as_posix() for f in region_dir.iterdir() if f.is_file() and f.suffix == ".mca"]
-        self._mca_coords = []
+        # Build the coord -> path mapping directly so files that don't match the
+        # r.X.Z.mca pattern can't misalign the pairing.
+        self._mca_coord_to_path = {}
         for path in self._mca_files:
             match = re.search(r"r\.(-?\d+)\.(-?\d+)\.mca", os.path.basename(path))
             if match:
-                self._mca_coords.append((int(match.group(1)), int(match.group(2))))
+                self._mca_coord_to_path[(int(match.group(1)), int(match.group(2)))] = path
 
-        self._mca_coord_to_path = {(x, z): path for (x, z), path in zip(self._mca_coords, self._mca_files)}
-        self._mca_coords = set(self._mca_coords)
+        self._mca_coords = set(self._mca_coord_to_path)
         self._mca_coords_rejected = set()
         self._metadata = {"total_regions": len(self._mca_files), "extracted_regions": {}}
         self._chunks_coords = set(self._world.all_chunk_coords("minecraft:overworld"))
@@ -160,7 +164,8 @@ class WorldWrapper:
                         z_start, z_end = rz * 16, (rz + 1) * 16
                         tmp = self._biomes.to_global_ids(chunk.biomes._2d, chunk.biome_palette)
                         biomes[x_start:x_end, z_start:z_end] = tmp
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Skipping biomes for chunk {chunk_coords}: {e}")
                     continue
         pbar.close()
         return biomes
@@ -223,7 +228,8 @@ class WorldWrapper:
                                 volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(
                                     sub_chunk, chunk._block_palette
                                 )
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Skipping blocks for chunk {chunk_coords}: {e}")
                         continue
 
         data, start_y_offset = self._post_process_volume(volume_6d)
@@ -281,13 +287,13 @@ class WorldWrapper:
 
         self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
             "y_range": (-64, min(320, int(data.shape[2]) + actual_min_y)),
-            "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True))},
+            "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True), strict=True)},
             "avg_surface_y": avg_surface_pos,
         }
 
         return data
 
-    def get_heightmap(self, region_x: int, region_z: int, transparent_ids: List[int] = [0, 1]) -> np.ndarray:
+    def get_heightmap(self, region_x: int, region_z: int, transparent_ids: Optional[List[int]] = None) -> np.ndarray:
         """Generates a 512x512 heightmap for a given region.
 
         The heightmap represents the highest non-transparent block at each (x, z)
@@ -301,6 +307,8 @@ class WorldWrapper:
         Returns:
             A 2D numpy array (uint16) of shape (512, 512) representing heights.
         """
+        if transparent_ids is None:
+            transparent_ids = [0, 1]
         volume = self.get_region_volume(region_x, region_z, use_fast_extractor=True)
 
         is_solid = ~np.isin(volume, transparent_ids)
@@ -347,12 +355,13 @@ class WorldWrapper:
                             it_value = chunk["Level"]["InhabitedTime"].value
 
                         data[cx, cz] = it_value
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Skipping inhabited time for chunk ({cx}, {cz}): {e}")
                     continue
 
         return data / 20  # Convert ticks to seconds
 
-    def chunk_inhibited_time(self, x: int, z: int) -> int:
+    def chunk_inhabited_time(self, x: int, z: int) -> int:
         """Retrieves the inhabited time for a specific chunk.
 
         Args:

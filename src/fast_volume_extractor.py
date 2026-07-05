@@ -1,4 +1,5 @@
 import gzip
+import logging
 import math
 import zlib
 from pathlib import Path
@@ -8,8 +9,10 @@ import amulet.api.block
 import amulet_nbt
 import numpy as np
 
+logger = logging.getLogger(__name__)
+
 try:
-    from numba import njit, uint16, uint64
+    from numba import njit
 
     HAS_NUMBA = True
 except ImportError:
@@ -19,6 +22,7 @@ if HAS_NUMBA:
 
     @njit
     def _unpack_numba(data_u64, bits_per_block, blocks_per_long):
+        """Unpacks a section's bit-packed block-state longs into 4096 palette indices."""
         unpacked = np.empty(4096, dtype=np.uint16)
         mask = np.uint64((1 << bits_per_block) - 1)
         upto = 4096
@@ -33,8 +37,15 @@ if HAS_NUMBA:
         return unpacked
 
 
+# Region (.mca) file layout constants
 SECTOR_BYTES = 4096
 CHUNK_HEADER_SIZE = 5
+BLOCKS_PER_SECTION = 4096  # 16 * 16 * 16
+
+# Chunk payload compression types (see the Anvil region format spec)
+COMPRESSION_GZIP = 1
+COMPRESSION_ZLIB = 2
+COMPRESSION_NONE = 3
 
 try:
     from .world_wrapper import BlockStates
@@ -53,7 +64,7 @@ class FastVolumeParser:
         self._blockstates = blockstates
         self._block_cache = {}
         self._f = open(self.region_path, "rb")
-        self._header = self._f.read(4096)
+        self._header = self._f.read(SECTOR_BYTES)
 
         if translator is None:
             import PyMCTranslate
@@ -83,11 +94,11 @@ class FastVolumeParser:
         length = int.from_bytes(header[:4], byteorder="big")
         compression_type = header[4]
         compressed_data = self._f.read(length - 1)
-        if compression_type == 1:
+        if compression_type == COMPRESSION_GZIP:
             data = gzip.decompress(compressed_data)
-        elif compression_type == 2:
+        elif compression_type == COMPRESSION_ZLIB:
             data = zlib.decompress(compressed_data)
-        elif compression_type == 3:
+        elif compression_type == COMPRESSION_NONE:
             data = compressed_data
         else:
             return None
@@ -107,7 +118,7 @@ class FastVolumeParser:
             shifts = np.arange(blocks_per_long, dtype=np.uint64) * bits_per_block
             mask = np.uint64((1 << bits_per_block) - 1)
             unpacked_2d = (data_u64[:, None] >> shifts) & mask
-            unpacked_1d = unpacked_2d.flatten()[:4096].astype(np.uint16)
+            unpacked_1d = unpacked_2d.flatten()[:BLOCKS_PER_SECTION].astype(np.uint16)
 
         return unpacked_1d.reshape((16, 16, 16)).transpose(2, 0, 1)
 
@@ -153,7 +164,6 @@ class FastVolumeParser:
         volume = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
 
         marker_id = self._blockstates.get_global_id_by_block('universal_minecraft:sponge[wet="false"]')
-        air_id = self._blockstates.get_global_id_by_block("universal_minecraft:air")
 
         # Consistent with Amulet: if min_y is -64, section -4 maps to index 0
         y_offset_sections = -(min_y // 16)
@@ -235,7 +245,7 @@ class FastVolumeParser:
                                     # Single-block palette without data means the whole section is that block
                                     volume[cx, cz, sec_idx] = global_palette[0]
                 except Exception as e:
-                    print(f"FastVolumeParser Error @ {cx},{cz}: {e}")
+                    logger.warning(f"FastVolumeParser error @ chunk ({cx}, {cz}): {e}")
                     continue
 
         return volume

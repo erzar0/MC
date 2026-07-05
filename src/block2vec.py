@@ -6,6 +6,7 @@ Architecture:
     - Word2Vec-style subsampling to reduce frequency bias from common blocks
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -17,6 +18,8 @@ import torch.nn as nn
 import triton
 import triton.language as tl
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 
 @triton.jit
@@ -110,7 +113,8 @@ class Block2Vec(nn.Module):
         n_elements = center_ids.numel()
         if n_elements == 0:
             return
-        grid = lambda meta: (triton.cdiv(n_elements, meta["BLOCK_SIZE_N"]),)
+        def grid(meta):
+            return (triton.cdiv(n_elements, meta["BLOCK_SIZE_N"]),)
         _sgns_kernel[grid](
             self.embedding_in,
             self.embedding_out,
@@ -344,6 +348,9 @@ class SpatialMinecraftDataset:
 # Training
 # ============================================================================
 
+# Fallback vocabulary size when block_states.txt is missing
+DEFAULT_VOCAB_SIZE = 65536
+
 
 def get_vocab_size(block_states_path: Optional[str] = None) -> int:
     """Read vocabulary size from block_states.txt."""
@@ -353,8 +360,8 @@ def get_vocab_size(block_states_path: Optional[str] = None) -> int:
     if path.exists():
         with open(path, "r") as f:
             return sum(1 for line in f if line.strip())
-    print(f"Warning: block_states.txt not found at {path}, using default vocab_size=65536")
-    return 65536
+    logger.warning(f"block_states.txt not found at {path}, using default vocab_size={DEFAULT_VOCAB_SIZE}")
+    return DEFAULT_VOCAB_SIZE
 
 
 def train_block2vec_from_volumes(
@@ -370,23 +377,28 @@ def train_block2vec_from_volumes(
     save_dir: Optional[str] = None,
     save_every: int = 100,
     block_states_path: Optional[str] = None,
+    seed: Optional[int] = None,
 ):
+    if seed is not None:
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
     # Discover volumes
     volumes_path = Path(volumes_dir)
     b2frames = list(volumes_path.rglob("*.b2frame"))
     if not b2frames:
-        print(f"No .b2frame files found in {volumes_dir}!")
+        logger.error(f"No .b2frame files found in {volumes_dir}!")
         return
 
     # Load negative buffer
     if not negative_buffer_path or not os.path.exists(negative_buffer_path):
         raise ValueError(f"Negative sampling buffer path required! Got: {negative_buffer_path}")
-    print(f"Loading negative sampling buffer from {negative_buffer_path}...")
+    logger.info(f"Loading negative sampling buffer from {negative_buffer_path}...")
     neg_buffer_gpu = torch.load(negative_buffer_path, weights_only=True).cuda()
 
     # Initialize model
     vocab_size = get_vocab_size(block_states_path)
-    print(f"Vocab size: {vocab_size} | Volumes: {len(b2frames)} | Neighbor mode: {neighbor_mode}")
+    logger.info(f"Vocab size: {vocab_size} | Volumes: {len(b2frames)} | Neighbor mode: {neighbor_mode}")
     model = Block2Vec(vocab_size=vocab_size, embedding_dim=embedding_dim).cuda()
 
     # Training state
@@ -436,11 +448,7 @@ def train_block2vec_from_volumes(
                 neg_idx = dataset.neg_idx
                 vbar.set_postfix({"lr": f"{lr:.6f}", "total_pairs": f"{total_words_processed / 1e6:.1f}M"})
             except Exception as e:
-                print(f"\nError processing volume {b2_file.name}: {e}")
-            # finally:
-            #     # Free GPU memory from this volume before loading the next
-            #     del volume, dataset
-            #     torch.cuda.empty_cache()
+                logger.error(f"Error processing volume {b2_file.name}: {e}")
 
             volumes_processed += 1
             vbar.update(1)
@@ -456,9 +464,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Train Block2Vec embeddings from Minecraft volumes")
-    parser.add_argument(
-        "--volumes", type=str, default="/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/"
-    )
+    parser.add_argument("--volumes", type=str, default=str(Path(__file__).parent.parent / "tmp/processed_worlds/cleansed"))
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=2**23)
@@ -470,7 +476,10 @@ if __name__ == "__main__":
     parser.add_argument("--save_dir", type=str, default="tmp/checkpoints")
     parser.add_argument("--save_every", type=int, default=1000, help="Checkpoint every N volumes")
     parser.add_argument("--block_states", type=str, default=None, help="Path to block_states.txt")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility (default: unseeded)")
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     if not Path(args.volumes).exists():
         print(f"Volumes directory {args.volumes} not found.")
@@ -489,6 +498,7 @@ if __name__ == "__main__":
         save_dir=args.save_dir,
         save_every=args.save_every,
         block_states_path=args.block_states,
+        seed=args.seed,
     )
 
     if model:
