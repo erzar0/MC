@@ -128,9 +128,25 @@ class DownloadProcessor:
         self._process_list(map_dirs, limit=None, retry_failed=retry_failed, workers=workers)
 
     def _process_list(self, map_dirs: list[Path], limit: Optional[int], retry_failed: bool, workers: int):
-        processed = done = failed = skipped = 0
+        tasks_to_run, failed, skipped = self._prepare_tasks(map_dirs, limit=limit, retry_failed=retry_failed)
 
+        done = 0
+        if tasks_to_run:
+            done, task_failures = self._execute_tasks(tasks_to_run, workers=workers)
+            failed += task_failures
+
+        log.info(f"\nFinished processing. done={done}  failed={failed}  skipped(already-processed)={skipped}")
+
+    def _prepare_tasks(
+        self, map_dirs: list[Path], limit: Optional[int], retry_failed: bool
+    ) -> tuple[list[tuple[str, Path]], int, int]:
+        """Filters map dirs by state and locates world roots.
+
+        Returns:
+            Tuple of (runnable (map_id, world_root) tasks, failed count, skipped count).
+        """
         tasks_to_run = []
+        failed = skipped = 0
 
         for map_dir in map_dirs:
             if limit and len(tasks_to_run) >= limit:
@@ -160,11 +176,16 @@ class DownloadProcessor:
 
             tasks_to_run.append((map_id, world_root))
 
-        if not tasks_to_run:
-            log.info(f"\nFinished processing. done={done}  failed={failed}  skipped(already-processed)={skipped}")
-            return
+        return tasks_to_run, failed, skipped
 
+    def _execute_tasks(self, tasks_to_run: list[tuple[str, Path]], workers: int) -> tuple[int, int]:
+        """Runs the tasks in a process pool and records results.
+
+        Returns:
+            Tuple of (done count, failed count).
+        """
         log.info(f"Submitting {len(tasks_to_run)} maps to {workers} workers.")
+        done = failed = 0
 
         self.executor = ProcessPoolExecutor(max_workers=workers)
         futures = {}
@@ -180,44 +201,55 @@ class DownloadProcessor:
                 map_id = futures[future]
                 try:
                     map_id, result = future.result()
-
-                    if result["status"] == "success":
-                        output_dir = Path(result["output_dir"])
-                        screenshots_dir = output_dir / "screenshots"
-
-                        if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
-                            zero_regions_dir = output_dir.parent / "0_regions" / map_id
-                            zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
-                            if zero_regions_dir.exists():
-                                shutil.rmtree(zero_regions_dir)
-                            shutil.move(str(output_dir), str(zero_regions_dir))
-
-                            self.state.mark_failed(map_id, "0 screenshots generated")
-                            log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
-                            failed += 1
-                        else:
-                            self.state.mark_done(map_id, result["output_dir"])
-                            log.info(f"[{map_id}] ✓ Successfully processed")
-                            done += 1
+                    if self._handle_result(map_id, result):
+                        done += 1
                     else:
-                        self.state.mark_failed(map_id, result["error"])
-                        log.error(f"[{map_id}] ✗ Failed to process: {result['error']}")
                         failed += 1
-
                 except Exception as exc:
                     log.error(f"[{map_id}] ✗ Worker failed with exception: {exc}")
                     self.state.mark_failed(map_id, f"Worker exception: {exc}")
                     failed += 1
 
                 self.state.save()
-                processed += 1
 
         except Exception as e:
             log.error(f"Execution interrupted: {e}")
         finally:
             self.executor.shutdown(wait=False, cancel_futures=True)
 
-        log.info(f"\nFinished processing. done={done}  failed={failed}  skipped(already-processed)={skipped}")
+        return done, failed
+
+    def _handle_result(self, map_id: str, result: dict) -> bool:
+        """Records one worker result in the state file.
+
+        Worlds that produced no screenshots are moved to `0_regions/` and
+        marked failed.
+
+        Returns:
+            True if the map was successfully processed, False otherwise.
+        """
+        if result["status"] != "success":
+            self.state.mark_failed(map_id, result["error"])
+            log.error(f"[{map_id}] ✗ Failed to process: {result['error']}")
+            return False
+
+        output_dir = Path(result["output_dir"])
+        screenshots_dir = output_dir / "screenshots"
+
+        if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
+            zero_regions_dir = output_dir.parent / "0_regions" / map_id
+            zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
+            if zero_regions_dir.exists():
+                shutil.rmtree(zero_regions_dir)
+            shutil.move(str(output_dir), str(zero_regions_dir))
+
+            self.state.mark_failed(map_id, "0 screenshots generated")
+            log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
+            return False
+
+        self.state.mark_done(map_id, result["output_dir"])
+        log.info(f"[{map_id}] ✓ Successfully processed")
+        return True
 
 
 def _parse_args() -> argparse.Namespace:
