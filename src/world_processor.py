@@ -314,69 +314,71 @@ class WorldProcessor:
 
         pbar = tqdm(region_coords, desc="Generating screenshots")
         for rx, rz in pbar:
-            # mcmap takes coordinates in blocks
-            x_from, z_from = rx * REGION_BLOCKS, rz * REGION_BLOCKS
-            x_to, z_to = x_from + REGION_BLOCKS, z_from + REGION_BLOCKS
-            y_from, y_to = regions_metadata[f"{rx},{rz}"]["y_range"]
+            y_from, _y_to = regions_metadata[f"{rx},{rz}"]["y_range"]
 
             for orientation in self.ORIENTATIONS:
                 pbar.set_postfix({"region": f"r.{rx}.{rz}", "orientation": orientation})
 
                 screenshot_path = output_dir / f"r.{rx}.{rz}.{orientation}.png"
-
-                cmd = [
-                    str(self.mcmap_bin),
-                    f"-{orientation}",
-                    "-from",
-                    str(x_from),
-                    str(z_from),
-                    "-to",
-                    str(x_to),
-                    str(z_to),
-                    "-min",
-                    str(y_from),
-                    "-max",
-                    str(MAX_WORLD_HEIGHT),
-                    "-fragment",
-                    str(REGION_BLOCKS),
-                    "-padding",
-                    "0",
-                    "-dim",
-                    "overworld",
-                    "-nobeacons",
-                    "-shading",
-                    "-lighting",
-                    "-file",
-                    str(screenshot_path),
-                    str(world_path),
-                ]
+                cmd = self._build_mcmap_cmd(world_path, screenshot_path, rx, rz, y_from, orientation)
 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode != 0:
                     logger.warning(f"mcmap failed for r.{rx}.{rz} ({orientation}): {result.stderr}")
                     continue
 
-                # Crop transparent pixels from top/bottom and Compress to JXL
                 try:
-                    with Image.open(screenshot_path) as img:
-                        base_img = img.convert("RGBA")
-
-                    # Crop transparent pixels from top and bottom
-                    alpha = base_img.split()[-1]
-                    bbox = alpha.getbbox()
-                    if bbox:
-                        _, upper, _, lower = bbox
-                        base_img = base_img.crop((0, upper, base_img.width, lower))
-
-                    jxl_path = screenshot_path.with_suffix(".jxl")
-                    # Using JXL for ML Datasets
-                    base_img.save(jxl_path, quality=70, effort=3)
-
-                    # Delete the original PNG image
-                    if screenshot_path.exists():
-                        os.remove(screenshot_path)
+                    self._compress_screenshot_to_jxl(screenshot_path)
                 except Exception as e:
                     logger.warning(f"Failed to process screenshot for r.{rx}.{rz} ({orientation}): {e}")
+
+    def _build_mcmap_cmd(
+        self, world_path: Path, screenshot_path: Path, rx: int, rz: int, y_from: int, orientation: str
+    ) -> List[str]:
+        """Builds the mcmap command line for one region render."""
+        # mcmap takes coordinates in blocks
+        x_from, z_from = rx * REGION_BLOCKS, rz * REGION_BLOCKS
+        x_to, z_to = x_from + REGION_BLOCKS, z_from + REGION_BLOCKS
+
+        # fmt: off
+        return [
+            str(self.mcmap_bin),
+            f"-{orientation}",
+            "-from", str(x_from), str(z_from),
+            "-to", str(x_to), str(z_to),
+            "-min", str(y_from),
+            "-max", str(MAX_WORLD_HEIGHT),
+            "-fragment", str(REGION_BLOCKS),
+            "-padding", "0",
+            "-dim", "overworld",
+            "-nobeacons",
+            "-shading",
+            "-lighting",
+            "-file", str(screenshot_path),
+            str(world_path),
+        ]
+        # fmt: on
+
+    @staticmethod
+    def _compress_screenshot_to_jxl(screenshot_path: Path) -> None:
+        """Crops transparent top/bottom rows and re-encodes the PNG as JXL."""
+        with Image.open(screenshot_path) as img:
+            base_img = img.convert("RGBA")
+
+        # Crop transparent pixels from top and bottom
+        alpha = base_img.split()[-1]
+        bbox = alpha.getbbox()
+        if bbox:
+            _, upper, _, lower = bbox
+            base_img = base_img.crop((0, upper, base_img.width, lower))
+
+        # Using JXL for ML Datasets
+        jxl_path = screenshot_path.with_suffix(".jxl")
+        base_img.save(jxl_path, quality=70, effort=3)
+
+        # Delete the original PNG image
+        if screenshot_path.exists():
+            os.remove(screenshot_path)
 
 
 if __name__ == "__main__":
