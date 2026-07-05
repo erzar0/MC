@@ -18,8 +18,8 @@ from diffusers import SanaVideoPipeline
 from scipy.spatial import cKDTree
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from src.block_colors import load_block_states, load_id2rgb
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.common.block_colors import load_block_states, load_id2rgb
 
 
 def parse_args():

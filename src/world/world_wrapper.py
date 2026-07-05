@@ -466,7 +466,7 @@ class _StringRegistry:
                         stored. Defaults to the 'assets' directory in the project root.
         """
         if asset_path is None:
-            asset_path = Path(__file__).parent.parent / "assets"
+            asset_path = Path(__file__).resolve().parents[2] / "assets"
 
         asset_path.mkdir(parents=True, exist_ok=True)
         self._file_path = asset_path / self.REGISTRY_FILENAME

@@ -7,7 +7,7 @@ on start and saved after mutations, so interrupted runs can resume.
 Subclasses set `DEFAULT_ENTRY` to their per-item schema and add domain
 mark_* helpers. The serialized JSON schema is exactly whatever the entries
 contain — this base class adds no wrapper keys, keeping existing state
-files (assets/*.json) fully compatible.
+files (data/pipeline/*.json) fully compatible.
 """
 
 import json

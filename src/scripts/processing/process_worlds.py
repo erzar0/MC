@@ -11,19 +11,19 @@ from pathlib import Path
 from typing import Optional
 
 # Ensure src is in path for imports
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).resolve().parents[3]
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from src import config
-from src.scripts.resumable_state import JsonStateStore
-from src.world_processor import WorldProcessor
+from src.common.resumable_state import JsonStateStore
+from src.world.world_processor import WorldProcessor
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
-log = logging.getLogger("process_downloads")
+log = logging.getLogger("process_worlds")
 
-STATE_FILE = project_root / "assets" / "process_state.json"
+STATE_FILE = config.PIPELINE_DATA_DIR / "process_state.json"
 DOWNLOADS_DIR = config.DOWNLOADS_DIR
 
 

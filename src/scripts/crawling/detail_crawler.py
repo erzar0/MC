@@ -13,6 +13,7 @@ import logging
 import random
 import re
 import signal
+import sys
 import time
 from pathlib import Path
 
@@ -25,11 +26,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("pmc_detail_crawler")
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-ASSETS_DIR = PROJECT_ROOT / "assets"
-DEFAULT_INPUT_FILE = ASSETS_DIR / "pmc_data.csv"
-DEFAULT_RESULTS_FILE = ASSETS_DIR / "pmc_details.csv"
-DEFAULT_STATE_FILE = ASSETS_DIR / "pmc_details_crawl_state.json"
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src import config
+
+DEFAULT_INPUT_FILE = config.PIPELINE_DATA_DIR / "pmc_data.csv"
+DEFAULT_RESULTS_FILE = config.PIPELINE_DATA_DIR / "pmc_details.csv"
+DEFAULT_STATE_FILE = config.PIPELINE_DATA_DIR / "pmc_details_crawl_state.json"
 
 PMC_BASE_URL = "https://www.planetminecraft.com"
 
@@ -52,7 +54,7 @@ class DetailCrawler:
         self.running = True
         self.processed_ids: set[str] = set()
 
-        ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+        config.PIPELINE_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.state = self._load_state()
         self._load_processed_ids()
 

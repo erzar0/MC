@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BLOCK_STATES_PATH = PROJECT_ROOT / "assets" / "block_states.txt"
 DEFAULT_BLOCK_STATE2RGB_PATH = PROJECT_ROOT / "assets" / "block_state2rgb.csv"
 

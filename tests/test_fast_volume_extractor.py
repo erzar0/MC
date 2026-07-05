@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.fast_volume_extractor import FastVolumeParser
-from src.world_wrapper import BlockStates, WorldWrapper
+from src.world.fast_volume_extractor import FastVolumeParser
+from src.world.world_wrapper import BlockStates, WorldWrapper
 
 
 @pytest.fixture

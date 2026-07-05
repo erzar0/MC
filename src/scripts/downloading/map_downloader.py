@@ -15,7 +15,7 @@ Supported resolvers
     PlanetMinecraftResolver – appends /download/ to project URLs
     DirectResolver      – passes direct archive URLs through unchanged
 
-State file:  assets/map_download_state.json
+State file:  data/pipeline/map_download_state.json
 Downloads:   tmp/downloads/<map_id>/<filename>
 """
 
@@ -44,18 +44,18 @@ from requests.adapters import HTTPAdapter, Retry
 from tqdm import tqdm
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.scripts.resumable_state import JsonStateStore
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src import config
+from src.common.resumable_state import JsonStateStore
 
 # ---------------------------------------------------------------------------
 # Paths & logging
 # ---------------------------------------------------------------------------
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-ASSETS_DIR = REPO_ROOT / "assets"
-INPUT_CSV = ASSETS_DIR / "pmc_data_cleansed.csv"
-STATE_FILE = ASSETS_DIR / "map_download_state.json"
-DOWNLOAD_DIR = REPO_ROOT / "tmp" / "downloads"
+REPO_ROOT = config.PROJECT_ROOT
+INPUT_CSV = config.PIPELINE_DATA_DIR / "pmc_data_cleansed.csv"
+STATE_FILE = config.PIPELINE_DATA_DIR / "map_download_state.json"
+DOWNLOAD_DIR = config.DOWNLOADS_DIR
 
 logging.basicConfig(
     level=logging.INFO,

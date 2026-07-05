@@ -12,6 +12,7 @@ import json
 import logging
 import random
 import signal
+import sys
 import time
 from pathlib import Path
 
@@ -24,11 +25,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("pmc_data_crawler")
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-ASSETS_DIR = PROJECT_ROOT / "assets"
-DEFAULT_STATE_FILE = ASSETS_DIR / "crawl_state.json"
-DEFAULT_RESULTS_FILE = ASSETS_DIR / "pmc_data_crawl_state.csv"
-DEFAULT_CHROME_PROFILE = PROJECT_ROOT / "tmp" / "prof"
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src import config
+
+# State/output files live with the other mutable pipeline data. Defaults point
+# at the files that actually exist on disk (the historic defaults referenced
+# names that were renamed after the original crawl).
+DEFAULT_STATE_FILE = config.PIPELINE_DATA_DIR / "pmc_data_crawl_state.json"
+DEFAULT_RESULTS_FILE = config.PIPELINE_DATA_DIR / "pmc_data.csv"
+DEFAULT_CHROME_PROFILE = config.PROJECT_ROOT / "tmp" / "prof"
 
 # PMC platform filter values
 PLATFORM_JAVA = 1
@@ -63,7 +68,7 @@ class Crawler:
         self.running = True
         self.processed_urls: set[str] = set()
 
-        ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+        config.PIPELINE_DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.state = self._load_initial_state()
         self._load_processed_from_csv()
 
@@ -232,7 +237,7 @@ class Crawler:
                     except Exception as e:
                         log.debug(f"Error quitting driver: {e}")
 
-        log.info(f"[Done] Assets updated in: {ASSETS_DIR}")
+        log.info(f"[Done] Results updated in: {config.PIPELINE_DATA_DIR}")
 
 
 def _parse_args() -> argparse.Namespace:

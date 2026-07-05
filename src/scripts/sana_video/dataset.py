@@ -21,8 +21,8 @@ import torch
 from torch.utils.data import Dataset
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from src.block_colors import load_id2rgb
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.common.block_colors import load_id2rgb
 
 
 class MinecraftVideoDataset(Dataset):

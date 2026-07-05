@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.world_wrapper import WorldWrapper
+from src.world.world_wrapper import WorldWrapper
 
 
 @pytest.fixture

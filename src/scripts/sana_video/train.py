@@ -28,11 +28,11 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 # Support both `python -m src.scripts.train_sana_video` and direct execution
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 try:
-    from src.scripts.sana_video_dataset import MinecraftVideoDataset
+    from src.scripts.sana_video.dataset import MinecraftVideoDataset
 except ImportError:
-    from sana_video_dataset import MinecraftVideoDataset
+    from dataset import MinecraftVideoDataset
 
 
 def parse_args():

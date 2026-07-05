@@ -1,6 +1,6 @@
 import pytest
 
-from src.batching import batch_n
+from src.common.batching import batch_n
 
 
 def test_batch_list_input():

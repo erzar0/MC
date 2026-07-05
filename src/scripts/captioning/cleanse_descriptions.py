@@ -23,16 +23,15 @@ from openai import OpenAI
 from tqdm import tqdm
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from src.scripts.llm_utils import make_vllm_client, strip_thinking_tags
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src import config
+from src.common.llm_utils import make_vllm_client, strip_thinking_tags
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-ASSETS_DIR = PROJECT_ROOT / "assets"
-INPUT_CSV = ASSETS_DIR / "pmc_data_cleansed.csv"
-OUTPUT_CSV = ASSETS_DIR / "pmc_descriptions_cleaned.csv"
+INPUT_CSV = config.PIPELINE_DATA_DIR / "pmc_data_cleansed.csv"
+OUTPUT_CSV = config.PIPELINE_DATA_DIR / "pmc_descriptions_cleaned.csv"
 
 # ---------------------------------------------------------------------------
 # Separate system prompts for each field

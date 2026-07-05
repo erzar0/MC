@@ -2,6 +2,8 @@ from pathlib import Path
 
 # Base Paths
 PROJECT_ROOT = Path(__file__).parent.parent
+ASSETS_DIR = PROJECT_ROOT / "assets"  # immutable reference data (block states, palettes)
+PIPELINE_DATA_DIR = PROJECT_ROOT / "data" / "pipeline"  # mutable crawl/download state + CSVs
 
 # Third-party tools
 SERVER_DIR = PROJECT_ROOT / "tmp" / "third-party" / "server"

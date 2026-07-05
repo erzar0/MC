@@ -6,9 +6,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.block_colors import load_block_states, load_id2rgb
-from src.scripts.llm_utils import strip_thinking_tags
-from src.scripts.resumable_state import JsonStateStore
+from src.common.block_colors import load_block_states, load_id2rgb
+from src.common.llm_utils import strip_thinking_tags
+from src.common.resumable_state import JsonStateStore
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -92,8 +92,8 @@ def test_json_state_store_corrupt_file_starts_fresh(tmp_path):
     ],
 )
 def test_golden_state_schemas(state_file, required_keys):
-    """The real assets/ state files must match the schemas the classes write."""
-    path = PROJECT_ROOT / "assets" / state_file
+    """The real data/pipeline/ state files must match the schemas the classes write."""
+    path = PROJECT_ROOT / "data" / "pipeline" / state_file
     if not path.exists():
         pytest.skip(f"{state_file} not present")
     with open(path, "r", encoding="utf-8") as fh:
@@ -106,7 +106,7 @@ def test_golden_state_schemas(state_file, required_keys):
 
 def test_download_state_matches_real_schema(tmp_path):
     """DownloadState (via JsonStateStore) writes entries shaped like the real file."""
-    from src.scripts.map_downloader import DownloadState
+    from src.scripts.downloading.map_downloader import DownloadState
 
     path = tmp_path / "map_download_state.json"
     state = DownloadState(path)
@@ -121,7 +121,7 @@ def test_download_state_matches_real_schema(tmp_path):
 
 
 def test_process_state_matches_real_schema(tmp_path):
-    from src.scripts.process_downloads import ProcessState
+    from src.scripts.processing.process_worlds import ProcessState
 
     path = tmp_path / "process_state.json"
     state = ProcessState(path)

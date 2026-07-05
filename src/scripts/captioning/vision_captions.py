@@ -12,10 +12,11 @@ from PIL import Image
 from tqdm.asyncio import tqdm
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from openai import AsyncOpenAI
 
-from src.scripts.llm_utils import make_async_vllm_client, strip_thinking_tags
+from src import config
+from src.common.llm_utils import make_async_vllm_client, strip_thinking_tags
 
 try:
     # Registers the JXL codec with PIL as an import side effect
@@ -23,10 +24,8 @@ try:
 except ImportError:
     pass
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-ASSETS_DIR = PROJECT_ROOT / "assets"
-CLEANSED_DIR = PROJECT_ROOT / "tmp" / "processed_worlds" / "cleansed"
-CSV_PATH = ASSETS_DIR / "pmc_descriptions_cleaned.csv"
+CLEANSED_DIR = config.PROCESSED_WORLDS_DIR / "cleansed"
+CSV_PATH = config.PIPELINE_DATA_DIR / "pmc_descriptions_cleaned.csv"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 # Support both package import and direct script execution
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from src import config
 
 logger = logging.getLogger(__name__)
