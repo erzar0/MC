@@ -14,7 +14,8 @@ from PIL import Image
 from tqdm import tqdm
 
 try:
-    import pillow_jxl
+    # Registers the JXL codec with PIL as an import side effect
+    import pillow_jxl  # noqa: F401
 except ImportError:
     pass
 # Ensure src is in path for imports if run as main
@@ -29,6 +30,13 @@ from src.world_wrapper import WorldWrapper
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# An MCA region spans 512x512 blocks
+REGION_BLOCKS = 512
+# Post-1.18 Java worlds span y in [-64, 320], i.e. 384 blocks
+MAX_WORLD_HEIGHT = 384
+# Give the 1.6.4 conversion server at most 30 minutes to start up
+SERVER_STARTUP_TIMEOUT_S = 1800
 
 
 class WorldProcessor:
@@ -54,22 +62,6 @@ class WorldProcessor:
         self.output_dir = Path(output_dir).absolute()
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Preload the grid overlay to memory to avoid reloading during every screenshot iteration
-        self.enable_overlay = False
-        self.overlay_img = None
-
-        if self.enable_overlay:
-            overlay_path = self.project_root / "assets" / "grid.png"
-            if overlay_path.exists():
-                try:
-                    from PIL import Image
-
-                    self.overlay_img = Image.open(overlay_path).convert("RGBA")
-                except ImportError:
-                    logger.warning("Pillow (PIL) is not installed. Skipping grid overlay.")
-                except Exception as e:
-                    logger.warning(f"Failed to load grid overlay: {e}")
 
     def process_world(self, world_path: Path, world_name: str, remove_tmp_dirs: bool = False):
         """Orchestrates the processing of a single world."""
@@ -101,7 +93,8 @@ class WorldProcessor:
             screenshots_count = len(list(screenshots_dir.glob("*.png"))) if screenshots_dir.exists() else 0
 
             if remove_tmp_dirs:
-                shutil.rmtree(converted_world_path) if converted_world_path != world_path else None
+                if converted_world_path != world_path:
+                    shutil.rmtree(converted_world_path)
                 shutil.rmtree(version_updated_path.parent)
 
             logger.info(f"--- Finished processing world: {world_name} ---")
@@ -183,7 +176,7 @@ class WorldProcessor:
                 ):
                     raise RuntimeError(f"Minecraft server crashed during MCR to MCA conversion: {line_str}")
 
-                if time.time() - start_time > 1800:  # 30 min timeout
+                if time.time() - start_time > SERVER_STARTUP_TIMEOUT_S:
                     logger.warning("Server startup timed out. Proceeding anyway.")
                     break
         finally:
@@ -237,8 +230,12 @@ class WorldProcessor:
 
         logger.info("Chunker conversion successful.")
 
-    def _extract_world_data(self, world_path: Path, output_dir: Path) -> List[Tuple[int, int]]:
-        """Extracts MCA files and region volumes. Returns list of region coordinates."""
+    def _extract_world_data(self, world_path: Path, output_dir: Path) -> Tuple[List[Tuple[int, int]], dict]:
+        """Extracts MCA files and region volumes.
+
+        Returns:
+            Tuple of (list of extracted region coordinates, world metadata dict).
+        """
         logger.info(f"Step 3: Extracting world data (MCA and volumes) to {output_dir}...")
 
         # 1. Extract volumes using WorldWrapper
@@ -317,10 +314,9 @@ class WorldProcessor:
 
         pbar = tqdm(region_coords, desc="Generating screenshots")
         for rx, rz in pbar:
-            # MCA region (rx, rz) spans 512x512 blocks.
-            # mcmap takes coordinates in blocks.
-            x_from, z_from = rx * 512, rz * 512
-            x_to, z_to = x_from + 512, z_from + 512
+            # mcmap takes coordinates in blocks
+            x_from, z_from = rx * REGION_BLOCKS, rz * REGION_BLOCKS
+            x_to, z_to = x_from + REGION_BLOCKS, z_from + REGION_BLOCKS
             y_from, y_to = regions_metadata[f"{rx},{rz}"]["y_range"]
 
             for orientation in self.ORIENTATIONS:
@@ -340,9 +336,9 @@ class WorldProcessor:
                     "-min",
                     str(y_from),
                     "-max",
-                    str(384),
+                    str(MAX_WORLD_HEIGHT),
                     "-fragment",
-                    "512",
+                    str(REGION_BLOCKS),
                     "-padding",
                     "0",
                     "-dim",
@@ -364,18 +360,6 @@ class WorldProcessor:
                 try:
                     with Image.open(screenshot_path) as img:
                         base_img = img.convert("RGBA")
-
-                    if getattr(self, "enable_overlay", False) and getattr(self, "overlay_img", None) is not None:
-                        avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
-
-                        # -64 -> 1149 offset, 320 -> 0 offset
-                        offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
-
-                        # Center exactly if widths differ, otherwise it will just be 0
-                        offset_x = (base_img.width - self.overlay_img.width) // 2
-
-                        # Paste using overlay image as the alpha mask
-                        base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
 
                     # Crop transparent pixels from top and bottom
                     alpha = base_img.split()[-1]
@@ -400,7 +384,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Process a Minecraft world.")
     parser.add_argument("world_source_path", help="Path to the world source directory.")
-    parser.add_argument("world_name", help="Name of the world.", nargs="?", default="greenfield")
+    parser.add_argument("world_name", help="Name of the world.", nargs="?", default=config.DEFAULT_WORLD_NAME)
     args = parser.parse_args()
 
     world_name = args.world_name or Path(args.world_source_path).name

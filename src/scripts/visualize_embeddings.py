@@ -1,26 +1,47 @@
+"""Visualize trained block2vec embeddings as RGB colors.
+
+Reduces embeddings to 3D with PaCMAP, maps the axes to RGB, and renders
+interactive Plotly HTML plus static SVG plots. Also saves the resulting
+per-block RGB lookup table (`block_embeddings_rgb.npy`).
+"""
+
+import argparse
+import logging
+import random
+import re
+import sys
+import warnings
+from collections import defaultdict
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pacmap
 import plotly.graph_objects as go
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, QuantileTransformer
 
 plt.switch_backend("Agg")
-from pathlib import Path
+
+# Support both package import and direct script execution
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src import config
+
+logger = logging.getLogger(__name__)
 
 
-def load_data():
-    project_root = Path(__file__).parent.parent.parent
-    embeddings_path = (
-        project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_16730.npy"
-    )
-    states_path = project_root / "assets/block_states.txt"
+def find_default_checkpoint() -> Path | None:
+    """Returns the newest block-embedding checkpoint under tmp/checkpoints, if any."""
+    ckpt_dir = config.PROJECT_ROOT / "tmp" / "checkpoints"
+    candidates = sorted(ckpt_dir.glob("block_embeddings_ckpt_*.npy"), key=lambda p: p.stat().st_mtime)
+    return candidates[-1] if candidates else None
 
-    print(f"Loading embeddings from {embeddings_path}...")
-    embeddings = np.load(embeddings_path)
 
-    # Load block names
-    print(f"Loading block names from {states_path}...")
+def load_data(checkpoint_path: Path, states_path: Path):
+    logger.info(f"Loading embeddings from {checkpoint_path}...")
+    embeddings = np.load(checkpoint_path)
+
+    logger.info(f"Loading block names from {states_path}...")
     with open(states_path, "r") as f:
         block_names = [line.strip() for line in f.readlines()]
 
@@ -31,10 +52,9 @@ def load_data():
 
 
 def reduce_dimensions(embeddings):
-    print("Reducing dimensions using PaCMAP to 3D...")
+    logger.info("Reducing dimensions using PaCMAP to 3D...")
     reducer = pacmap.PaCMAP(n_components=3, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0)
-    reduced = reducer.fit_transform(embeddings, init="pca")
-    return reduced
+    return reducer.fit_transform(embeddings, init="pca")
 
 
 def get_group_key(full_name):
@@ -42,8 +62,6 @@ def get_group_key(full_name):
     e.g. 'universal_minecraft:stairs[facing="south",material="quartz",shape="straight"]'
       -> 'universal_minecraft:stairs|quartz'
     """
-    import re
-
     base = re.split(r"[\[\{]", full_name)[0]
     mat = re.search(r'material="([^"]*)"', full_name)
     if mat:
@@ -55,37 +73,18 @@ def get_group_key(full_name):
 
 
 def get_representative_colors(block_names, reduced_scaled):
-    """
-    Groups blocks by base name and assigns a color based on a RANDOM
-    representative state for the whole group.
-    """
-    import random
-    from collections import defaultdict
-
-    # Group indices by base name
+    """Groups blocks by base name and colors each group by a random representative state."""
     groups = defaultdict(list)
     for i, name in enumerate(block_names):
-        base = get_group_key(name)
-        groups[base].append(i)
+        groups[get_group_key(name)].append(i)
 
-    base_to_representative_color = {}
+    base_to_representative_color = {base: reduced_scaled[random.choice(indices)] for base, indices in groups.items()}
 
-    # Pick a random representative for each group
-    for base, indices in groups.items():
-        rep_idx = random.choice(indices)
-        base_to_representative_color[base] = reduced_scaled[rep_idx]
-
-    # Assign the group color to all members
-    final_colors = []
-    for i, name in enumerate(block_names):
-        base = get_group_key(name)
-        final_colors.append(base_to_representative_color[base])
-
-    return np.array(final_colors)
+    return np.array([base_to_representative_color[get_group_key(name)] for name in block_names])
 
 
-def visualize_3d_plotly(data, names, colors, title="3D Embedding Visualization", filename="output.html"):
-    print(f"Creating 3D Plotly visualization: {title}...")
+def visualize_3d_plotly(data, names, colors, output_dir: Path, title="3D Embedding Visualization", filename="output.html"):
+    logger.info(f"Creating 3D Plotly visualization: {title}...")
     fig = go.Figure(
         data=[
             go.Scatter3d(
@@ -109,14 +108,15 @@ def visualize_3d_plotly(data, names, colors, title="3D Embedding Visualization",
     # RGB gradient indicators along axis edges
     n_grad = 40
     t = np.linspace(0, 1, n_grad)
+    zeros = np.zeros(n_grad)
     axis_cfg = [
         # (x, y, z, R, G, B) — each axis gets its channel ramping, others at 0
-        (t, np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad)),  # X=Red
-        (np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad)),  # Y=Green
-        (np.zeros(n_grad), np.zeros(n_grad), t, np.zeros(n_grad), np.zeros(n_grad), t),  # Z=Blue
+        (t, zeros, zeros, t, zeros, zeros),  # X=Red
+        (zeros, t, zeros, zeros, t, zeros),  # Y=Green
+        (zeros, zeros, t, zeros, zeros, t),  # Z=Blue
     ]
     labels = ["R", "G", "B"]
-    for (gx, gy, gz, gr, gg, gb), label in zip(axis_cfg, labels):
+    for (gx, gy, gz, gr, gg, gb), label in zip(axis_cfg, labels, strict=True):
         fig.add_trace(
             go.Scatter3d(
                 x=gx,
@@ -126,7 +126,8 @@ def visualize_3d_plotly(data, names, colors, title="3D Embedding Visualization",
                 marker=dict(
                     size=4,
                     color=[
-                        "rgb({},{},{})".format(int(r * 255), int(g * 255), int(b * 255)) for r, g, b in zip(gr, gg, gb)
+                        "rgb({},{},{})".format(int(r * 255), int(g * 255), int(b * 255))
+                        for r, g, b in zip(gr, gg, gb, strict=True)
                     ],
                     opacity=1.0,
                 ),
@@ -152,19 +153,17 @@ def visualize_3d_plotly(data, names, colors, title="3D Embedding Visualization",
         margin=dict(l=0, r=0, b=0, t=40),
     )
 
-    Path("tmp").mkdir(exist_ok=True)
-    output_path = f"tmp/{filename}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / filename
     fig.write_html(output_path)
-    print(f"3D visualization saved to {output_path}")
+    logger.info(f"3D visualization saved to {output_path}")
 
 
-def visualize_2d_seaborn(data, names, colors, title="2D Projection", filename="output.svg"):
-    import random
-
+def visualize_2d_seaborn(data, names, colors, output_dir: Path, title="2D Projection", filename="output.svg"):
     dims = random.sample(range(3), 2)
     d1, d2 = dims[1], dims[0]
 
-    print(f"Creating 2D Seaborn SVG: {title} (Dimensions {d1 + 1} vs {d2 + 1})...")
+    logger.info(f"Creating 2D SVG: {title} (Dimensions {d1 + 1} vs {d2 + 1})...")
 
     num_points = data.shape[0]
     label_indices = np.linspace(0, num_points - 1, 150, dtype=int)
@@ -185,26 +184,20 @@ def visualize_2d_seaborn(data, names, colors, title="2D Projection", filename="o
 
     plt.title(f"{title} - Dimensions {d1 + 1} vs {d2 + 1}", color="black", fontsize=20)
 
-    Path("tmp").mkdir(exist_ok=True)
-    output_path = f"tmp/{filename}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / filename
     plt.savefig(output_path, format="svg", facecolor="white")
-    print(f"2D plot saved to {output_path}")
+    logger.info(f"2D plot saved to {output_path}")
 
 
-def main():
-    SQUISH_OUTLIERS = True
+def compute_rgb_coordinates(embeddings, raw_norms, squish_outliers: bool = True):
+    """Maps embeddings to [0, 1]^3 RGB coordinates via PaCMAP + PCA + equalization.
 
-    try:
-        embeddings, names = load_data()
-    except Exception as e:
-        print(f"Error loading data: {e}")
-        return
-
-    # Compute raw norms before normalization (for untrained block filtering)
-    raw_norms = np.linalg.norm(embeddings, axis=1)
-
+    Returns:
+        Tuple of (rgb coords for kept blocks, boolean keep mask over the vocabulary).
+    """
     # Pre-process embeddings: mean subtraction
-    print("Centering raw embeddings...")
+    logger.info("Centering raw embeddings...")
     embeddings = embeddings - embeddings.mean(axis=0)
 
     # PaCMAP 3D reduction on ALL embeddings (preserves global structure)
@@ -212,68 +205,98 @@ def main():
 
     # Filter out untrained blocks AFTER PaCMAP (using raw norms)
     keep_mask = raw_norms > 0.0
-
     n_filtered = (~keep_mask).sum()
-    print(f"Filtered {n_filtered} blocks (untrained). Keeping {keep_mask.sum()}/{len(names)}.")
-
+    logger.info(f"Filtered {n_filtered} blocks (untrained). Keeping {keep_mask.sum()}/{len(keep_mask)}.")
     pacmap_3d = pacmap_3d[keep_mask]
-    names = [n for n, k in zip(names, keep_mask) if k]
 
     # Center the 3D embeddings
-    print("Centering 3D coordinates...")
+    logger.info("Centering 3D coordinates...")
     pacmap_3d = pacmap_3d - pacmap_3d.mean(axis=0)
 
-    # 1. Align main point cloud variances to RGB axes via PCA
-    # This removes diagonal correlation, so the point cloud fills the axis-aligned RGB box
-    # print("Decorrelating axes with PCA to fill color space...")
+    # 1. Align main point cloud variances to RGB axes via PCA.
+    # This removes diagonal correlation, so the point cloud fills the axis-aligned RGB box.
     pacmap_3d = PCA(n_components=3).fit_transform(pacmap_3d)
-
-    import warnings
 
     warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.preprocessing._data")
 
-    # 2. Advanced Adaptive Squishing: Histogram Equalization (QuantileTransformer)
-    # This non-linear algorithm maps the empirical CDF of each axis perfectly to [0, 1].
-    # Dense clusters are entirely expanded to reveal their internal structure, and
-    # sparse outlier tails are smoothly, tightly compressed, yielding ZERO empty space.
-    if SQUISH_OUTLIERS:
-        print("Applying advanced Quantile Transformation (Histogram Equalization)...")
-        from sklearn.preprocessing import QuantileTransformer
-
-        # High n_quantiles ensures smooth color gradients across the vocabulary
+    # 2. Adaptive squishing: histogram equalization maps the empirical CDF of each
+    # axis to [0, 1]. Dense clusters expand, sparse outlier tails compress.
+    if squish_outliers:
+        logger.info("Applying Quantile Transformation (histogram equalization)...")
         scaler = QuantileTransformer(n_quantiles=100000, output_distribution="uniform", subsample=1000000)
         pacmap_3d = scaler.fit_transform(pacmap_3d)
 
-    scaler = MinMaxScaler()
-    pacmap_3d = scaler.fit_transform(pacmap_3d)
+    pacmap_3d = MinMaxScaler().fit_transform(pacmap_3d)
+    return pacmap_3d, keep_mask
 
-    # Reconstruct the full vocabulary array including the unfiltered blocks
-    # Untrained blocks will default to [0, 0, 0] (black)
+
+def main():
+    parser = argparse.ArgumentParser(description="Visualize block2vec embeddings as RGB colors")
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help="Path to a block_embeddings_*.npy checkpoint (default: newest under tmp/checkpoints)",
+    )
+    parser.add_argument(
+        "--block-states",
+        type=Path,
+        default=config.PROJECT_ROOT / "assets" / "block_states.txt",
+        help="Path to block_states.txt",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=config.PROJECT_ROOT / "tmp",
+        help="Directory for plots and the RGB LUT",
+    )
+    parser.add_argument("--no-squish", action="store_true", help="Disable quantile-based outlier squishing")
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+    checkpoint = args.checkpoint or find_default_checkpoint()
+    if checkpoint is None or not Path(checkpoint).exists():
+        logger.error("No embeddings checkpoint found. Pass --checkpoint explicitly.")
+        raise SystemExit(1)
+
+    embeddings, names = load_data(Path(checkpoint), args.block_states)
+
+    # Compute raw norms before normalization (for untrained block filtering)
+    raw_norms = np.linalg.norm(embeddings, axis=1)
+
+    pacmap_3d, keep_mask = compute_rgb_coordinates(embeddings, raw_norms, squish_outliers=not args.no_squish)
+    names = [n for n, k in zip(names, keep_mask, strict=True) if k]
+
+    # Reconstruct the full vocabulary array including the unfiltered blocks.
+    # Untrained blocks default to [0, 0, 0] (black).
     full_colors = np.zeros((len(keep_mask), 3), dtype=np.float32)
     full_colors[keep_mask] = pacmap_3d
 
     # Save the mapped colors as a 0-255 uint8 NumPy array for use as a LUT
     lut_uint8 = (full_colors * 255).astype(np.uint8)
-    lut_path = Path("tmp/block_embeddings_rgb.npy")
+    lut_path = args.output_dir / "block_embeddings_rgb.npy"
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     np.save(lut_path, lut_uint8)
-    print(f"Saved {len(lut_uint8)} RGB colors to {lut_path} for use as LUT.")
+    logger.info(f"Saved {len(lut_uint8)} RGB colors to {lut_path} for use as LUT.")
+
     # Mode 1: Individual Coloring (Every state is unique)
-    print("\n--- Mode 1: Individual State Colors ---")
+    logger.info("--- Mode 1: Individual State Colors ---")
     visualize_3d_plotly(
-        pacmap_3d, names, pacmap_3d, title="PaCMAP Individual Colors", filename="pacmap_individual_3d.html"
+        pacmap_3d, names, pacmap_3d, args.output_dir, title="PaCMAP Individual Colors", filename="pacmap_individual_3d.html"
     )
     visualize_2d_seaborn(
-        pacmap_3d, names, pacmap_3d, title="PaCMAP Individual Colors", filename="pacmap_individual_2d.svg"
+        pacmap_3d, names, pacmap_3d, args.output_dir, title="PaCMAP Individual Colors", filename="pacmap_individual_2d.svg"
     )
 
     # Mode 2: Grouped Representative Coloring (Grouped by base name)
-    print("\n--- Mode 2: Grouped Representative Colors ---")
+    logger.info("--- Mode 2: Grouped Representative Colors ---")
     grouped_colors = get_representative_colors(names, pacmap_3d)
     visualize_3d_plotly(
-        pacmap_3d, names, grouped_colors, title="PaCMAP Grouped Colors", filename="pacmap_grouped_3d.html"
+        pacmap_3d, names, grouped_colors, args.output_dir, title="PaCMAP Grouped Colors", filename="pacmap_grouped_3d.html"
     )
     visualize_2d_seaborn(
-        pacmap_3d, names, grouped_colors, title="PaCMAP Grouped Colors", filename="pacmap_grouped_2d.svg"
+        pacmap_3d, names, grouped_colors, args.output_dir, title="PaCMAP Grouped Colors", filename="pacmap_grouped_2d.svg"
     )
 
 
