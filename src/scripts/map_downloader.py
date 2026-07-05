@@ -202,15 +202,35 @@ class DropboxResolver(UrlResolver):
 
 
 class PlanetMinecraftResolver(UrlResolver):
-    """Appends /download/ to PlanetMinecraft project URLs."""
+    """Appends /download/ to PlanetMinecraft project URLs and resolves redirects."""
+    
+    def __init__(self):
+        self.chain = None # Set by ResolverChain later
 
     def can_handle(self, url: str) -> bool:
         return "planetminecraft.com" in _netloc(url)
 
     def resolve(self, url: str) -> Optional[str]:
-        if "/download/" in url:
-            return url
-        return url.rstrip("/") + "/download/"
+        if "/download/" not in url:
+            url = url.rstrip("/") + "/download/"
+            
+        try:
+            # PMC download URLs often redirect to a third-party host (like MediaFire)
+            # Or they serve the file directly if hosted on PMC.
+            # Using GET because HEAD sometimes returns 403 or doesn't include the Location header
+            resp = SESSION.get(url, timeout=15, allow_redirects=False)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                loc = resp.headers.get("Location")
+                if loc and "planetminecraft.com" not in _netloc(loc):
+                    # Redirects to another host! Let the chain handle it if possible.
+                    if self.chain:
+                        return self.chain.resolve(loc)
+                    return loc
+        except Exception as e:
+            log.debug(f"PlanetMinecraft resolve error: {e}")
+            pass
+            
+        return url
 
 
 class DirectResolver(UrlResolver):
@@ -223,6 +243,49 @@ class DirectResolver(UrlResolver):
         return url
 
 
+class GoogleDriveResolver(UrlResolver):
+    """Resolves Google Drive URLs."""
+
+    def can_handle(self, url: str) -> bool:
+        return "drive.google.com" in _netloc(url)
+
+    def resolve(self, url: str) -> Optional[str]:
+        file_id = None
+        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+        if match:
+            file_id = match.group(1)
+        else:
+            match = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', url)
+            if match:
+                file_id = match.group(1)
+            else:
+                match = re.search(r'/folders/([a-zA-Z0-9_-]+)', url)
+                if match:
+                    file_id = match.group(1)
+                
+        if not file_id:
+            return None
+            
+        base_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        try:
+            resp = SESSION.get(base_url, stream=True, timeout=25, allow_redirects=False)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                loc = resp.headers.get("Location")
+                if loc:
+                    return loc
+            elif resp.status_code == 200:
+                for key, value in resp.cookies.items():
+                    if key.startswith("download_warning"):
+                        return f"{base_url}&confirm={value}"
+                return base_url
+        except Exception as e:
+            log.debug(f"Google Drive resolve error: {e}")
+            pass
+            
+        return base_url
+
+
 class ResolverChain:
     """
     Tries each registered resolver in order and returns the first
@@ -231,8 +294,13 @@ class ResolverChain:
 
     def __init__(self, resolvers: list[UrlResolver]):
         self._resolvers = resolvers
+        for r in self._resolvers:
+            if hasattr(r, 'chain'):
+                r.chain = self
 
-    def resolve(self, url: str) -> Optional[str]:
+    def resolve(self, url: str, depth: int = 0) -> Optional[str]:
+        if depth > 5:
+            return None
         for resolver in self._resolvers:
             if resolver.can_handle(url):
                 result = resolver.resolve(url)
@@ -249,6 +317,7 @@ DEFAULT_RESOLVER_CHAIN = ResolverChain([
     MediaFireResolver(),
     DropboxResolver(),
     PlanetMinecraftResolver(),
+    GoogleDriveResolver(),
     DirectResolver(),
 ])
 
@@ -500,12 +569,41 @@ class MapDownloader:
 
         with open(INPUT_CSV, newline="", encoding="utf-8") as fh:
             rows = list(csv.DictReader(fh))
-        log.info(f"Loaded {len(rows)} rows from {INPUT_CSV.name}")
+            
+        allowed_categories = {
+            "Environment | Landscaping Map",
+            "Complex Map", "Complex",
+            "Land Structure Map", "Land Structure",
+            "Underground Structure Map", "Underground Structure",
+            "Water Structure Map", "Water Structure"
+        }
+        
+        rows = [r for r in rows if r.get("category", "").strip() in allowed_categories]
+        
+        def get_downloads(r):
+            try:
+                return int(r.get("downloads", 0) or 0)
+            except ValueError:
+                return 0
+                
+        rows.sort(key=get_downloads, reverse=True)
+            
+        log.info(f"Loaded {len(rows)} rows from {INPUT_CSV.name} after filtering and sorting")
 
         done = failed = skipped = processed = 0
 
+        def get_dir_size(path: Path) -> int:
+            if not path.exists():
+                return 0
+            return sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+
         for row in rows:
             if not self.running or (limit and processed >= limit):
+                break
+
+            current_dir_size = get_dir_size(DOWNLOAD_DIR)
+            if current_dir_size > 50 * 1024**3:
+                log.warning(f"Downloads directory exceeded 50GB limit (Current size: {current_dir_size / 1024**3:.2f}GB). Stopping.")
                 break
 
             map_id  = row["id"].strip()
@@ -556,6 +654,8 @@ class MapDownloader:
 
             if status == "done":
                 done += 1
+                new_size = get_dir_size(DOWNLOAD_DIR)
+                log.info(f"[{map_id}] Current downloads directory size: {new_size / 1024**3:.2f}GB / 50.00GB")
             else:
                 failed += 1
 

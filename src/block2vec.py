@@ -445,7 +445,7 @@ if __name__ == "__main__":
     parser.add_argument("--subsample_t", type=float, default=1e-5, help="Subsampling threshold")
     parser.add_argument("--neighbor_mode", type=str, default="cube26", choices=["face6", "cube26"])
     parser.add_argument("--save_dir", type=str, default="tmp/checkpoints")
-    parser.add_argument("--save_every", type=int, default=10, help="Checkpoint every N volumes")
+    parser.add_argument("--save_every", type=int, default=1000, help="Checkpoint every N volumes")
     parser.add_argument("--block_states", type=str, default=None, help="Path to block_states.txt")
     args = parser.parse_args()
 

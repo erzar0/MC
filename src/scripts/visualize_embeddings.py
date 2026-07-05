@@ -12,7 +12,7 @@ import os
 
 def load_data():
     project_root = Path(__file__).parent.parent.parent
-    embeddings_path = project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_22000.npy"
+    embeddings_path = project_root / "/home/kyre/repos/minecraft-world-generator/tmp/checkpoints/block_embeddings_ckpt_16730.npy"
     states_path = project_root / "assets/block_states.txt"
 
     print(f"Loading embeddings from {embeddings_path}...")

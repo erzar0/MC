@@ -234,3 +234,9 @@ config/
 openspec
 !assets/grid.png
 !assets/bottom.png
+
+# Local tool/env dirs
+vllm_env/
+.vllm_venv/
+.antigravitycli/
+.claude/

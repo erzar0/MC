@@ -49,18 +49,21 @@ class WorldProcessor:
         self.output_dir = Path(output_dir).absolute()
         
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Preload the grid overlay to memory to avoid reloading during every screenshot iteration
+        self.enable_overlay = False
         self.overlay_img = None
-        overlay_path = self.project_root / "assets" / "grid.png"
-        if overlay_path.exists():
-            try:
-                from PIL import Image
-                self.overlay_img = Image.open(overlay_path).convert("RGBA")
-            except ImportError:
-                logger.warning("Pillow (PIL) is not installed. Skipping grid overlay.")
-            except Exception as e:
-                logger.warning(f"Failed to load grid overlay: {e}")
+        
+        if self.enable_overlay:
+            overlay_path = self.project_root / "assets" / "grid.png"
+            if overlay_path.exists():
+                try:
+                    from PIL import Image
+                    self.overlay_img = Image.open(overlay_path).convert("RGBA")
+                except ImportError:
+                    logger.warning("Pillow (PIL) is not installed. Skipping grid overlay.")
+                except Exception as e:
+                    logger.warning(f"Failed to load grid overlay: {e}")
 
     def process_world(self, world_path: Path, world_name: str, remove_tmp_dirs: bool = False):
         """Orchestrates the processing of a single world."""
@@ -167,6 +170,9 @@ class WorldProcessor:
                 if "Done" in line_str or "Preparing spawn area" in line_str:
                     logger.info("Conversion trigger detected. Stopping server.")
                     break
+
+                if "This crash report has been saved to" in line_str or "Encountered an unexpected exception" in line_str:
+                    raise RuntimeError(f"Minecraft server crashed during MCR to MCA conversion: {line_str}")
                 
                 if time.time() - start_time > 1800: # 30 min timeout
                     logger.warning("Server startup timed out. Proceeding anyway.")
@@ -278,9 +284,12 @@ class WorldProcessor:
             
         return extracted_regions, wrapper.metadata
 
+    ORIENTATIONS = ["nw", "ne", "se", "sw"]
+
     def _generate_screenshots(self, world_path: Path, output_dir: Path, region_coords: List[Tuple[int, int]], regions_metadata: dict):
-        """Generates screenshots for regions using mcmap."""
-        logger.info(f"Step 4: Generating screenshots for {len(region_coords)} regions...")
+        """Generates screenshots for regions using mcmap in all 4 orientations."""
+        total = len(region_coords) * len(self.ORIENTATIONS)
+        logger.info(f"Step 4: Generating screenshots for {len(region_coords)} regions x {len(self.ORIENTATIONS)} orientations ({total} total)...")
         
         if not self.mcmap_bin.exists():
             logger.warning(f"mcmap binary not found at {self.mcmap_bin}. Skipping screenshot generation.")
@@ -288,62 +297,72 @@ class WorldProcessor:
 
         pbar = tqdm(region_coords, desc="Generating screenshots")
         for rx, rz in pbar:
-            pbar.set_postfix({"region": f"r.{rx}.{rz}"})
             # MCA region (rx, rz) spans 512x512 blocks.
             # mcmap takes coordinates in blocks.
             x_from, z_from = rx * 512, rz * 512
             x_to, z_to = x_from + 512, z_from + 512
             y_from, y_to = regions_metadata[f"{rx},{rz}"]["y_range"]
-            
-            screenshot_path = output_dir / f"r.{rx}.{rz}.png"
-            
-            cmd = [
-                str(self.mcmap_bin),
-                "-from", str(x_from), str(z_from),
-                "-to", str(x_to), str(z_to),
-                "-min", str(y_from),
-                "-max", str(384),
-                "-fragment", "512",
-                "-padding", "0",
-                "-dim", "overworld",
-                "-nobeacons",
-                "-shading",
-                "-lighting",
-                "-file", str(screenshot_path),
-                str(world_path)
-            ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                logger.warning(f"mcmap failed for r.{rx}.{rz}: {result.stderr}")
-                return
+
+            for orientation in self.ORIENTATIONS:
+                pbar.set_postfix({"region": f"r.{rx}.{rz}", "orientation": orientation})
                 
-            # Add Grid Overlay and Compress to AVIF Q50
-            try:
-                with Image.open(screenshot_path) as img:
-                    base_img = img.convert("RGBA")
+                screenshot_path = output_dir / f"r.{rx}.{rz}.{orientation}.png"
                 
-                if getattr(self, "overlay_img", None) is not None:
-                    avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
+                cmd = [
+                    str(self.mcmap_bin),
+                    f"-{orientation}",
+                    "-from", str(x_from), str(z_from),
+                    "-to", str(x_to), str(z_to),
+                    "-min", str(y_from),
+                    "-max", str(384),
+                    "-fragment", "512",
+                    "-padding", "0",
+                    "-dim", "overworld",
+                    "-nobeacons",
+                    "-shading",
+                    "-lighting",
+                    "-file", str(screenshot_path),
+                    str(world_path)
+                ]
+                
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.warning(f"mcmap failed for r.{rx}.{rz} ({orientation}): {result.stderr}")
+                    continue
                     
-                    # -64 -> 1149 offset, 320 -> 0 offset
-                    offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
+                # Crop transparent pixels from top/bottom and Compress to JXL
+                try:
+                    with Image.open(screenshot_path) as img:
+                        base_img = img.convert("RGBA")
                     
-                    # Center exactly if widths differ, otherwise it will just be 0
-                    offset_x = (base_img.width - self.overlay_img.width) // 2
+                    if getattr(self, "enable_overlay", False) and getattr(self, "overlay_img", None) is not None:
+                        avg_surface_y = regions_metadata[f"{rx},{rz}"].get("avg_surface_y", 320)
+                        
+                        # -64 -> 1149 offset, 320 -> 0 offset
+                        offset_y = round(1149 - ((avg_surface_y + 64) / 384.0) * 1149)
+                        
+                        # Center exactly if widths differ, otherwise it will just be 0
+                        offset_x = (base_img.width - self.overlay_img.width) // 2
+                        
+                        # Paste using overlay image as the alpha mask
+                        base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
+                        
+                    # Crop transparent pixels from top and bottom
+                    alpha = base_img.split()[-1]
+                    bbox = alpha.getbbox()
+                    if bbox:
+                        _, upper, _, lower = bbox
+                        base_img = base_img.crop((0, upper, base_img.width, lower))
                     
-                    # Paste using overlay image as the alpha mask
-                    base_img.paste(self.overlay_img, (offset_x, offset_y), self.overlay_img)
-                
-                jxl_path = screenshot_path.with_suffix('.jxl')
-                # Using JXL for ML Datasets
-                base_img.save(jxl_path, quality=70, effort=3)
-                
-                # Delete the original PNG image
-                if screenshot_path.exists():
-                    os.remove(screenshot_path)
-            except Exception as e:
-                logger.warning(f"Failed to process screenshot for r.{rx}.{rz}: {e}")
+                    jxl_path = screenshot_path.with_suffix('.jxl')
+                    # Using JXL for ML Datasets
+                    base_img.save(jxl_path, quality=70, effort=3)
+                    
+                    # Delete the original PNG image
+                    if screenshot_path.exists():
+                        os.remove(screenshot_path)
+                except Exception as e:
+                    logger.warning(f"Failed to process screenshot for r.{rx}.{rz} ({orientation}): {e}")
 
 if __name__ == "__main__":
     import argparse

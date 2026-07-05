@@ -32,6 +32,30 @@ uv sync
 - [mcmap](https://github.com/spoutn1k/mcmap) - Rendering of Minecraft maps
 - [chunker](https://www.chunker.app/) - Translation of Minecraft world versions
 
+## 🖼️ Caption Generation (vLLM)
+
+To generate vision captions for JXL screenshots, we use a separate vLLM environment to prevent package bloat and JIT compilation issues:
+
+### 1. Setup the separate vLLM environment
+```bash
+cd vllm_env
+uv sync
+cd ..
+```
+
+### 2. Run the vLLM Server
+Run the local vLLM server with PyTorch's native sampler enabled (bypassing FlashInfer JIT compatibility bugs on WSL) and optimized memory bounds for the RTX 4070 Ti SUPER:
+```bash
+CUDA_HOME=/usr FLASHINFER_NVCC_THREADS=8 VLLM_USE_FLASHINFER_SAMPLER=0 .vllm_venv/bin/vllm serve Qwen/Qwen3-VL-8B-Instruct-FP8 --max-model-len 6144 --gpu-memory-utilization 0.90 --port 8000
+```
+
+### 3. Run the Captioning Script
+Once the server finishes loading and starts listening, run the captioning script using your main project virtual environment:
+```bash
+.venv/bin/python src/scripts/generate_vision_captions.py --model Qwen/Qwen3-VL-8B-Instruct-FP8 --base-url http://localhost:8000/v1 --concurrency 64
+```
+
+
 ## 📦 Tech Stack
 
 - **Core**: Python 3.12+

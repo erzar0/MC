@@ -4,6 +4,11 @@ import json
 import logging
 import argparse
 import signal
+import shutil
+import random
+import re
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional, Dict
 
@@ -21,6 +26,35 @@ log = logging.getLogger("process_downloads")
 
 STATE_FILE = project_root / "assets" / "process_state.json"
 DOWNLOADS_DIR = config.DOWNLOADS_DIR
+
+def _worker_task(map_id: str, world_root: Path) -> tuple[str, dict]:
+    worker_id = multiprocessing.current_process().pid
+    
+    # Create worker-specific server_dir to avoid port/file clashes during MCR to MCA conversion
+    worker_server_dir = Path(config.SERVER_DIR).parent / f"{Path(config.SERVER_DIR).name}_worker_{worker_id}"
+    
+    if not worker_server_dir.exists():
+        try:
+            shutil.copytree(config.SERVER_DIR, worker_server_dir, dirs_exist_ok=True)
+            # Change server-port to avoid "Address already in use"
+            props_path = worker_server_dir / "server.properties"
+            if props_path.exists():
+                with open(props_path, "r") as f:
+                    content = f.read()
+                port = random.randint(26000, 30000)
+                content = re.sub(r"server-port=\d+", f"server-port={port}", content)
+                if "server-port" not in content:
+                    content += f"\nserver-port={port}\n"
+                with open(props_path, "w") as f:
+                    f.write(content)
+        except Exception as e:
+            log.warning(f"Failed to setup worker server dir: {e}")
+            pass
+
+    processor = WorldProcessor(server_dir=worker_server_dir)
+    return map_id, processor.process_world(world_root, map_id, remove_tmp_dirs=True)
+
+
 
 
 class ProcessState:
@@ -74,16 +108,18 @@ class DownloadProcessor:
 
     def __init__(self):
         self.state = ProcessState()
-        self.processor = WorldProcessor()
         self.running = True
+        self.executor = None
         
         signal.signal(signal.SIGINT, self._handle_exit)
         signal.signal(signal.SIGTERM, self._handle_exit)
 
     def _handle_exit(self, signum, frame):
         if self.running:
-            log.info("Interrupt received – finishing current world before exit...")
+            log.info("Interrupt received – finishing current worlds before exit...")
             self.running = False
+            if self.executor:
+                self.executor.shutdown(wait=False, cancel_futures=True)
         else:
             log.warning("Second interrupt – exiting immediately.")
             sys.exit(1)
@@ -95,7 +131,7 @@ class DownloadProcessor:
                 return p.parent
         return None
 
-    def process_all(self, limit: Optional[int] = None, retry_failed: bool = False):
+    def process_all(self, limit: Optional[int] = None, retry_failed: bool = False, workers: int = 1):
         """Processes all valid map directories found in tmp/downloads."""
         if not DOWNLOADS_DIR.exists():
             log.error(f"Downloads directory not found: {DOWNLOADS_DIR}")
@@ -104,9 +140,9 @@ class DownloadProcessor:
         map_dirs = [d for d in DOWNLOADS_DIR.iterdir() if d.is_dir()]
         log.info(f"Found {len(map_dirs)} downloaded maps in {DOWNLOADS_DIR.name}")
 
-        self._process_list(map_dirs, limit=limit, retry_failed=retry_failed)
+        self._process_list(map_dirs, limit=limit, retry_failed=retry_failed, workers=workers)
 
-    def process_ids(self, map_ids: list[str], retry_failed: bool = False):
+    def process_ids(self, map_ids: list[str], retry_failed: bool = False, workers: int = 1):
         """Processes only specific map IDs."""
         map_dirs = []
         for map_id in map_ids:
@@ -116,13 +152,15 @@ class DownloadProcessor:
                 continue
             map_dirs.append(map_dir)
 
-        self._process_list(map_dirs, limit=None, retry_failed=retry_failed)
+        self._process_list(map_dirs, limit=None, retry_failed=retry_failed, workers=workers)
 
-    def _process_list(self, map_dirs: list[Path], limit: Optional[int], retry_failed: bool):
+    def _process_list(self, map_dirs: list[Path], limit: Optional[int], retry_failed: bool, workers: int):
         processed = done = failed = skipped = 0
+        
+        tasks_to_run = []
 
         for map_dir in map_dirs:
-            if not self.running or (limit and processed >= limit):
+            if limit and len(tasks_to_run) >= limit:
                 break
 
             map_id = map_dir.name
@@ -145,40 +183,66 @@ class DownloadProcessor:
                 self.state.mark_failed(map_id, "No level.dat found inside directory")
                 self.state.save()
                 failed += 1
-                processed += 1
                 continue
 
-            log.info(f"[{map_id}] Starting Processing on: {world_root.relative_to(DOWNLOADS_DIR)}")
-            
-            # Execute processor
-            result = self.processor.process_world(world_root, map_id, remove_tmp_dirs=True)
+            tasks_to_run.append((map_id, world_root))
 
-            if result["status"] == "success":
-                import shutil
-                output_dir = Path(result["output_dir"])
-                screenshots_dir = output_dir / "screenshots"
+        if not tasks_to_run:
+            log.info(f"\nFinished processing. done={done}  failed={failed}  skipped(already-processed)={skipped}")
+            return
+
+        log.info(f"Submitting {len(tasks_to_run)} maps to {workers} workers.")
+
+        self.executor = ProcessPoolExecutor(max_workers=workers)
+        futures = {}
+        for map_id, world_root in tasks_to_run:
+            future = self.executor.submit(_worker_task, map_id, world_root)
+            futures[future] = map_id
+
+        try:
+            for future in as_completed(futures):
+                if not self.running:
+                    break
                 
-                if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
-                    zero_regions_dir = output_dir.parent / "0_regions" / map_id
-                    zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
-                    if zero_regions_dir.exists():
-                        shutil.rmtree(zero_regions_dir)
-                    shutil.move(str(output_dir), str(zero_regions_dir))
+                map_id = futures[future]
+                try:
+                    map_id, result = future.result()
                     
-                    self.state.mark_failed(map_id, "0 screenshots generated")
-                    log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
-                    failed += 1
-                else:
-                    self.state.mark_done(map_id, result["output_dir"])
-                    log.info(f"[{map_id}] ✓ Successfully processed")
-                    done += 1
-            else:
-                self.state.mark_failed(map_id, result["error"])
-                log.error(f"[{map_id}] ✗ Failed to process: {result['error']}")
-                failed += 1
+                    if result["status"] == "success":
+                        output_dir = Path(result["output_dir"])
+                        screenshots_dir = output_dir / "screenshots"
+                        
+                        if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
+                            zero_regions_dir = output_dir.parent / "0_regions" / map_id
+                            zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
+                            if zero_regions_dir.exists():
+                                shutil.rmtree(zero_regions_dir)
+                            shutil.move(str(output_dir), str(zero_regions_dir))
+                            
+                            self.state.mark_failed(map_id, "0 screenshots generated")
+                            log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
+                            failed += 1
+                        else:
+                            self.state.mark_done(map_id, result["output_dir"])
+                            log.info(f"[{map_id}] ✓ Successfully processed")
+                            done += 1
+                    else:
+                        self.state.mark_failed(map_id, result["error"])
+                        log.error(f"[{map_id}] ✗ Failed to process: {result['error']}")
+                        failed += 1
 
-            self.state.save()
-            processed += 1
+                except Exception as exc:
+                    log.error(f"[{map_id}] ✗ Worker failed with exception: {exc}")
+                    self.state.mark_failed(map_id, f"Worker exception: {exc}")
+                    failed += 1
+                
+                self.state.save()
+                processed += 1
+                
+        except Exception as e:
+            log.error(f"Execution interrupted: {e}")
+        finally:
+            self.executor.shutdown(wait=False, cancel_futures=True)
 
         log.info(
             f"\nFinished processing. done={done}  failed={failed}  "
@@ -194,6 +258,8 @@ def _parse_args() -> argparse.Namespace:
                         help="Attempt to process maps that previously failed")
     parser.add_argument("--ids", nargs="+",
                         help="Only process specific map IDs")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="Number of concurrent workers for processing maps")
     parser.add_argument("--debug", action="store_true",
                         help="Enable DEBUG log level")
     return parser.parse_args()
@@ -207,6 +273,6 @@ if __name__ == "__main__":
     orchestrator = DownloadProcessor()
 
     if args.ids:
-        orchestrator.process_ids(args.ids, retry_failed=args.retry_failed)
+        orchestrator.process_ids(args.ids, retry_failed=args.retry_failed, workers=args.workers)
     else:
-        orchestrator.process_all(limit=args.limit, retry_failed=args.retry_failed)
+        orchestrator.process_all(limit=args.limit, retry_failed=args.retry_failed, workers=args.workers)

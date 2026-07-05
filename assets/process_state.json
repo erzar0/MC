@@ -1,1060 +1,1100 @@
 {
-  "6518733": {
+  "3685354": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6518733"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3685354"
   },
-  "6687302": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6687302"
-  },
-  "6586660": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6586660"
-  },
-  "6541264": {
+  "2747333": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6739231": {
+  "2825656": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6739231"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2825656"
   },
-  "6511979": {
+  "2632699": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2632699"
+  },
+  "1665860": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6758058": {
+  "3149015": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6758058"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3149015"
   },
-  "6765106": {
+  "5188110": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5188110"
+  },
+  "3919": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3919"
+  },
+  "2622529": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2622529"
+  },
+  "3926770": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3926770"
+  },
+  "3084413": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6707037": {
+  "2071124": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "5966504": {
+  "384469": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5966504"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/384469"
   },
-  "4686974": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6541269": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6541269"
-  },
-  "6613364": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6613364"
-  },
-  "6720640": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6720640"
-  },
-  "6533461": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6533461"
-  },
-  "6590690": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6590690"
-  },
-  "6508460": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6508460"
-  },
-  "6610157": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6447926": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6790912": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6790912"
-  },
-  "6714716": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6714716"
-  },
-  "6511150": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6511150"
-  },
-  "5995881": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5995881"
-  },
-  "6636864": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4258196": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4258196"
-  },
-  "6598368": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6598368"
-  },
-  "6531035": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6531035"
-  },
-  "6542404": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6542404"
-  },
-  "4760700": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4760700"
-  },
-  "6595381": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6595381"
-  },
-  "6736213": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6736213"
-  },
-  "6476121": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6476121"
-  },
-  "6513273": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6489394": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6489394"
-  },
-  "6694090": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6499907": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6695870": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6695870"
-  },
-  "5919699": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4982915": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6765444": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6765444"
-  },
-  "6337019": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6337019"
-  },
-  "6519329": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6519329"
-  },
-  "3582260": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3582260"
-  },
-  "6518359": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6559126": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6559126"
-  },
-  "6384005": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6384005"
-  },
-  "6520773": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6520773"
-  },
-  "6583798": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6583798"
-  },
-  "6666413": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6528589": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6528589"
-  },
-  "6658754": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6658754"
-  },
-  "6567786": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6567786"
-  },
-  "6418131": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6418131"
-  },
-  "6807529": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6807529"
-  },
-  "6496522": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6496522"
-  },
-  "6533554": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6567449": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6567449"
-  },
-  "6777448": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6501399": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6501399"
-  },
-  "6649005": {
+  "3342216": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6649005"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3342216"
   },
-  "6404309": {
+  "289137": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6404309"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/289137"
   },
-  "6617604": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6100610": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6100610"
-  },
-  "6420786": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6699593": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6699593"
-  },
-  "6502821": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502821"
-  },
-  "6514042": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6019275": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6438985": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6438985"
-  },
-  "6696986": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6696986"
-  },
-  "6448285": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6448285"
-  },
-  "6302506": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6302506"
-  },
-  "6670260": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6136676": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4291514": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6527919": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6527919"
-  },
-  "6175182": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6175182"
-  },
-  "6494880": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6657875": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6657875"
-  },
-  "6587280": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6587280"
-  },
-  "6744522": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6744522"
-  },
-  "4340011": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4340011"
-  },
-  "6197218": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6733458": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6733458"
-  },
-  "4712360": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4712360"
-  },
-  "6789506": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6789506"
-  },
-  "6506709": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6506709"
-  },
-  "6699969": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6699969"
-  },
-  "6618320": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6618320"
-  },
-  "6674249": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6674249"
-  },
-  "6651699": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6651699"
-  },
-  "6520625": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6650468": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6650468"
-  },
-  "6588995": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6622023": {
-    "status": "failed",
-    "error": "No level.dat found inside directory",
-    "output_dir": null
-  },
-  "5309471": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5309471"
-  },
-  "6609593": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6232328": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6232328"
-  },
-  "6343923": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6343923"
-  },
-  "6754469": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6754469"
-  },
-  "6522699": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6474296": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6474296"
-  },
-  "6780871": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6780871"
-  },
-  "6724975": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6724975"
-  },
-  "6813079": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6813079"
-  },
-  "6642637": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6642637"
-  },
-  "6746527": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6746527"
-  },
-  "6720744": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6720744"
-  },
-  "6612912": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5906374": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6727201": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6727201"
-  },
-  "6617395": {
+  "4249334": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6617395"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4249334"
   },
-  "5916344": {
+  "2271119": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5916344"
-  },
-  "5167336": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5167336"
-  },
-  "6504857": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2271119"
   },
-  "6601469": {
+  "810027": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6601469"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/810027"
   },
-  "6604720": {
+  "150956": {
     "status": "failed",
     "error": "Chunker failed with exit code 1",
     "output_dir": null
   },
-  "6776642": {
+  "4484733": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6776642"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4484733"
   },
-  "6335741": {
+  "2092808": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6531419": {
+  "2997129": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6564577": {
+  "1113260": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6567246": {
+  "5804681": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6567246"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5804681"
   },
-  "5876428": {
+  "634123": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5876428"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/634123"
   },
-  "6619869": {
+  "3333354": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6532384": {
+  "3373585": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3373585"
+  },
+  "2949889": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6584743": {
+  "2893955": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6584743"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2893955"
   },
-  "6711466": {
+  "3922577": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3922577"
+  },
+  "579486": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6276837": {
+  "4564026": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4564026"
+  },
+  "441939": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "5720772": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5720772"
-  },
-  "6508427": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6508427"
-  },
-  "6695740": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6695740"
-  },
-  "6522947": {
+  "1779952": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6710167": {
+  "2234812": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6710167"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2234812"
   },
-  "6672136": {
+  "3620267": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3620267"
+  },
+  "1705157": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1705157"
+  },
+  "1818179": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1818179"
+  },
+  "1065923": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "3936949": {
+  "662370": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3936949"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/662370"
   },
-  "5987161": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5987161"
-  },
-  "5392442": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5392442"
-  },
-  "6633266": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6633266"
-  },
-  "6716366": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6716366"
-  },
-  "6574507": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6574507"
-  },
-  "6760529": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6760529"
-  },
-  "6494841": {
+  "758800": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6561962": {
+  "3318609": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3318609"
+  },
+  "849813": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6597413": {
+  "2284135": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6597413"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2284135"
   },
-  "6726707": {
+  "4207705": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6726707"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4207705"
   },
-  "6670826": {
+  "4863679": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4863679"
+  },
+  "5471322": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5471322"
+  },
+  "3567298": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "4922906": {
+  "1036059": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4922906"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1036059"
   },
-  "6727055": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6727055"
-  },
-  "5861892": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5861892"
-  },
-  "6070287": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6070287"
-  },
-  "6651195": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6651195"
-  },
-  "6608589": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6608589"
-  },
-  "6506381": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6506381"
-  },
-  "6684560": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6684560"
-  },
-  "6716926": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6716926"
-  },
-  "6311070": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6311070"
-  },
-  "6691491": {
+  "2037350": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6712513": {
+  "3045271": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6712513"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3045271"
   },
-  "5767513": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5767513"
-  },
-  "4143229": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4143229"
-  },
-  "6744674": {
+  "352797": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6502697": {
+  "3121319": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502697"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3121319"
   },
-  "4656860": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4656860"
-  },
-  "6509645": {
+  "399254": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6800803": {
+  "62708": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6800803"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/62708"
   },
-  "6506026": {
+  "3903709": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6506026"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3903709"
   },
-  "6810458": {
+  "3970656": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6810458"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3970656"
   },
-  "6725223": {
+  "6822": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6725223"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6822"
   },
-  "6659745": {
+  "5721071": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6659745"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5721071"
   },
-  "4212671": {
+  "1816395": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4212671"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1816395"
   },
-  "6537366": {
+  "13886": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6537366"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/13886"
   },
-  "6637483": {
+  "3818985": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3818985"
+  },
+  "668289": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/668289"
+  },
+  "833113": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6804780": {
+  "3620281": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6804780"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3620281"
   },
-  "6512737": {
+  "3242978": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6512737"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3242978"
   },
-  "6748211": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6748211"
-  },
-  "5454871": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5454871"
-  },
-  "6499581": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6499581"
-  },
-  "5078041": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5078041"
-  },
-  "6585671": {
+  "918223": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "5587235": {
+  "3934600": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5587235"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3934600"
   },
-  "6813863": {
+  "618602": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6502880": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502880"
-  },
-  "6683691": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6683691"
-  },
-  "6015269": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6015269"
-  },
-  "6515984": {
+  "98192": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6583612": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6583612"
-  },
-  "6073623": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6073623"
-  },
-  "6789878": {
+  "4871292": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6540106": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6202270": {
+  "2667003": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6202270"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2667003"
   },
-  "6437648": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6578925": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6584955": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6604568": {
+  "3832003": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6604568"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3832003"
   },
-  "6561715": {
+  "1896553": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2629096": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6561715"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2629096"
+  },
+  "1051701": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1051701"
+  },
+  "818499": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/818499"
+  },
+  "4257152": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3610966": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3610966"
+  },
+  "4478412": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4478412"
+  },
+  "3017183": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3017183"
+  },
+  "3884132": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3884132"
+  },
+  "2768107": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2768107"
+  },
+  "905703": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/905703"
+  },
+  "1349110": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2628635": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2628635"
+  },
+  "5470307": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5470307"
+  },
+  "2340160": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2340160"
+  },
+  "1863192": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "230566": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/230566"
+  },
+  "3784177": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3784177"
+  },
+  "3364718": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3364718"
+  },
+  "1026": {
+    "status": "failed",
+    "error": "Could not find a matching format for /home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/versions/1026/1_19_2",
+    "output_dir": null
+  },
+  "2864426": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3539802": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3539802"
+  },
+  "1209037": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "4254609": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "1794939": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "1909470": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1909470"
+  },
+  "5115299": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5115299"
+  },
+  "1669039": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1669039"
+  },
+  "3572763": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "561939": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/561939"
+  },
+  "3129935": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3129935"
+  },
+  "4290792": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4290792"
+  },
+  "3950300": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3950300"
+  },
+  "1709987": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "1916782": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1916782"
+  },
+  "7761": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2624133": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2056670": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3677610": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3677610"
+  },
+  "4730171": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4730171"
+  },
+  "5436435": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5436435"
+  },
+  "3077856": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3077856"
+  },
+  "1855251": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1855251"
+  },
+  "3152766": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3152766"
+  },
+  "124401": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2305273": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2305273"
+  },
+  "3122339": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2178846": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2178846"
+  },
+  "3578139": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3578139"
+  },
+  "1442805": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3238685": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3238685"
+  },
+  "3822355": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3822355"
+  },
+  "3558606": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3558606"
+  },
+  "3863": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3863"
+  },
+  "3734883": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2907105": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "60072": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/60072"
+  },
+  "4397910": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4397910"
+  },
+  "3961066": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3961066"
+  },
+  "4804013": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4804013"
+  },
+  "3193867": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3193867"
+  },
+  "3642553": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3400098": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "1657905": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1657905"
+  },
+  "1173801": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1173801"
+  },
+  "3088590": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "765460": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3992215": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3992215"
+  },
+  "894595": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/894595"
+  },
+  "3695465": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3249524": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3249524"
+  },
+  "2435878": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2169604": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2169604"
+  },
+  "2471236": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2613115": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "974889": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3168149": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3168149"
+  },
+  "3408035": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3653211": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3653211"
+  },
+  "3218042": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2471378": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3435153": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3435153"
+  },
+  "3579207": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3579207"
+  },
+  "1714561": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3395294": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "5762": {
+    "status": "failed",
+    "error": "Minecraft server crashed during MCR to MCA conversion: 2026-05-17 16:01:31 [SEVERE] Encountered an unexpected exception u",
+    "output_dir": null
+  },
+  "2776562": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2776562"
+  },
+  "3812737": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3812737"
+  },
+  "3936891": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3936891"
+  },
+  "4486353": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4486353"
+  },
+  "14070": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "5924296": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5924296"
+  },
+  "1581359": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1581359"
+  },
+  "3763188": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3763188"
+  },
+  "5299322": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5299322"
+  },
+  "2148574": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2148574"
+  },
+  "134030": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3761097": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3761097"
+  },
+  "275447": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "99432": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3452527": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3452527"
+  },
+  "2079118": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2789900": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3029106": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3029106"
+  },
+  "801031": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "5675928": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5675928"
+  },
+  "950997": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2778816": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "4168192": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4168192"
+  },
+  "3680965": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3680965"
+  },
+  "2253561": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2253561"
+  },
+  "435102": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/435102"
+  },
+  "3502555": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3016233": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "380677": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/380677"
+  },
+  "2664348": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2664348"
+  },
+  "987022": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/987022"
+  },
+  "4316860": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4316860"
+  },
+  "4049714": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4049714"
+  },
+  "1025554": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1025554"
+  },
+  "2677826": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2622752": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2622752"
+  },
+  "4574306": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4574306"
+  },
+  "3409628": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3409628"
+  },
+  "5861194": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5861194"
+  },
+  "3128936": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3128936"
+  },
+  "5814178": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "624993": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/624993"
+  },
+  "2097885": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2825413": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "252556": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/252556"
+  },
+  "75111": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/75111"
+  },
+  "4949077": {
+    "status": "failed",
+    "error": "Chunker failed with exit code 1",
+    "output_dir": null
+  },
+  "3293466": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3293466"
+  },
+  "2043719": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "1879242": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2680078": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "2740879": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "913598": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/913598"
+  },
+  "3078335": {
+    "status": "failed",
+    "error": "0 screenshots generated",
+    "output_dir": null
+  },
+  "3273442": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3273442"
+  },
+  "4473912": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4473912"
+  },
+  "3559440": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3559440"
+  },
+  "2799303": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2799303"
+  },
+  "1215284": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1215284"
   },
   "3944614": {
     "status": "done",
     "error": null,
     "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3944614"
   },
-  "6741438": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5352332": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5352332"
-  },
-  "6543992": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6543992"
-  },
-  "6799731": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6799731"
-  },
-  "6039247": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6039247"
-  },
-  "6657701": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6657701"
-  },
-  "6799275": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5761514": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5761514"
-  },
-  "6592644": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6812545": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6812545"
-  },
-  "5966198": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5966198"
-  },
-  "6445843": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6557414": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6557414"
-  },
-  "6650184": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6650184"
-  },
-  "6550333": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6529204": {
+  "5353686": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
@@ -1064,3024 +1104,589 @@
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6593331": {
+  "2970062": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6593331"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2970062"
   },
-  "6576516": {
+  "2179382": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2179382"
+  },
+  "2047718": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6418285": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6418285"
-  },
-  "6665548": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6665548"
-  },
-  "6164615": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6164615"
-  },
-  "6046580": {
+  "5111316": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6757408": {
+  "296209": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6757408"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/296209"
   },
-  "6465682": {
+  "1131927": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1131927"
+  },
+  "4056118": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4056118"
+  },
+  "2955025": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2955025"
+  },
+  "192263": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/192263"
+  },
+  "3554200": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3554200"
+  },
+  "3870112": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "4508127": {
+  "2173533": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4508127"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2173533"
   },
-  "6748003": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6748003"
-  },
-  "6542627": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6542627"
-  },
-  "6146148": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6146148"
-  },
-  "5744637": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5744637"
-  },
-  "6718859": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6718859"
-  },
-  "6562260": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6562260"
-  },
-  "4779528": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4779528"
-  },
-  "6636315": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6636315"
-  },
-  "6621450": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6621450"
-  },
-  "6126096": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6126096"
-  },
-  "6517365": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6517365"
-  },
-  "6714902": {
+  "2189432": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6581138": {
+  "3772744": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6532950": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6532950"
-  },
-  "6551501": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6551501"
-  },
-  "6671868": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6671868"
-  },
-  "6610502": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6610502"
-  },
-  "4949055": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4949055"
-  },
-  "6514167": {
+  "993223": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6794340": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6489030": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6478645": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6791039": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6791039"
-  },
-  "5670136": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5670136"
-  },
-  "6512432": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6512432"
-  },
-  "6747893": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6747893"
-  },
-  "6703908": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6444920": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6444920"
-  },
-  "6765719": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6659917": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6659917"
-  },
-  "6585708": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6225712": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6225712"
-  },
-  "6682153": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4067953": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6513619": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6513619"
-  },
-  "6531054": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6628353": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6765544": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6765544"
-  },
-  "6509651": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6509651"
-  },
-  "6634134": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6634134"
-  },
-  "6539466": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6539466"
-  },
-  "6532257": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6532257"
-  },
-  "6494279": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6494279"
-  },
-  "6677057": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6519703": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6566869": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5858626": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5858626"
-  },
-  "6536991": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6536991"
-  },
-  "6275611": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6668455": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6668455"
-  },
-  "6550349": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6502364": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502364"
-  },
-  "6536165": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6536165"
-  },
-  "4944035": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4944035"
-  },
-  "6711024": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6711024"
-  },
-  "6577233": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6577233"
-  },
-  "6745909": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6745909"
-  },
-  "5718567": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5718567"
-  },
-  "6716060": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6716060"
-  },
-  "6613211": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6569944": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6569944"
-  },
-  "6530428": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6530428"
-  },
-  "6668199": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6668199"
-  },
-  "6626719": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6258561": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6258561"
-  },
-  "6579564": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6813587": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6527744": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6527744"
-  },
-  "6557314": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6557314"
-  },
-  "6161294": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6161294"
-  },
-  "6541275": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6541275"
-  },
-  "6746609": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6769992": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6628375": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6499475": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6499475"
-  },
-  "6514826": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6514826"
-  },
-  "6567527": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6567527"
-  },
-  "6600960": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6600960"
-  },
-  "6773168": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6773168"
-  },
-  "4826642": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4826642"
-  },
-  "6591520": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6509111": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6509111"
-  },
-  "5520371": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5520371"
-  },
-  "6519561": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6688228": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6688228"
-  },
-  "6734320": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6669756": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6669756"
-  },
-  "6608450": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6219525": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6219525"
-  },
-  "6623817": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6623817"
-  },
-  "6637122": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6649554": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6649554"
-  },
-  "6445381": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6445381"
-  },
-  "6544775": {
+  "5034776": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6544775"
-  },
-  "6572832": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6572832"
-  },
-  "6715806": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6716945": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6609780": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6690008": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6690008"
-  },
-  "6711152": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6711152"
-  },
-  "6530367": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6530367"
-  },
-  "6532567": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6532567"
-  },
-  "6538917": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6538917"
-  },
-  "6669090": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6069623": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6648983": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6648983"
-  },
-  "6439026": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4396195": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4396195"
-  },
-  "6623299": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6805722": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6805722"
-  },
-  "6562756": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6562756"
-  },
-  "6297043": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6297043"
-  },
-  "6456649": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6807202": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6701602": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6701602"
-  },
-  "6509346": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6509346"
-  },
-  "6429983": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6429983"
-  },
-  "6160258": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6507330": {
-    "status": "failed",
-    "error": "Could not find a matching format for /home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/versions/6507330/1_19_2",
-    "output_dir": null
-  },
-  "6714541": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6509333": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6582869": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6582869"
-  },
-  "6519519": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6519519"
-  },
-  "6621170": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6772231": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6772231"
-  },
-  "6706266": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6706266"
-  },
-  "5731613": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5731613"
-  },
-  "6438399": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6302123": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6302123"
-  },
-  "6655871": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6655871"
-  },
-  "6700037": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4240572": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4240572"
-  },
-  "6649183": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6649183"
-  },
-  "6451333": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6451333"
-  },
-  "6109279": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6109279"
-  },
-  "6814960": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6041968": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6041968"
-  },
-  "6663104": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6303433": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6303433"
-  },
-  "6765028": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6765028"
-  },
-  "5443004": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5443004"
-  },
-  "4092301": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4092301"
-  },
-  "5635908": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5635908"
-  },
-  "6734997": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6734997"
-  },
-  "6662803": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6777790": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6777790"
-  },
-  "6506459": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4643666": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
-    "output_dir": null
-  },
-  "6660885": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6660885"
-  },
-  "6701212": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6701212"
-  },
-  "6546495": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6546495"
-  },
-  "6749737": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6749737"
-  },
-  "4214188": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4214188"
-  },
-  "6428652": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6543537": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6342537": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6342537"
-  },
-  "5360317": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5360317"
-  },
-  "6644307": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6229304": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6229304"
-  },
-  "6360371": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6360371"
-  },
-  "6699368": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6699368"
-  },
-  "6636755": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5652956": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5652956"
-  },
-  "6548975": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6557017": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6557017"
-  },
-  "6699892": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6720013": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6720013"
-  },
-  "5997239": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5997239"
-  },
-  "6613584": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5034776"
   },
-  "6600155": {
+  "3887390": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6600155"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3887390"
   },
-  "6628946": {
+  "3763077": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6628946"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3763077"
   },
   "4017774": {
     "status": "done",
     "error": null,
     "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4017774"
   },
-  "6305966": {
+  "4266533": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6305966"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4266533"
   },
-  "6455726": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
-    "output_dir": null
-  },
-  "6670430": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6670430"
-  },
-  "6559919": {
+  "1103711": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6551224": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6551224"
-  },
-  "6598825": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6598825"
-  },
-  "6506669": {
+  "2941956": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6539904": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6539904"
-  },
-  "6764018": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6764018"
-  },
-  "6665766": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6665766"
-  },
-  "6646953": {
+  "2650017": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6689570": {
+  "160508": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/160508"
+  },
+  "2633891": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2633891"
+  },
+  "2064362": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2064362"
+  },
+  "332658": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6662441": {
+  "3821345": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6662441"
-  },
-  "6774873": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6774873"
-  },
-  "6707323": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6707323"
-  },
-  "6600852": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6333322": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6560843": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6399026": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6777555": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6777555"
-  },
-  "6547750": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6547750"
-  },
-  "4905408": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4905408"
-  },
-  "6443087": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6443087"
-  },
-  "6627482": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6627482"
-  },
-  "5151078": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6503508": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6503508"
-  },
-  "6565175": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6565175"
-  },
-  "6524569": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6524569"
-  },
-  "6020380": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6314573": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6314573"
-  },
-  "6561576": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6561576"
-  },
-  "6670842": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6066749": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6066749"
-  },
-  "6504555": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6504555"
-  },
-  "6750640": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6750640"
-  },
-  "3985540": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3985540"
-  },
-  "6702798": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6702798"
-  },
-  "6793746": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6793746"
-  },
-  "6644286": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6671103": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
-    "output_dir": null
-  },
-  "6517958": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6517958"
-  },
-  "3961066": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3961066"
-  },
-  "6806746": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6806746"
-  },
-  "5241671": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5241671"
-  },
-  "6524647": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6501424": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6501424"
-  },
-  "5545094": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5545094"
-  },
-  "6516305": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6445203": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4832975": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4832975"
-  },
-  "6609859": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6609859"
-  },
-  "6767802": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6221648": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6711804": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6364698": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6024204": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6024204"
-  },
-  "6552709": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6696630": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6696630"
-  },
-  "5660608": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6595659": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6571482": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6297000": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6297000"
-  },
-  "6799508": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6799508"
-  },
-  "6649471": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6649471"
-  },
-  "6765217": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6545699": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6545699"
-  },
-  "6054946": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6054946"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3821345"
   },
   "6094908": {
     "status": "done",
     "error": null,
     "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6094908"
   },
-  "4911831": {
+  "1894530": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4911831"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1894530"
   },
-  "6676933": {
+  "3346982": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6676933"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3346982"
   },
-  "5850188": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5850188"
-  },
-  "6775845": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6775845"
-  },
-  "6786689": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6724026": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6487685": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6487685"
-  },
-  "6532283": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6671047": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6671047"
-  },
-  "5756692": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5756692"
-  },
-  "6773468": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6773468"
-  },
-  "6502396": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502396"
-  },
-  "6548087": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6251065": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6251065"
-  },
-  "6536237": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6536237"
-  },
-  "5882190": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5882190"
-  },
-  "6659184": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6659184"
-  },
-  "6700447": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6472207": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6472207"
-  },
-  "6614515": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6646007": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6666047": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6666047"
-  },
-  "6577394": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6577394"
-  },
-  "6751385": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6751385"
-  },
-  "6673170": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6673170"
-  },
-  "6791113": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6791113"
-  },
-  "6439745": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6614902": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6773449": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6773449"
-  },
-  "6473766": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6473766"
-  },
-  "5770536": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5770536"
-  },
-  "5952308": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5952308"
-  },
-  "6598357": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6598357"
-  },
-  "5410198": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5410198"
-  },
-  "6544068": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6544068"
-  },
-  "6356830": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6356830"
-  },
-  "6650206": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6650206"
-  },
-  "6443722": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6443722"
-  },
-  "6533913": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6647619": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6647619"
-  },
-  "6506896": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6659017": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6659017"
-  },
-  "6266050": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6465715": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6537223": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6537223"
-  },
-  "6660655": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6660655"
-  },
-  "6640082": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6568612": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5668827": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5668827"
-  },
-  "5367807": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5367807"
-  },
-  "6657672": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6657672"
-  },
-  "6588857": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6622438": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5235745": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6591838": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6591838"
-  },
-  "6626480": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6626480"
-  },
-  "6581400": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6581400"
-  },
-  "6479987": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6479987"
-  },
-  "6378634": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6378634"
-  },
-  "6419900": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6644235": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6644235"
-  },
-  "6696148": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6696148"
-  },
-  "6660827": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "3939404": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3939404"
-  },
-  "6364655": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6364655"
-  },
-  "6673717": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6673717"
-  },
-  "6400405": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6400405"
-  },
-  "6650061": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6650061"
-  },
-  "6562222": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6753527": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6171630": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6171630"
-  },
-  "6632642": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6753713": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6753713"
-  },
-  "6020672": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6020672"
-  },
-  "6322743": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6322743"
-  },
-  "5883568": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5883568"
-  },
-  "6680526": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6680526"
-  },
-  "6598110": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5278992": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5278992"
-  },
-  "6506521": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6506521"
-  },
-  "6791002": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6791002"
-  },
-  "6679817": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6679817"
-  },
-  "6558524": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6558524"
-  },
-  "6704906": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6704906"
-  },
-  "6660125": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6697542": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6512864": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "2500574": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6674205": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6674205"
-  },
-  "6670256": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6670256"
-  },
-  "6223084": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5701694": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5701694"
-  },
-  "6306563": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6306563"
-  },
-  "3934113": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3934113"
-  },
-  "4023950": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6172968": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6633094": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6633094"
-  },
-  "6367352": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6367352"
-  },
-  "6639308": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6639308"
-  },
-  "6515940": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6515940"
-  },
-  "6599884": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6499602": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6499602"
-  },
-  "6232709": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6232709"
-  },
-  "6623212": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6248558": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6248558"
-  },
-  "6557872": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6635050": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6764268": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6764268"
-  },
-  "6700373": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6022214": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6022214"
-  },
-  "5970999": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5970999"
-  },
-  "6639943": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6639943"
-  },
-  "5193546": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5193546"
-  },
-  "6499526": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6499526"
-  },
-  "6731460": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6731460"
-  },
-  "6505319": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6505319"
-  },
-  "6570073": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6570073"
-  },
-  "6291188": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "3879781": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3879781"
-  },
-  "4409454": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4409454"
-  },
-  "6813144": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6813144"
-  },
-  "6666543": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6544075": {
-    "status": "failed",
-    "error": "Region directory not found at /home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/versions/6544075/1_19_2/region",
-    "output_dir": null
-  },
-  "6688956": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6688956"
-  },
-  "4886539": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4886539"
-  },
-  "6039564": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6039564"
-  },
-  "6415840": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6415840"
-  },
-  "6605169": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6605169"
-  },
-  "6317057": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6317057"
-  },
-  "6765674": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6807773": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4132500": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4132500"
-  },
-  "6515473": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6515473"
-  },
-  "6702858": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6702858"
-  },
-  "6625930": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6625930"
-  },
-  "6503395": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6503395"
-  },
-  "6592622": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6053492": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6053492"
-  },
-  "5520756": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5520756"
-  },
-  "6527359": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6520369": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6520369"
-  },
-  "6662723": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6662723"
-  },
-  "6237318": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6237318"
-  },
-  "6697458": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6697458"
-  },
-  "6588287": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6588287"
-  },
-  "6725413": {
-    "status": "failed",
-    "error": "Could not find a matching format for /home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/versions/6725413/1_19_2",
-    "output_dir": null
-  },
-  "6699976": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6699976"
-  },
-  "6621214": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5880830": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5880830"
-  },
-  "6630954": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6806685": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6806685"
-  },
-  "6228119": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5654319": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5654319"
-  },
-  "6705085": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6705085"
-  },
-  "3973459": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6556924": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6702899": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6778263": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6801045": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6530714": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6539804": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6539804"
-  },
-  "6507562": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6609827": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6448352": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6448352"
-  },
-  "6650494": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6650494"
-  },
-  "6631062": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6631062"
-  },
-  "6529643": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "3965606": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3965606"
-  },
-  "6692179": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6692179"
-  },
-  "6637750": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4563674": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5906349": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5906349"
-  },
-  "6706463": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6706463"
-  },
-  "6538157": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6749767": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6749767"
-  },
-  "6784961": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6784961"
-  },
-  "6509553": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6509553"
-  },
-  "6510636": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6626138": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6626138"
-  },
-  "6553378": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6553378"
-  },
-  "6808650": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6808650"
-  },
-  "6797261": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6797261"
-  },
-  "6744241": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6744241"
-  },
-  "4207705": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4207705"
-  },
-  "6592606": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6592606"
-  },
-  "6585246": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6585246"
-  },
-  "6445602": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6445602"
-  },
-  "6055024": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6055024"
-  },
-  "5240574": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6580521": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6580521"
-  },
-  "6620730": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6620730"
-  },
-  "6787423": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
-    "output_dir": null
-  },
-  "6571896": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6571896"
-  },
-  "6804000": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6804000"
-  },
-  "6770886": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "5427057": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5427057"
-  },
-  "6608326": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6663781": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4693200": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4693200"
-  },
-  "6367722": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6367722"
-  },
-  "6616420": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6429962": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6429962"
-  },
-  "6728426": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6078167": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6078167"
-  },
-  "6566108": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6566108"
-  },
-  "6722545": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6722545"
-  },
-  "6683664": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6683664"
-  },
-  "6698547": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6698547"
-  },
-  "6668331": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6668331"
-  },
-  "6754463": {
+  "3131883": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6626713": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6626713"
-  },
-  "6544336": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6544336"
   },
-  "6596142": {
+  "4930361": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6596142"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4930361"
   },
-  "6534074": {
+  "762071": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6534074"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/762071"
   },
-  "6726497": {
+  "600108": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6726497"
-  },
-  "6796879": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/600108"
   },
-  "6450664": {
+  "4472354": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6450664"
-  },
-  "6670199": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4472354"
   },
-  "4940030": {
+  "4072732": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4940030"
-  },
-  "4364949": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4072732"
   },
-  "6308715": {
+  "6119938": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6308715"
-  },
-  "6421646": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6119938"
   },
-  "6550872": {
+  "850236": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "4673395": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4673395"
-  },
-  "6509837": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6509837"
-  },
-  "4949087": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4949087"
-  },
-  "6776078": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6776078"
-  },
-  "6450470": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6450470"
-  },
-  "6532684": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6532684"
-  },
-  "6534104": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6534104"
-  },
-  "6500028": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6500028"
-  },
-  "5457555": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5457555"
   },
-  "6157029": {
+  "2606237": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6806170": {
+  "3906545": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6806170"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3906545"
   },
-  "6541304": {
+  "2607311": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6450411": {
+  "2089846": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "4280923": {
+  "5960863": {
     "status": "failed",
     "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6165845": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6165845"
-  },
-  "6465721": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6465721"
-  },
-  "6606738": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6606738"
-  },
-  "6690490": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
     "output_dir": null
   },
-  "5866161": {
+  "5654865": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5866161"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5654865"
   },
-  "6705068": {
+  "1841173": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6705068"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1841173"
   },
-  "6671934": {
+  "3261233": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6661488": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6661488"
-  },
-  "6647987": {
+  "2243904": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6703115": {
+  "3222831": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6755553": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6755553"
-  },
-  "6655429": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6655429"
-  },
-  "6598765": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6598765"
   },
-  "6746949": {
+  "502901": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6746949"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/502901"
   },
-  "6535851": {
+  "1256769": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6535851"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1256769"
   },
-  "6234714": {
+  "3980585": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6234714"
-  },
-  "6587262": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3980585"
   },
-  "6645005": {
+  "1868431": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6547756": {
+  "1885661": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6547756"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1885661"
   },
-  "6563415": {
+  "717768": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6563415"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/717768"
   },
-  "6730815": {
+  "3017372": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6730815"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3017372"
   },
-  "6807415": {
+  "1871507": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6807415"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1871507"
   },
-  "6523408": {
+  "2067812": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6523408"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2067812"
   },
-  "6575222": {
+  "2294402": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6575222"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2294402"
   },
-  "6667507": {
+  "4398501": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6667507"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4398501"
   },
-  "5270887": {
+  "2157214": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5270887"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2157214"
   },
-  "6439005": {
+  "1168230": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6513614": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6768686": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6633718": {
+  "3200972": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6633718"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3200972"
   },
-  "6416169": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6416169"
-  },
-  "6516303": {
+  "3256208": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6763586": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6763586"
-  },
-  "6385975": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6385975"
-  },
-  "5966551": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5966551"
-  },
-  "6690601": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6690601"
-  },
-  "6782855": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6782855"
-  },
-  "6566681": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6566681"
-  },
-  "6555288": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6555288"
   },
-  "6281350": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6281350"
-  },
-  "6539300": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6539300"
-  },
-  "6673053": {
+  "1340124": {
     "status": "failed",
     "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "4353678": {
-    "status": "failed",
-    "error": "No level.dat found inside directory",
     "output_dir": null
   },
-  "5997009": {
+  "3553358": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5997009"
-  },
-  "6510203": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3553358"
   },
-  "6612657": {
+  "1813943": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6598788": {
+  "1241961": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6634618": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6634618"
   },
-  "6581047": {
+  "4758525": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6581047"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4758525"
   },
-  "6623209": {
+  "551962": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6666682": {
+  "848087": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6666682"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/848087"
   },
-  "6562528": {
+  "5421985": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6562528"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5421985"
   },
-  "6575005": {
+  "762820": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6710529": {
+  "3909303": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6710529"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3909303"
   },
-  "6695509": {
+  "2981406": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6594664": {
+  "4930564": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6594664"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4930564"
   },
-  "6497769": {
+  "4851895": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6497769"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4851895"
   },
-  "6372374": {
+  "3001235": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6372374"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3001235"
   },
-  "6709963": {
+  "4730256": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6709963"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4730256"
   },
-  "6673047": {
+  "2168539": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6569924": {
+  "2391408": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6569924"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2391408"
   },
-  "4469445": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4469445"
-  },
-  "6647508": {
+  "2550533": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6587323": {
+  "4609336": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6587323"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4609336"
   },
-  "6137690": {
+  "150913": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6578488": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6578488"
   },
-  "6702060": {
+  "2723017": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6565916": {
+  "996624": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6771121": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6771121"
   },
-  "6636103": {
+  "1432203": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6696008": {
+  "2635026": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6663533": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6663533"
   },
-  "6619483": {
+  "3649306": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6619483"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3649306"
   },
-  "6435550": {
+  "1447419": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6435550"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1447419"
   },
-  "5988041": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5988041"
-  },
-  "6590316": {
+  "29153": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6652429": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6652429"
-  },
-  "6526668": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6526668"
   },
-  "6617465": {
+  "76878": {
     "status": "failed",
-    "error": "No level.dat found inside directory",
+    "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6554072": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6554072"
   },
-  "6502467": {
+  "44574": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6502467"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/44574"
   },
-  "6689063": {
+  "703331": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "4910836": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4910836"
   },
-  "6653581": {
+  "3603142": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6514125": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6514125"
-  },
-  "6625654": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6625654"
   },
-  "6649050": {
+  "5136301": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6649050"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5136301"
   },
-  "6678135": {
+  "429547": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6575257": {
+  "4019563": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6575257"
-  },
-  "6675894": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4019563"
   },
-  "6571237": {
+  "3383606": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "5031630": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+  "4756103": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4756103"
   },
-  "6089861": {
+  "3079889": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6089861"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3079889"
   },
-  "6451467": {
+  "699352": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6451467"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/699352"
   },
-  "6660026": {
+  "3920833": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6660026"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3920833"
   },
-  "5756332": {
+  "5549311": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5756332"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5549311"
   },
-  "6566767": {
+  "1340731": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6566767"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1340731"
   },
-  "4917705": {
+  "107844": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "5999621": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5999621"
-  },
-  "4773522": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4773522"
-  },
-  "6638427": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6638427"
   },
-  "6518740": {
+  "2371433": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "5149978": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5149978"
-  },
-  "6568334": {
+  "1116641": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6755824": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6755824"
   },
-  "6290152": {
+  "3112155": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6636544": {
+  "1400559": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
-  },
-  "6550309": {
-    "status": "done",
-    "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6550309"
   },
-  "6581665": {
+  "1182121": {
     "status": "failed",
     "error": "0 screenshots generated",
     "output_dir": null
   },
-  "6450861": {
+  "5601137": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6450861"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5601137"
   },
-  "6047311": {
+  "3975784": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6047311"
-  },
-  "6328936": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3975784"
   },
-  "6615729": {
+  "1015758": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/6615729"
-  },
-  "6478601": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
-  },
-  "6503965": {
-    "status": "failed",
-    "error": "0 screenshots generated",
-    "output_dir": null
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1015758"
   },
-  "4632035": {
+  "1055627": {
     "status": "done",
     "error": null,
-    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/4632035"
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/1055627"
   },
-  "3903709": {
-    "status": "failed",
-    "error": "[Errno 28] No space left on device: '/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/versions/3903709/1_19_2/region/r.17.-11.mca' -> '/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/3903709/region/r.17.-11.mca'",
-    "output_dir": null
+  "5977961": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/5977961"
   },
-  "6530082": {
-    "status": "failed",
-    "error": "Chunker failed with exit code 1",
-    "output_dir": null
+  "2322939": {
+    "status": "done",
+    "error": null,
+    "output_dir": "/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/2322939"
   }
 }
