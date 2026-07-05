@@ -52,7 +52,7 @@ try:
 except ImportError:
     # Handle direct script execution where '.' is not available
     try:
-        from world_wrapper import BlockStates
+        from world_wrapper import BlockStates  # pyrefly: ignore  # direct-script-execution fallback
     except ImportError:
         # If it's passed as an argument, we just need the type hint to work
         BlockStates = Any

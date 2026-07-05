@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 try:
     from src.scripts.sana_video.dataset import MinecraftVideoDataset
 except ImportError:
-    from dataset import MinecraftVideoDataset
+    from dataset import MinecraftVideoDataset  # pyrefly: ignore  # direct-script-execution fallback
 
 
 def parse_args():
