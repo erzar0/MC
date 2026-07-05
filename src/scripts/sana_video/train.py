@@ -67,14 +67,25 @@ def parse_args():
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--num_workers", type=int, default=2, help="DataLoader workers")
     parser.add_argument("--save_every_epochs", type=int, default=1, help="Save checkpoint every N epochs")
+    parser.add_argument(
+        "--save_every_steps",
+        type=int,
+        default=1000,
+        help="Also save a checkpoint every N samples seen (0 disables step-based saving)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     return parser.parse_args()
 
 
-def save_checkpoint(args, accelerator, transformer, epoch):
-    """Saves either LoRA adapter weights or the full transformer, per mode."""
+def save_checkpoint(args, accelerator, transformer, tag):
+    """Saves a checkpoint (LoRA adapter or full transformer) named ``checkpoint-{tag}``.
+
+    Writes an empty ``.complete`` marker file once all weights are flushed, so an
+    external checkpoint uploader (see ``deploy/remote_train.sh``) can tell the
+    checkpoint is fully written before syncing it to Google Drive.
+    """
     unwrapped = accelerator.unwrap_model(transformer)
-    save_path = os.path.join(args.output_dir, f"checkpoint-epoch-{epoch + 1}")
+    save_path = os.path.join(args.output_dir, f"checkpoint-{tag}")
 
     if args.mode == "lora":
         lora_state_dict = get_peft_model_state_dict(unwrapped)
@@ -83,6 +94,9 @@ def save_checkpoint(args, accelerator, transformer, epoch):
     else:
         unwrapped.save_pretrained(save_path)
         print(f"Saved full transformer weights to {save_path}")
+
+    Path(save_path, ".complete").touch()
+    return save_path
 
 
 def main():
@@ -179,6 +193,8 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
     global_step = 0
+    samples_seen = 0
+    last_ckpt_milestone = 0
     print(f"Start training: {args.epochs} epochs | Steps per epoch: {len(dataloader)}")
 
     for epoch in range(args.epochs):
@@ -243,7 +259,16 @@ def main():
             loss_val = loss.item()
             epoch_loss += loss_val
             global_step += 1
-            progress_bar.set_postfix({"loss": f"{loss_val:.4f}", "step": global_step})
+            samples_seen += B
+            progress_bar.set_postfix({"loss": f"{loss_val:.4f}", "step": global_step, "samples": samples_seen})
+
+            # Step-based checkpointing: save each time samples_seen crosses a
+            # multiple of save_every_steps (robust to batch size and resumes).
+            if args.save_every_steps and samples_seen // args.save_every_steps > last_ckpt_milestone:
+                last_ckpt_milestone = samples_seen // args.save_every_steps
+                accelerator.wait_for_everyone()
+                if accelerator.is_main_process:
+                    save_checkpoint(args, accelerator, transformer, f"step-{samples_seen}")
 
         avg_loss = epoch_loss / max(len(dataloader), 1)
         print(f"Epoch {epoch + 1} Avg Loss: {avg_loss:.4f}")
@@ -251,7 +276,7 @@ def main():
         if (epoch + 1) % args.save_every_epochs == 0 or (epoch + 1) == args.epochs:
             accelerator.wait_for_everyone()
             if accelerator.is_main_process:
-                save_checkpoint(args, accelerator, transformer, epoch)
+                save_checkpoint(args, accelerator, transformer, f"epoch-{epoch + 1}")
 
     print("Training complete!")
 

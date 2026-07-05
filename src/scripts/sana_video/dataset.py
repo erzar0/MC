@@ -59,6 +59,11 @@ class MinecraftVideoDataset(Dataset):
         self.surface_margin = surface_margin
         self.content_threshold = content_threshold
 
+        # Relative volume_path entries are resolved against the manifest's own
+        # directory, so a packaged dataset bundle (relative manifest + volumes)
+        # is portable to any machine. Absolute paths are still honored as-is.
+        self._manifest_dir = Path(manifest_path).resolve().parent
+
         self.entries = []
         with open(manifest_path, "r") as f:
             for line in f:
@@ -100,7 +105,11 @@ class MinecraftVideoDataset(Dataset):
     def __getitem__(self, idx: int):
         entry = self.entries[idx]
 
-        with open(entry["volume_path"], "rb") as f:
+        volume_path = Path(entry["volume_path"])
+        if not volume_path.is_absolute():
+            volume_path = self._manifest_dir / volume_path
+
+        with open(volume_path, "rb") as f:
             volume = blosc2.unpack_array2(f.read())  # (X, Z, Y) uint16
 
         # Y-layers become frames: (X, Z, Y) -> (Y, X, Z)
