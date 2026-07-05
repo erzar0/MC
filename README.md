@@ -4,14 +4,22 @@
 
 ```text
 ├── src/
-│   ├── region_extractor.py    # Core engine: Extracts 3D volumes, biomes, and metadata.
-│   ├── scripts/               # Web automation for data collection.
-│   │   ├── data_crawler.py    # Scrapes Planet Minecraft project listings.
-│   │   └── detail_crawler.py  # Deep extraction of map metadata.
-│   ├── playground/            # Experimental scripts.
-│   └── notebooks/             # Interactive exploration and visualization.
-├── assets/                    # Global state and data.
-└── pyproject.toml             # Project dependencies.
+│   ├── config.py                  # Central path config (PROJECT_ROOT-relative).
+│   ├── world_wrapper.py           # Core engine: Extracts 3D volumes, biomes, and metadata.
+│   ├── fast_volume_extractor.py   # Fast NBT/region volume parsing (numba-accelerated).
+│   ├── world_processor.py         # Full conversion + extraction + render pipeline.
+│   ├── block2vec.py               # Block embedding training (SGNS + Triton kernel).
+│   ├── block_colors.py            # Shared block-ID <-> RGB palette utilities.
+│   ├── scripts/                   # Runnable entrypoints (see AGENTS.md for the full table).
+│   │   ├── pmc_data_crawler.py    # Scrapes Planet Minecraft project listings.
+│   │   ├── pmc_detail_crawler.py  # Deep extraction of map metadata.
+│   │   ├── map_downloader.py      # Downloads and extracts map archives.
+│   │   ├── process_downloads.py   # Batch world processing driver.
+│   │   └── train_sana_video.py    # SANA-Video fine-tuning (LoRA or full).
+│   └── notebooks/                 # Interactive exploration and visualization.
+├── assets/                        # Global state and data.
+├── tests/                         # pytest suite (run: .venv/bin/python -m pytest).
+└── pyproject.toml                 # Project dependencies + ruff/pytest config.
 ```
 
 ## ⚡ Installation
