@@ -4,22 +4,25 @@
 
 ```text
 ├── src/
-│   ├── config.py                  # Central path config (PROJECT_ROOT-relative).
-│   ├── world_wrapper.py           # Core engine: Extracts 3D volumes, biomes, and metadata.
-│   ├── fast_volume_extractor.py   # Fast NBT/region volume parsing (numba-accelerated).
-│   ├── world_processor.py         # Full conversion + extraction + render pipeline.
-│   ├── block2vec.py               # Block embedding training (SGNS + Triton kernel).
-│   ├── block_colors.py            # Shared block-ID <-> RGB palette utilities.
-│   ├── scripts/                   # Runnable entrypoints (see AGENTS.md for the full table).
-│   │   ├── pmc_data_crawler.py    # Scrapes Planet Minecraft project listings.
-│   │   ├── pmc_detail_crawler.py  # Deep extraction of map metadata.
-│   │   ├── map_downloader.py      # Downloads and extracts map archives.
-│   │   ├── process_downloads.py   # Batch world processing driver.
-│   │   └── train_sana_video.py    # SANA-Video fine-tuning (LoRA or full).
-│   └── notebooks/                 # Interactive exploration and visualization.
-├── assets/                        # Global state and data.
-├── tests/                         # pytest suite (run: .venv/bin/python -m pytest).
-└── pyproject.toml                 # Project dependencies + ruff/pytest config.
+│   ├── config.py                # Central path config (PROJECT_ROOT-relative).
+│   ├── block2vec.py             # Block embedding training (SGNS + Triton kernel).
+│   ├── common/                  # Shared utilities (batching, block_colors, llm_utils, resumable_state).
+│   ├── world/                   # World data extraction core:
+│   │   ├── world_wrapper.py     #   Amulet wrapper: 3D volumes, biomes, metadata.
+│   │   ├── fast_volume_extractor.py  # Fast NBT/region parsing (numba-accelerated).
+│   │   └── world_processor.py   #   Full conversion + extraction + render pipeline.
+│   └── scripts/                 # CLI entrypoints, one package per pipeline stage:
+│       ├── crawling/            #   listing_crawler.py, detail_crawler.py (PMC)
+│       ├── downloading/         #   map_downloader.py
+│       ├── processing/          #   process_worlds.py (batch WorldProcessor driver)
+│       ├── captioning/          #   cleanse_descriptions.py, vision_captions.py (vLLM)
+│       ├── embeddings/          #   negative_buffer.py, benchmark.py, visualize.py
+│       └── sana_video/          #   dataset.py, prepare_dataset.py, train.py, inference.py
+├── assets/                      # Immutable reference data (block states, palettes).
+├── data/pipeline/               # Mutable crawl/download state + CSVs.
+├── notebooks/                   # Interactive exploration and visualization.
+├── tests/                       # pytest suite (run: .venv/bin/python -m pytest).
+└── pyproject.toml               # Project dependencies + ruff/pytest config.
 ```
 
 ## ⚡ Installation
@@ -60,7 +63,7 @@ CUDA_HOME=/usr FLASHINFER_NVCC_THREADS=8 VLLM_USE_FLASHINFER_SAMPLER=0 .vllm_ven
 ### 3. Run the Captioning Script
 Once the server finishes loading and starts listening, run the captioning script using your main project virtual environment:
 ```bash
-.venv/bin/python src/scripts/generate_vision_captions.py --model Qwen/Qwen3-VL-8B-Instruct-FP8 --base-url http://localhost:8000/v1 --concurrency 64
+.venv/bin/python src/scripts/captioning/vision_captions.py --model Qwen/Qwen3-VL-8B-Instruct-FP8 --base-url http://localhost:8000/v1 --concurrency 64
 ```
 
 

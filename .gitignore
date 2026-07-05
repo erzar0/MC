@@ -219,7 +219,10 @@ __marimo__/
 
 # Data files
 data/*
+# ...but track the mutable pipeline state/CSVs
+!data/pipeline/
 notebooks/*
+!notebooks/*.ipynb
 build/*
 *.mp4
 *.png

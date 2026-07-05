@@ -93,7 +93,7 @@ testpaths = ["tests"]
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-extend-exclude = ["Sana", "DC-Gen", "vllm_env", "tmp", "data", ".venv", ".vllm_venv", "src/notebooks"]
+extend-exclude = ["Sana", "DC-Gen", "vllm_env", "tmp", "data", ".venv", ".vllm_venv", "notebooks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B"]
