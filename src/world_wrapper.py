@@ -1,26 +1,26 @@
-from amulet.api.block import Block
-from amulet.api.registry import BlockManager
-from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
-import amulet
 import os
-import glob 
-import numpy as np
 import re
-from tqdm import tqdm
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import amulet
 import anvil
+import numpy as np
+from amulet.api.registry import BlockManager
+from tqdm import tqdm
 
 try:
     from .fast_volume_extractor import FastVolumeParser
 except ImportError:
     from fast_volume_extractor import FastVolumeParser
 
+
 class WorldWrapper:
     """A wrapper around the Amulet library to extract region data from Minecraft worlds.
 
-    This class provides a high-level interface to load Minecraft worlds, identify valid 
-    regions, and extract structured data such as 3D block volumes, heightmaps, 
-    and player inhabited times. It also handles translation of block and biome IDs 
+    This class provides a high-level interface to load Minecraft worlds, identify valid
+    regions, and extract structured data such as 3D block volumes, heightmaps,
+    and player inhabited times. It also handles translation of block and biome IDs
     to consistent global IDs.
     """
 
@@ -30,10 +30,10 @@ class WorldWrapper:
         Args:
             world_path: Path to the Minecraft world directory (containing level.dat).
         """
-        self._world = amulet.load_level(world_path) 
+        self._world = amulet.load_level(world_path)
 
         bounds = self._world.bounds("minecraft:overworld")
-        height = (bounds.max_y - bounds.min_y)
+        height = bounds.max_y - bounds.min_y
         if height > 384:
             raise ValueError("World height must be less than or equal to 384")
 
@@ -47,11 +47,11 @@ class WorldWrapper:
             match = re.search(r"r\.(-?\d+)\.(-?\d+)\.mca", os.path.basename(path))
             if match:
                 self._mca_coords.append((int(match.group(1)), int(match.group(2))))
-        
+
         self._mca_coord_to_path = {(x, z): path for (x, z), path in zip(self._mca_coords, self._mca_files)}
         self._mca_coords = set(self._mca_coords)
         self._mca_coords_rejected = set()
-        self._metadata = {"total_regions": len(self._mca_files), "extracted_regions": {}} 
+        self._metadata = {"total_regions": len(self._mca_files), "extracted_regions": {}}
         self._chunks_coords = set(self._world.all_chunk_coords("minecraft:overworld"))
 
         # Filter out regions that are missing any chunks (Stage 1 rejection)
@@ -59,35 +59,35 @@ class WorldWrapper:
         for mca_coord in pbar:
             pbar.set_postfix({"region": f"r.{mca_coord[0]}.{mca_coord[1]}"})
             reg_x_base, reg_z_base = mca_coord[0] * 32, mca_coord[1] * 32
-            if any((reg_x_base + cx, reg_z_base + cz) not in self._chunks_coords
-                   for cz in range(32) for cx in range(32)):
+            if any(
+                (reg_x_base + cx, reg_z_base + cz) not in self._chunks_coords for cz in range(32) for cx in range(32)
+            ):
                 self.reject_region(mca_coord[0], mca_coord[1])
-        
+
         self._blockstates = BlockStates()
         self._biomes = Biomes()
-    
+
     @property
     def mca_coords(self) -> List[Tuple[int, int]]:
         """Returns a list of (region_x, region_z) tuples for all valid regions."""
         return list(self._mca_coords - self._mca_coords_rejected)
-    
+
     @property
     def metadata(self) -> dict:
         """Returns the metadata for the world."""
         return self._metadata
-    
+
     @property
     def mca_paths(self, include_rejected=False):
         if include_rejected:
             return list(self._mca_coord_to_path.values())
         return [path for coord, path in self._mca_coord_to_path.items() if coord not in self._mca_coords_rejected]
-            
 
     @property
     def chunk_coords(self) -> List[Tuple[int, int]]:
         """Returns a list of (chunk_x, chunk_z) tuples for all chunks in the world."""
         return list(self._chunks_coords)
-    
+
     def misc_keys(self) -> Any:
         """Utility method to inspect misc keys in a sample chunk for debugging.
 
@@ -98,11 +98,11 @@ class WorldWrapper:
             return []
         x, z = list(self._chunks_coords)[0]
         return self._world.get_chunk(x, z, "minecraft:overworld").misc.keys()
-    
+
     def reject_region(self, region_x: int, region_z: int) -> None:
         """Marks a region as rejected and removes it from processing.
 
-        This is used to filter out regions that don't meet quality criteria 
+        This is used to filter out regions that don't meet quality criteria
         (e.g., incomplete regions at the edge of the world).
 
         Args:
@@ -112,25 +112,25 @@ class WorldWrapper:
         if (region_x, region_z) in self._mca_coords:
             self._mca_coords_rejected.add((region_x, region_z))
             self._metadata["rejected_regions"] = self._metadata.get("rejected_regions", 0) + 1
-    
+
     def _post_process_volume(self, volume: np.ndarray) -> Tuple[np.ndarray, int]:
         """Transposes, reshapes and trims vertical space to only include non-air blocks.
-        
+
         Returns:
             Tuple of (trimmed_volume, start_y_offset)
         """
         data = volume.transpose(0, 3, 1, 5, 2, 4)
         data = data.reshape(512, 512, -1)
-        
+
         has_content = np.any(data != 0, axis=(0, 1))
         if not np.any(has_content):
             return data[:, :, :0], 0
-        
+
         indices = np.where(has_content)[0]
         start_y = int(indices[0])
         end_y = int(indices[-1] + 1)
-            
-        trimmed = data[:, :, start_y : end_y]
+
+        trimmed = data[:, :, start_y:end_y]
         return trimmed, start_y
 
     def get_region_biomes(self, region_x: int, region_z: int) -> np.ndarray:
@@ -188,13 +188,13 @@ class WorldWrapper:
         bounds = self._world.bounds("minecraft:overworld")
         data = None
         start_y_offset = 0
-        
+
         if use_fast_extractor:
             mca_path = self._mca_coord_to_path.get((region_x, region_z))
             if not mca_path:
                 self.reject_region(region_x, region_z)
                 raise FileNotFoundError(f"MCA file not found for region ({region_x}, {region_z}).")
-                
+
             try:
                 parser = FastVolumeParser(Path(mca_path), self._blockstates)
                 volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384 + 16)
@@ -204,10 +204,10 @@ class WorldWrapper:
                 raise RuntimeError(f"FastVolumeParser failed for region ({region_x}, {region_z}): {e}") from e
         else:
             # Get Blocks (via Amulet extractor)
-            height = (bounds.max_y - bounds.min_y)
-            max_sections = (height // 16 + 1) + 1 # Add 1 and check later if region is too high
+            height = bounds.max_y - bounds.min_y
+            max_sections = (height // 16 + 1) + 1  # Add 1 and check later if region is too high
             volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
-        
+
             pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
             for rx in range(32):
                 for rz in range(32):
@@ -220,15 +220,19 @@ class WorldWrapper:
                             sec_idx = y + y_offset_sections
                             if 0 <= sec_idx < max_sections:
                                 sub_chunk = chunk.blocks.get_sub_chunk(y)
-                                volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(sub_chunk, chunk._block_palette)
+                                volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(
+                                    sub_chunk, chunk._block_palette
+                                )
                     except Exception:
                         continue
-                    
+
         data, start_y_offset = self._post_process_volume(volume_6d)
         # Reject if the non-air span is too thin
         if data.shape[2] < 5:
             self.reject_region(region_x, region_z)
-            raise ValueError(f"Region ({region_x}, {region_z}) rejected: non-air span is only {data.shape[2]} blocks high.")
+            raise ValueError(
+                f"Region ({region_x}, {region_z}) rejected: non-air span is only {data.shape[2]} blocks high."
+            )
 
         # Reject if the non-air span is too high
         if data.shape[2] > 384:
@@ -239,35 +243,39 @@ class WorldWrapper:
         content_ratio = np.sum(np.any(data > 1, axis=2)) / (512 * 512)
         if content_ratio < 0.10:
             self.reject_region(region_x, region_z)
-            raise ValueError(f"Region ({region_x}, {region_z}) rejected: {(1.0 - content_ratio) * 100:.1f}% filled with air/sponge.")
+            raise ValueError(
+                f"Region ({region_x}, {region_z}) rejected: {(1.0 - content_ratio) * 100:.1f}% filled with air/sponge."
+            )
 
         # Calculate Average Surface Elevation (Heightmap based)
         mask = data > 1
         has_solid = np.any(mask, axis=2)
-        
+
         if np.any(has_solid):
             # Find the highest block by looking from the top down (reversing the Y axis)
             flipped_mask = mask[:, :, ::-1]
             highest_indices = data.shape[2] - 1 - np.argmax(flipped_mask, axis=2)
-            
+
             # Average the elevation ONLY for columns that have at least one block
             # USING MEDIAN prevents tall structures or deep holes from skewing the plane
             solid_heights = highest_indices[has_solid]
             avg_surface_local = float(np.median(solid_heights))
-            
+
             # Reject if the height map is completely flat AND uniform (e.g. superflat or artificial platform)
             if np.ptp(solid_heights) == 0:
                 # Since it's perfectly flat, all surface blocks are at the exact same vertical index
                 h = solid_heights[0]
                 surface_blocks = data[:, :, h][has_solid]
-                
+
                 # Only reject if every single block on the flat surface is identical
                 if np.ptp(surface_blocks) == 0:
                     self.reject_region(region_x, region_z)
-                    raise ValueError(f"Region ({region_x}, {region_z}) rejected: heightmap is completely flat and uniform.")
+                    raise ValueError(
+                        f"Region ({region_x}, {region_z}) rejected: heightmap is completely flat and uniform."
+                    )
         else:
             avg_surface_local = 320
-            
+
         actual_min_y = bounds.min_y + start_y_offset
         avg_surface_pos = round(avg_surface_local + actual_min_y, 2)
 
@@ -278,11 +286,11 @@ class WorldWrapper:
         }
 
         return data
-    
+
     def get_heightmap(self, region_x: int, region_z: int, transparent_ids: List[int] = [0, 1]) -> np.ndarray:
         """Generates a 512x512 heightmap for a given region.
 
-        The heightmap represents the highest non-transparent block at each (x, z) 
+        The heightmap represents the highest non-transparent block at each (x, z)
         coordinate.
 
         Args:
@@ -294,16 +302,16 @@ class WorldWrapper:
             A 2D numpy array (uint16) of shape (512, 512) representing heights.
         """
         volume = self.get_region_volume(region_x, region_z, use_fast_extractor=True)
-        
+
         is_solid = ~np.isin(volume, transparent_ids)
-        
+
         flipped_mask = is_solid[:, :, ::-1]
-        
+
         heights = flipped_mask.shape[2] - np.argmax(flipped_mask, axis=2)
-        
+
         no_solid_blocks = ~np.any(is_solid, axis=2)
         heights[no_solid_blocks] = 0
-        
+
         return heights.astype(np.uint16)
 
     def mca_inhabited_times(self, region_x: int, region_z: int) -> np.ndarray:
@@ -324,7 +332,7 @@ class WorldWrapper:
             return np.zeros((32, 32), dtype=np.int64)
 
         data = np.zeros((32, 32), dtype=np.int64)
-    
+
         region = anvil.Region.from_file(path)
 
         for cz in range(32):
@@ -337,12 +345,12 @@ class WorldWrapper:
                             it_value = chunk["InhabitedTime"].value
                         elif "Level" in chunk and "InhabitedTime" in chunk["Level"]:
                             it_value = chunk["Level"]["InhabitedTime"].value
-                        
-                        data[cx, cz] = it_value 
+
+                        data[cx, cz] = it_value
                 except Exception:
                     continue
 
-        return data / 20 # Convert ticks to seconds
+        return data / 20  # Convert ticks to seconds
 
     def chunk_inhibited_time(self, x: int, z: int) -> int:
         """Retrieves the inhabited time for a specific chunk.
@@ -376,7 +384,7 @@ class WorldWrapper:
         region_x_offset = chunk_x % 32
         region_z_offset = chunk_z % 32
         return {"x": region_x, "z": region_z, "x_offset": region_x_offset, "z_offset": region_z_offset}
-    
+
     @staticmethod
     def to_chunk_coords(region_x: int, region_z: int, region_x_offset: int, region_z_offset: int) -> Dict[str, int]:
         """Converts region (MCA) coordinates and offsets back to chunk coordinates.
@@ -393,12 +401,12 @@ class WorldWrapper:
         chunk_x = region_x * 32 + region_x_offset
         chunk_z = region_z * 32 + region_z_offset
         return {"x": chunk_x, "z": chunk_z}
-    
+
 
 class BlockStates:
     """Manages the mapping between Minecraft blockstate strings and global IDs.
 
-    This class ensures that blockstates are consistently mapped to numerical IDs 
+    This class ensures that blockstates are consistently mapped to numerical IDs
     across different chunks and regions. The mapping is persisted to a text file.
     """
 
@@ -411,7 +419,7 @@ class BlockStates:
         """
         if asset_path is None:
             asset_path = Path(__file__).parent.parent / "assets"
-        
+
         asset_path.mkdir(parents=True, exist_ok=True)
         self._file_path = asset_path / "block_states.txt"
         self._file_path.touch(exist_ok=True)
@@ -433,9 +441,9 @@ class BlockStates:
         new_id = len(self._blockstates)
         self._blockstates.append(blockstate)
         self._blockstates_dict[blockstate] = new_id
-        
+
         with open(self._file_path, "a") as f:
-            f.write(f"{blockstate}\n") 
+            f.write(f"{blockstate}\n")
         return new_id
 
     def to_global_ids(self, blocks_array: np.ndarray, block_palette: BlockManager) -> np.ndarray:
@@ -449,20 +457,20 @@ class BlockStates:
             A numpy array of the same shape as blocks_array, containing global IDs.
         """
         palette_translation = []
-        
+
         marker_block = 'universal_minecraft:sponge[wet="false"]'
 
         for i in range(len(block_palette)):
             block_obj = block_palette._index_to_block[i]
             block_str = str(block_obj)
-            
+
             # Filter out numerical blocks (legacy format) and use a marker
             if "minecraft:numerical" in block_str:
                 logger.warning(f"Intercepted legacy block: {block_str}")
                 global_id = self.get_global_id_by_block(marker_block)
             else:
                 global_id = self.get_global_id_by_block(block_str)
-                
+
             palette_translation.append(global_id)
 
         palette_translation = np.array(palette_translation, dtype=np.uint16)
@@ -480,7 +488,7 @@ class BlockStates:
         if 0 <= id < len(self._blockstates):
             return self._blockstates[id]
         return 'universal_minecraft:sponge[wet="false"]'
-    
+
     def _sanitize_mod_block(self, block_str: str) -> str:
         """Converts modded blocks into a distinct vanilla marker block."""
         if block_str.startswith("universal_minecraft:"):
@@ -504,6 +512,7 @@ class BlockStates:
             return self._add_blockstate(blockstate)
         return self._blockstates_dict[blockstate]
 
+
 class Biomes:
     """Manages the mapping between Minecraft biome strings and global IDs.
 
@@ -524,7 +533,7 @@ class Biomes:
         asset_path.mkdir(parents=True, exist_ok=True)
         self._file_path = asset_path / "biomes.txt"
         self._file_path.touch(exist_ok=True)
-        
+
         with open(self._file_path, "r") as f:
             lines = f.read().splitlines()
             self._biomes = lines
@@ -542,9 +551,9 @@ class Biomes:
         new_id = len(self._biomes)
         self._biomes.append(biome_str)
         self._biomes_dict[biome_str] = new_id
-        
+
         with open(self._file_path, "a") as f:
-            f.write(f"{biome_str}\n") 
+            f.write(f"{biome_str}\n")
         return new_id
 
     def to_global_ids(self, biome_indices: np.ndarray, biome_palette: list) -> np.ndarray:
@@ -558,7 +567,7 @@ class Biomes:
             A numpy array of the same shape as biome_indices, containing global IDs.
         """
         palette_translation = []
-        
+
         for biome_obj in biome_palette:
             biome_str = str(biome_obj)
             global_id = self.get_global_id_by_biome(biome_str)
@@ -578,8 +587,8 @@ class Biomes:
         """
         if 0 <= id < len(self._biomes):
             return self._biomes[id]
-        return 'universal_minecraft:plains'
-    
+        return "universal_minecraft:plains"
+
     def get_global_id_by_biome(self, biome_str: str) -> int:
         """Retrieves the global ID corresponding to a given biome string.
 

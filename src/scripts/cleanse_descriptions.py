@@ -12,13 +12,11 @@ Usage:
     python -m src.scripts.cleanse_descriptions [--batch-size 64] [--max-rows 0] [--resume]
 """
 
-import sys
-import csv
-import json
 import argparse
+import csv
 import time
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 from openai import OpenAI
 from tqdm import tqdm
@@ -122,7 +120,7 @@ def strip_thinking_tags(text: str) -> str:
     if "<think>" in text:
         think_end = text.find("</think>")
         if think_end != -1:
-            text = text[think_end + len("</think>"):].strip()
+            text = text[think_end + len("</think>") :].strip()
     return text
 
 
@@ -136,7 +134,7 @@ def clean_title(client: OpenAI, raw_title: str, model_name: str) -> str:
         messages=[
             {"role": "system", "content": TITLE_SYSTEM_PROMPT},
             {"role": "user", "content": raw_title},
-        ]
+        ],
     )
     return strip_thinking_tags(response.choices[0].message.content.strip())
 
@@ -148,7 +146,7 @@ def clean_tags(client: OpenAI, raw_tags: str, model_name: str) -> str:
         messages=[
             {"role": "system", "content": TAGS_SYSTEM_PROMPT},
             {"role": "user", "content": raw_tags},
-        ]
+        ],
     )
     return strip_thinking_tags(response.choices[0].message.content.strip())
 
@@ -160,7 +158,7 @@ def clean_description(client: OpenAI, raw_description: str, model_name: str) -> 
         messages=[
             {"role": "system", "content": DESCRIPTION_SYSTEM_PROMPT},
             {"role": "user", "content": raw_description},
-        ]
+        ],
     )
     return strip_thinking_tags(response.choices[0].message.content.strip())
 
@@ -210,10 +208,7 @@ def process_batch(
     results = [None] * len(rows)
 
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
-        future_to_idx = {
-            executor.submit(process_single_row, client, row, model_name): i
-            for i, row in enumerate(rows)
-        }
+        future_to_idx = {executor.submit(process_single_row, client, row, model_name): i for i, row in enumerate(rows)}
 
         with tqdm(total=len(rows), desc="  Rows", leave=False) as pbar:
             for future in as_completed(future_to_idx):
@@ -235,12 +230,14 @@ def load_input_csv(path: Path, max_rows: int = 0) -> list[dict]:
         for i, row in enumerate(reader):
             if max_rows and i >= max_rows:
                 break
-            rows.append({
-                "id": row["id"],
-                "title": row.get("title", ""),
-                "tags": row.get("tags", ""),
-                "description": row.get("description", ""),
-            })
+            rows.append(
+                {
+                    "id": row["id"],
+                    "title": row.get("title", ""),
+                    "tags": row.get("tags", ""),
+                    "description": row.get("description", ""),
+                }
+            )
     return rows
 
 
@@ -272,18 +269,26 @@ def write_results(path: Path, results: list[dict], append: bool = False):
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Cleanse PMC map descriptions using local vLLM server")
-    parser.add_argument("--batch-size", type=int, default=64,
-                        help="Number of rows per batch (default: 64)")
-    parser.add_argument("--concurrency", type=int, default=16,
-                        help="Number of concurrent rows to process (default: 16)")
-    parser.add_argument("--max-rows", type=int, default=0,
-                        help="Max rows to process (0 = all)")
-    parser.add_argument("--resume", action="store_true",
-                        help="Resume from where we left off (skip already-processed IDs)")
-    parser.add_argument("--model", type=str, default="Qwen/Qwen3-VL-8B-Instruct-FP8",
-                        help="Model name served by vLLM (default: Qwen/Qwen3-VL-8B-Instruct-FP8)")
-    parser.add_argument("--base-url", type=str, default="http://localhost:8000/v1",
-                        help="vLLM server base URL (default: http://localhost:8000/v1)")
+    parser.add_argument("--batch-size", type=int, default=64, help="Number of rows per batch (default: 64)")
+    parser.add_argument(
+        "--concurrency", type=int, default=16, help="Number of concurrent rows to process (default: 16)"
+    )
+    parser.add_argument("--max-rows", type=int, default=0, help="Max rows to process (0 = all)")
+    parser.add_argument(
+        "--resume", action="store_true", help="Resume from where we left off (skip already-processed IDs)"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="Qwen/Qwen3-VL-8B-Instruct-FP8",
+        help="Model name served by vLLM (default: Qwen/Qwen3-VL-8B-Instruct-FP8)",
+    )
+    parser.add_argument(
+        "--base-url",
+        type=str,
+        default="http://localhost:8000/v1",
+        help="vLLM server base URL (default: http://localhost:8000/v1)",
+    )
     args = parser.parse_args()
 
     print(f"Model:       {args.model}")
@@ -291,7 +296,7 @@ def main():
     print(f"Concurrency: {args.concurrency}")
     print(f"Input:       {INPUT_CSV}")
     print(f"Output:      {OUTPUT_CSV}")
-    print(f"Note:        3 LLM calls per row (title, tags, description)")
+    print("Note:        3 LLM calls per row (title, tags, description)")
 
     # Initialise OpenAI client pointing at local vLLM server
     client = OpenAI(
@@ -326,7 +331,7 @@ def main():
     t_start = time.time()
 
     for batch_start in tqdm(range(0, len(rows), batch_size), total=num_batches, desc="Batches"):
-        batch = rows[batch_start:batch_start + batch_size]
+        batch = rows[batch_start : batch_start + batch_size]
 
         t0 = time.time()
         results = process_batch(client, batch, model_name=args.model, concurrency=args.concurrency)
@@ -336,8 +341,10 @@ def main():
         total_processed += len(results)
 
     total_elapsed = time.time() - t_start
-    print(f"\nDone! Processed {total_processed} rows in {total_elapsed:.1f}s "
-          f"({total_processed/total_elapsed:.1f} rows/s)")
+    print(
+        f"\nDone! Processed {total_processed} rows in {total_elapsed:.1f}s "
+        f"({total_processed / total_elapsed:.1f} rows/s)"
+    )
     print(f"Output saved to: {OUTPUT_CSV}")
 
 

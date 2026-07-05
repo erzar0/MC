@@ -7,22 +7,41 @@ Usage:
         --output_npy tmp/generated_tower.npy
 """
 
-import os
 import argparse
 import csv
+import os
+from pathlib import Path
+
 import numpy as np
 import torch
-from scipy.spatial import cKDTree
-from pathlib import Path
 from diffusers import SanaVideoPipeline
+from scipy.spatial import cKDTree
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate 3D Minecraft voxel grids from text using SANA-Video")
     parser.add_argument("--prompt", type=str, required=True, help="Text prompt describing the voxel structure")
-    parser.add_argument("--lora_path", type=str, default=None, help="Path to trained LoRA adapter directory (lora mode checkpoints)")
-    parser.add_argument("--transformer_path", type=str, default=None, help="Path to fully fine-tuned transformer directory (full mode checkpoints)")
-    parser.add_argument("--pretrained_model", type=str, default="Efficient-Large-Model/SANA-Video_2B_480p_diffusers", help="Base SANA-Video model")
-    parser.add_argument("--output_npy", type=str, default="tmp/generated_structure.npy", help="Path to save the snapped block ID voxel grid")
+    parser.add_argument(
+        "--lora_path", type=str, default=None, help="Path to trained LoRA adapter directory (lora mode checkpoints)"
+    )
+    parser.add_argument(
+        "--transformer_path",
+        type=str,
+        default=None,
+        help="Path to fully fine-tuned transformer directory (full mode checkpoints)",
+    )
+    parser.add_argument(
+        "--pretrained_model",
+        type=str,
+        default="Efficient-Large-Model/SANA-Video_2B_480p_diffusers",
+        help="Base SANA-Video model",
+    )
+    parser.add_argument(
+        "--output_npy",
+        type=str,
+        default="tmp/generated_structure.npy",
+        help="Path to save the snapped block ID voxel grid",
+    )
     parser.add_argument("--height", type=int, default=512, help="Spatial Height resolution")
     parser.add_argument("--width", type=int, default=512, help="Spatial Width resolution")
     parser.add_argument("--frames", type=int, default=64, help="Voxel vertical layers (Time/Frames axis)")
@@ -30,6 +49,7 @@ def parse_args():
     parser.add_argument("--block_state2rgb", type=str, default=None, help="Path to block_state2rgb.csv")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -46,9 +66,7 @@ def main():
     if args.transformer_path and os.path.exists(args.transformer_path):
         print(f"Loading fully fine-tuned transformer from {args.transformer_path}...")
         transformer_cls = type(pipe.transformer)
-        pipe.transformer = transformer_cls.from_pretrained(
-            args.transformer_path, torch_dtype=torch.bfloat16
-        ).to("cuda")
+        pipe.transformer = transformer_cls.from_pretrained(args.transformer_path, torch_dtype=torch.bfloat16).to("cuda")
     elif args.lora_path and os.path.exists(args.lora_path):
         print(f"Loading LoRA weights adapter from {args.lora_path}...")
         pipe.load_lora_weights(args.lora_path)
@@ -68,9 +86,9 @@ def main():
             use_resolution_binning=False,  # Keep exact crop dimensions
             num_inference_steps=30,
             generator=torch.Generator(device="cuda").manual_seed(args.seed),
-            output_type="np.array"
+            output_type="np.array",
         ).frames[0]
-        
+
     # SANA-Video returns numpy array normalized to [0, 1] (float) or [0, 255] (uint8)
     if video.dtype == np.float32 or video.dtype == np.float64:
         video = (video * 255).astype(np.uint8)
@@ -92,7 +110,7 @@ def main():
     # Load block states list
     with open(block_states_path, "r") as f:
         states = [line.strip() for line in f]
-        
+
     # Load state -> RGB mapping
     state2rgb = {}
     with open(block_state2rgb_path, "r") as f:
@@ -130,6 +148,7 @@ def main():
         block_count = counts[i]
         block_name = states[block_id] if block_id < len(states) else f"Unknown ({block_id})"
         print(f"  - {block_name}: {block_count} voxels")
+
 
 if __name__ == "__main__":
     main()

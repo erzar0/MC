@@ -16,6 +16,7 @@ MCMAP_BIN = PROJECT_ROOT / "tmp" / "third-party" / "mcmap" / "build" / "bin" / "
 
 # Data Processing
 PROCESSED_WORLDS_DIR = PROJECT_ROOT / "tmp" / "processed_worlds"
+DEFAULT_WORLD_NAME = "greenfield"
 
 # Experiment Settings
 DOWNLOADS_DIR = PROJECT_ROOT / "tmp" / "downloads"

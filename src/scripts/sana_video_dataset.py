@@ -90,9 +90,7 @@ class MinecraftVideoDataset(Dataset):
         block_state2rgb_path: Optional[str] = None,
     ):
         if (max_frames - 1) % 4 != 0:
-            raise ValueError(
-                f"max_frames must be 4n+1 for the Wan VAE temporal compression, got {max_frames}"
-            )
+            raise ValueError(f"max_frames must be 4n+1 for the Wan VAE temporal compression, got {max_frames}")
         self.spatial_crop_size = spatial_crop_size
         self.max_frames = max_frames
         self.surface_margin = surface_margin
@@ -152,7 +150,7 @@ class MinecraftVideoDataset(Dataset):
         if h > crop or w > crop:
             y0 = random.randint(0, max(0, h - crop))
             x0 = random.randint(0, max(0, w - crop))
-            window = window[:, y0:y0 + crop, x0:x0 + crop]
+            window = window[:, y0 : y0 + crop, x0 : x0 + crop]
 
         # Block IDs -> RGB pseudo-video, normalized to [-1, 1] for the VAE
         rgb = self.id2rgb[window]  # (F, H, W, 3) uint8

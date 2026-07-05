@@ -7,15 +7,17 @@ Architecture:
 """
 
 import os
-import numpy as np
+from pathlib import Path
+from typing import Optional
+
 import blosc2
+import numpy as np
 import torch
 import torch.nn as nn
 import triton
 import triton.language as tl
-from typing import Optional
-from pathlib import Path
 from tqdm import tqdm
+
 
 @triton.jit
 def _sgns_kernel(
@@ -31,7 +33,7 @@ def _sgns_kernel(
     BLOCK_SIZE_N: tl.constexpr,
 ):
     """Fused Skip-Gram with Negative Sampling update.
-    
+
     For each (center, context) pair:
       1. Compute positive gradient:  g = (σ(v_c · u_ctx) - 1) · lr
       2. Compute negative gradients: g = σ(v_c · u_neg) · lr  (for each negative)
@@ -86,9 +88,10 @@ def _sgns_kernel(
         mask=element_mask[:, None],
     )
 
+
 class Block2Vec(nn.Module):
     """Skip-Gram embedding model for Minecraft block IDs.
-    
+
     Uses separate input (center) and output (context) embedding matrices,
     trained via a fused Triton SGNS kernel that bypasses PyTorch autograd.
     """
@@ -100,19 +103,25 @@ class Block2Vec(nn.Module):
         self.n_negatives = n_negatives
 
         # Registered as buffers (not Parameters) since Triton writes directly to memory
-        self.register_buffer('embedding_in', torch.randn(vocab_size, embedding_dim) * 0.05)
-        self.register_buffer('embedding_out', torch.zeros(vocab_size, embedding_dim))
+        self.register_buffer("embedding_in", torch.randn(vocab_size, embedding_dim) * 0.05)
+        self.register_buffer("embedding_out", torch.zeros(vocab_size, embedding_dim))
 
     def train_step(self, center_ids, context_ids, negative_ids, learning_rate: float):
         n_elements = center_ids.numel()
         if n_elements == 0:
             return
-        grid = lambda meta: (triton.cdiv(n_elements, meta['BLOCK_SIZE_N']),)
+        grid = lambda meta: (triton.cdiv(n_elements, meta["BLOCK_SIZE_N"]),)
         _sgns_kernel[grid](
-            self.embedding_in, self.embedding_out,
-            center_ids, context_ids, negative_ids,
-            learning_rate, n_elements, self.n_negatives,
-            embedding_dim=self.embedding_dim, BLOCK_SIZE_N=128,
+            self.embedding_in,
+            self.embedding_out,
+            center_ids,
+            context_ids,
+            negative_ids,
+            learning_rate,
+            n_elements,
+            self.n_negatives,
+            embedding_dim=self.embedding_dim,
+            BLOCK_SIZE_N=128,
         )
 
     def get_embeddings(self) -> np.ndarray:
@@ -129,35 +138,43 @@ class Block2Vec(nn.Module):
 
         sims = torch.mm(norm_emb, norm_all.t()).squeeze(0)
         top_indices = torch.topk(sims, min(top_n + 1, self.vocab_size)).indices[1:].cpu().tolist()
-        return [
-            (id_to_name.get(idx, str(idx)) if id_to_name else str(idx), sims[idx].item())
-            for idx in top_indices
-        ]
+        return [(id_to_name.get(idx, str(idx)) if id_to_name else str(idx), sims[idx].item()) for idx in top_indices]
+
 
 # Cached neighbor offset tensors (module-level singletons)
 _FACE6_OFFSETS = None
 _CUBE26_OFFSETS = None
 
+
 def _get_offsets(neighbor_mode: str) -> torch.Tensor:
     """Return cached neighbor offset tensor on GPU."""
     global _FACE6_OFFSETS, _CUBE26_OFFSETS
 
-    if neighbor_mode == 'face6':
+    if neighbor_mode == "face6":
         if _FACE6_OFFSETS is None:
-            _FACE6_OFFSETS = torch.tensor([
-                [-1, 0, 0], [1, 0, 0],
-                [0, -1, 0], [0, 1, 0],
-                [0, 0, -1], [0, 0, 1],
-            ], device='cuda', dtype=torch.int32)
+            _FACE6_OFFSETS = torch.tensor(
+                [
+                    [-1, 0, 0],
+                    [1, 0, 0],
+                    [0, -1, 0],
+                    [0, 1, 0],
+                    [0, 0, -1],
+                    [0, 0, 1],
+                ],
+                device="cuda",
+                dtype=torch.int32,
+            )
         return _FACE6_OFFSETS
-    elif neighbor_mode == 'cube26':
+    elif neighbor_mode == "cube26":
         if _CUBE26_OFFSETS is None:
             offsets = [
                 [dx, dy, dz]
-                for dx in [-1, 0, 1] for dy in [-1, 0, 1] for dz in [-1, 0, 1]
+                for dx in [-1, 0, 1]
+                for dy in [-1, 0, 1]
+                for dz in [-1, 0, 1]
                 if not (dx == 0 and dy == 0 and dz == 0)
             ]
-            _CUBE26_OFFSETS = torch.tensor(offsets, device='cuda', dtype=torch.int32)
+            _CUBE26_OFFSETS = torch.tensor(offsets, device="cuda", dtype=torch.int32)
         return _CUBE26_OFFSETS
     else:
         raise ValueError(f"Unknown neighbor_mode: {neighbor_mode!r}. Use 'face6' or 'cube26'.")
@@ -191,7 +208,7 @@ class SpatialMinecraftDataset:
         neg_buffer_gpu: torch.Tensor,
         neg_idx: int,
         subsample_threshold: float = 1e-2,
-        neighbor_mode: str = 'face6',
+        neighbor_mode: str = "face6",
         batch_size: int = 4096,
     ):
         self.shape = region_volume.shape
@@ -221,16 +238,16 @@ class SpatialMinecraftDataset:
         """Flatten volume in random C/Fortran order, extract non-boundary indices."""
         sx, sz, sy = self.shape
         mask = np.zeros(self.shape, dtype=bool)
-        mask[1:sx-1, 1:sz-1, 1:sy-1] = True
+        mask[1 : sx - 1, 1 : sz - 1, 1 : sy - 1] = True
 
         # Randomize memory traversal order for batch locality variation
         self._use_fortran = np.random.random() < 0.5
         if self._use_fortran:
-            valid_flat = np.flatnonzero(mask.ravel(order='F'))
+            valid_flat = np.flatnonzero(mask.ravel(order="F"))
             self._stride_y = sx * sz
             self._stride_z = sx
         else:
-            valid_flat = np.flatnonzero(mask.ravel(order='C'))
+            valid_flat = np.flatnonzero(mask.ravel(order="C"))
             self._stride_x = sz * sy
             self._stride_z = sy
 
@@ -273,7 +290,7 @@ class SpatialMinecraftDataset:
         center_ids = self.gpu_volume[cx.long(), cz.long(), cy.long()]
 
         # Subsample centers
-        keep_mask = torch.rand(center_ids.numel(), device='cuda') < self.keep_probs[center_ids]
+        keep_mask = torch.rand(center_ids.numel(), device="cuda") < self.keep_probs[center_ids]
         if not keep_mask.any():
             return self._empty_batch(n_negatives)
 
@@ -283,7 +300,7 @@ class SpatialMinecraftDataset:
         # Gather spatial neighbors (no clamp needed — centers are ≥1 voxel from edges)
         # Loop avoids allocating (B, N, 3) intermediate; peak mem: (B, N) vs (B, N, 3)
         n_centers = cx.shape[0]
-        context_ids_2d = torch.empty((n_centers, self.n_neighbors), device='cuda', dtype=self.gpu_volume.dtype)
+        context_ids_2d = torch.empty((n_centers, self.n_neighbors), device="cuda", dtype=self.gpu_volume.dtype)
         for k in range(self.n_neighbors):
             context_ids_2d[:, k] = self.gpu_volume[
                 (cx + self.offsets[k, 0]).long(),
@@ -304,11 +321,11 @@ class SpatialMinecraftDataset:
         # Draw negatives from circular buffer (slice-based, no index tensor)
         total_pairs = final_centers.numel()
         needed = total_pairs * n_negatives
-        negatives = torch.empty(needed, device='cuda', dtype=self.neg_buffer.dtype)
+        negatives = torch.empty(needed, device="cuda", dtype=self.neg_buffer.dtype)
         remaining, pos, idx = needed, 0, self.neg_idx
         while remaining > 0:
             avail = min(remaining, self.neg_buffer_size - idx)
-            negatives[pos:pos + avail] = self.neg_buffer[idx:idx + avail]
+            negatives[pos : pos + avail] = self.neg_buffer[idx : idx + avail]
             pos += avail
             remaining -= avail
             idx = 0
@@ -319,17 +336,20 @@ class SpatialMinecraftDataset:
 
     @staticmethod
     def _empty_batch(n_negatives):
-        empty = torch.zeros(0, device='cuda', dtype=torch.int32)
-        return empty, empty, torch.zeros((0, n_negatives), device='cuda', dtype=torch.int32)
+        empty = torch.zeros(0, device="cuda", dtype=torch.int32)
+        return empty, empty, torch.zeros((0, n_negatives), device="cuda", dtype=torch.int32)
 
 
 # ============================================================================
 # Training
 # ============================================================================
 
+
 def get_vocab_size(block_states_path: Optional[str] = None) -> int:
     """Read vocabulary size from block_states.txt."""
-    path = Path(block_states_path) if block_states_path else Path(__file__).parent.parent / "assets" / "block_states.txt"
+    path = (
+        Path(block_states_path) if block_states_path else Path(__file__).parent.parent / "assets" / "block_states.txt"
+    )
     if path.exists():
         with open(path, "r") as f:
             return sum(1 for line in f if line.strip())
@@ -346,7 +366,7 @@ def train_block2vec_from_volumes(
     initial_lr: float = 0.025,
     min_lr: float = 0.0001,
     subsample_t: float = 1e-2,
-    neighbor_mode: str = 'cube26',
+    neighbor_mode: str = "cube26",
     save_dir: Optional[str] = None,
     save_every: int = 100,
     block_states_path: Optional[str] = None,
@@ -386,7 +406,7 @@ def train_block2vec_from_volumes(
         np.random.shuffle(b2frames)
 
         for b2_file in b2frames:
-            vbar.set_description(f"Epoch {epoch+1}/{epochs} | {b2_file.name}")
+            vbar.set_description(f"Epoch {epoch + 1}/{epochs} | {b2_file.name}")
 
             try:
                 with open(b2_file, "rb") as f:
@@ -414,7 +434,7 @@ def train_block2vec_from_volumes(
                     pbar.set_postfix({"lr": f"{lr:.6f}", "pairs": f"{c_ids.numel()}"})
 
                 neg_idx = dataset.neg_idx
-                vbar.set_postfix({"lr": f"{lr:.6f}", "total_pairs": f"{total_words_processed/1e6:.1f}M"})
+                vbar.set_postfix({"lr": f"{lr:.6f}", "total_pairs": f"{total_words_processed / 1e6:.1f}M"})
             except Exception as e:
                 print(f"\nError processing volume {b2_file.name}: {e}")
             # finally:
@@ -431,11 +451,14 @@ def train_block2vec_from_volumes(
 
     return model
 
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Train Block2Vec embeddings from Minecraft volumes")
-    parser.add_argument("--volumes", type=str, default="/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/")
+    parser.add_argument(
+        "--volumes", type=str, default="/home/kyre/repos/minecraft-world-generator/tmp/processed_worlds/cleansed/"
+    )
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=2**23)
@@ -474,7 +497,11 @@ if __name__ == "__main__":
         print("Embeddings saved to tmp/block_embeddings.npy")
 
         # Quick similarity test
-        states_path = Path(args.block_states) if args.block_states else Path(__file__).parent.parent / "assets" / "block_states.txt"
+        states_path = (
+            Path(args.block_states)
+            if args.block_states
+            else Path(__file__).parent.parent / "assets" / "block_states.txt"
+        )
         id_to_name = {}
         if states_path.exists():
             with open(states_path, "r") as f:

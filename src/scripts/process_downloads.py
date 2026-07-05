@@ -1,16 +1,15 @@
-import os
-import sys
+import argparse
 import json
 import logging
-import argparse
-import signal
-import shutil
+import multiprocessing
 import random
 import re
-import multiprocessing
+import shutil
+import signal
+import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 # Ensure src is in path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -27,12 +26,13 @@ log = logging.getLogger("process_downloads")
 STATE_FILE = project_root / "assets" / "process_state.json"
 DOWNLOADS_DIR = config.DOWNLOADS_DIR
 
+
 def _worker_task(map_id: str, world_root: Path) -> tuple[str, dict]:
     worker_id = multiprocessing.current_process().pid
-    
+
     # Create worker-specific server_dir to avoid port/file clashes during MCR to MCA conversion
     worker_server_dir = Path(config.SERVER_DIR).parent / f"{Path(config.SERVER_DIR).name}_worker_{worker_id}"
-    
+
     if not worker_server_dir.exists():
         try:
             shutil.copytree(config.SERVER_DIR, worker_server_dir, dirs_exist_ok=True)
@@ -55,10 +55,9 @@ def _worker_task(map_id: str, world_root: Path) -> tuple[str, dict]:
     return map_id, processor.process_world(world_root, map_id, remove_tmp_dirs=True)
 
 
-
-
 class ProcessState:
     """Manages the process_state.json file for tracking progress."""
+
     def __init__(self, path: Path = STATE_FILE):
         self._path = path
         self._data: Dict[str, dict] = self._load()
@@ -73,11 +72,7 @@ class ProcessState:
         return {}
 
     def _ensure(self, map_id: str) -> dict:
-        return self._data.setdefault(map_id, {
-            "status": "pending",
-            "error": None,
-            "output_dir": None
-        })
+        return self._data.setdefault(map_id, {"status": "pending", "error": None, "output_dir": None})
 
     def is_done(self, map_id: str) -> bool:
         return self._ensure(map_id).get("status") == "done"
@@ -110,7 +105,7 @@ class DownloadProcessor:
         self.state = ProcessState()
         self.running = True
         self.executor = None
-        
+
         signal.signal(signal.SIGINT, self._handle_exit)
         signal.signal(signal.SIGTERM, self._handle_exit)
 
@@ -156,7 +151,7 @@ class DownloadProcessor:
 
     def _process_list(self, map_dirs: list[Path], limit: Optional[int], retry_failed: bool, workers: int):
         processed = done = failed = skipped = 0
-        
+
         tasks_to_run = []
 
         for map_dir in map_dirs:
@@ -203,22 +198,22 @@ class DownloadProcessor:
             for future in as_completed(futures):
                 if not self.running:
                     break
-                
+
                 map_id = futures[future]
                 try:
                     map_id, result = future.result()
-                    
+
                     if result["status"] == "success":
                         output_dir = Path(result["output_dir"])
                         screenshots_dir = output_dir / "screenshots"
-                        
+
                         if not screenshots_dir.exists() or not any(screenshots_dir.iterdir()):
                             zero_regions_dir = output_dir.parent / "0_regions" / map_id
                             zero_regions_dir.parent.mkdir(parents=True, exist_ok=True)
                             if zero_regions_dir.exists():
                                 shutil.rmtree(zero_regions_dir)
                             shutil.move(str(output_dir), str(zero_regions_dir))
-                            
+
                             self.state.mark_failed(map_id, "0 screenshots generated")
                             log.warning(f"[{map_id}] ✗ Moved to 0_regions due to empty screenshots.")
                             failed += 1
@@ -235,33 +230,25 @@ class DownloadProcessor:
                     log.error(f"[{map_id}] ✗ Worker failed with exception: {exc}")
                     self.state.mark_failed(map_id, f"Worker exception: {exc}")
                     failed += 1
-                
+
                 self.state.save()
                 processed += 1
-                
+
         except Exception as e:
             log.error(f"Execution interrupted: {e}")
         finally:
             self.executor.shutdown(wait=False, cancel_futures=True)
 
-        log.info(
-            f"\nFinished processing. done={done}  failed={failed}  "
-            f"skipped(already-processed)={skipped}"
-        )
+        log.info(f"\nFinished processing. done={done}  failed={failed}  skipped(already-processed)={skipped}")
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process downloaded Minecraft maps.")
-    parser.add_argument("--limit", type=int, default=None,
-                        help="Process at most N maps (for testing)")
-    parser.add_argument("--retry-failed", action="store_true",
-                        help="Attempt to process maps that previously failed")
-    parser.add_argument("--ids", nargs="+",
-                        help="Only process specific map IDs")
-    parser.add_argument("--workers", type=int, default=1,
-                        help="Number of concurrent workers for processing maps")
-    parser.add_argument("--debug", action="store_true",
-                        help="Enable DEBUG log level")
+    parser.add_argument("--limit", type=int, default=None, help="Process at most N maps (for testing)")
+    parser.add_argument("--retry-failed", action="store_true", help="Attempt to process maps that previously failed")
+    parser.add_argument("--ids", nargs="+", help="Only process specific map IDs")
+    parser.add_argument("--workers", type=int, default=1, help="Number of concurrent workers for processing maps")
+    parser.add_argument("--debug", action="store_true", help="Enable DEBUG log level")
     return parser.parse_args()
 
 

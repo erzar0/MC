@@ -1,8 +1,9 @@
+import sys
+from pathlib import Path
+
 import blosc2
 import numpy as np
 import pandas as pd
-from pathlib import Path
-import sys
 
 # Add project root to sys.path
 project_root = Path(__file__).parent.parent
@@ -11,19 +12,20 @@ if str(project_root) not in sys.path:
 
 from src import config
 
+
 def test_pipeline_data_loading():
     """
     Test that loads all important data used by 01_data_preparation.py.
     """
     world_name = config.DEFAULT_WORLD_NAME
     cleansed_dir = config.PROCESSED_WORLDS_DIR / "cleansed" / world_name
-    
+
     print(f"Testing data loaded for: {world_name}")
-    
+
     # 1. Test Volumes (used to generate minecraft models)
     volumes_dir = cleansed_dir / "volumes"
     volume_file = volumes_dir / "r.0.0.b2frame"
-    
+
     if volume_file.exists():
         print(f"Loading volume from {volume_file}...")
         with open(volume_file, "rb") as f:
@@ -31,15 +33,12 @@ def test_pipeline_data_loading():
 
         volume_array = blosc2.unpack_array2(compressed_data)
         print(f"Unpacked volume shape: {volume_array.shape}")
-        
+
         # Load LUT
         lut_path = project_root / "assets" / "block_state2rgb.csv"
         if lut_path.exists():
             df = pd.read_csv(lut_path)
-            lut = np.array([
-                [int(val) for val in row.split("|")] 
-                for row in df['rgb']
-            ], dtype=np.uint8)
+            lut = np.array([[int(val) for val in row.split("|")] for row in df["rgb"]], dtype=np.uint8)
 
             print("Converting block IDs to RGB...")
             rgb_cube = lut[volume_array]
@@ -48,7 +47,7 @@ def test_pipeline_data_loading():
             print(f"Warning: LUT not found at {lut_path}")
     else:
         print(f"Warning: Volume file not found at {volume_file}")
-        
+
     # 2. Test Screenshots (used by 01_data_preparation.py)
     screenshots_dir = cleansed_dir / "screenshots"
     if screenshots_dir.exists():
@@ -63,11 +62,11 @@ def test_pipeline_data_loading():
         captions = list(captions_dir.glob("*.txt"))
         print(f"Found {len(captions)} caption files in {captions_dir}...")
         for cap in captions[:2]:
-            with open(cap, 'r', encoding='utf-8') as f:
+            with open(cap, "r", encoding="utf-8") as f:
                 print(f"  Sample Caption {cap.name}: {f.read()[:100]}...")
     else:
         print(f"Warning: Captions dir not found at {captions_dir}")
 
+
 if __name__ == "__main__":
     test_pipeline_data_loading()
-

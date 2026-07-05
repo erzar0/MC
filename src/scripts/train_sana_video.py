@@ -18,15 +18,14 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
-
 from accelerate import Accelerator
 from accelerate.utils import set_seed
 from diffusers import SanaVideoPipeline
 from diffusers.training_utils import cast_training_params
 from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict
+from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 # Support both `python -m src.scripts.train_sana_video` and direct execution
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -38,14 +37,31 @@ except ImportError:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Fine-tune SANA-Video on Minecraft 3D voxel volumes")
-    parser.add_argument("--manifest", type=str, default="tmp/sana_video_manifest.jsonl", help="Path to JSONL dataset manifest")
-    parser.add_argument("--pretrained_model", type=str, default="Efficient-Large-Model/SANA-Video_2B_480p_diffusers", help="Base SANA-Video model ID")
-    parser.add_argument("--mode", type=str, choices=["lora", "full"], default="lora", help="Fine-tuning mode: LoRA adapters or full transformer weights")
+    parser.add_argument(
+        "--manifest", type=str, default="tmp/sana_video_manifest.jsonl", help="Path to JSONL dataset manifest"
+    )
+    parser.add_argument(
+        "--pretrained_model",
+        type=str,
+        default="Efficient-Large-Model/SANA-Video_2B_480p_diffusers",
+        help="Base SANA-Video model ID",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["lora", "full"],
+        default="lora",
+        help="Fine-tuning mode: LoRA adapters or full transformer weights",
+    )
     parser.add_argument("--output_dir", type=str, default="tmp/sana_video_ft", help="Directory to save checkpoints")
     parser.add_argument("--spatial_crop_size", type=int, default=512, help="Spatial resolution to crop volumes to")
-    parser.add_argument("--max_frames", type=int, default=65, help="Frame/Y-layer count per sample (must be 4n+1 for the Wan VAE)")
+    parser.add_argument(
+        "--max_frames", type=int, default=65, help="Frame/Y-layer count per sample (must be 4n+1 for the Wan VAE)"
+    )
     parser.add_argument("--lora_rank", type=int, default=8, help="LoRA attention rank (lora mode only)")
-    parser.add_argument("--learning_rate", type=float, default=None, help="Learning rate (default: 2e-4 for lora, 1e-5 for full)")
+    parser.add_argument(
+        "--learning_rate", type=float, default=None, help="Learning rate (default: 2e-4 for lora, 1e-5 for full)"
+    )
     parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size per device (keep 1 to fit VRAM)")
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4, help="Gradient accumulation steps")
@@ -82,7 +98,9 @@ def main():
         mixed_precision="bf16",
     )
     device = accelerator.device
-    print(f"Mode: {args.mode} | LR: {args.learning_rate} | Device: {device} | Mixed precision: {accelerator.mixed_precision}")
+    print(
+        f"Mode: {args.mode} | LR: {args.learning_rate} | Device: {device} | Mixed precision: {accelerator.mixed_precision}"
+    )
 
     # 2. Load pretrained pipeline and split out components
     print(f"Loading pretrained SANA-Video model from {args.pretrained_model}...")
@@ -143,6 +161,7 @@ def main():
     # 5. Optimizer (8-bit AdamW when available to shrink optimizer state)
     try:
         import bitsandbytes as bnb
+
         optimizer_cls = bnb.optim.AdamW8bit
         print("Using 8-bit AdamW optimizer.")
     except ImportError:

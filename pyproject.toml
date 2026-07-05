@@ -86,3 +86,18 @@ dependencies = [
 
 [tool.uv.sources]
 diffusers = { git = "https://github.com/huggingface/diffusers" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["Sana", "DC-Gen", "vllm_env", "tmp", "data", ".venv", ".vllm_venv", "src/notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+    "E501",  # line length handled by the formatter
+    "E402",  # module-level imports after sys.path setup (project convention)
+]

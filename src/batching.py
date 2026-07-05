@@ -1,7 +1,8 @@
 from itertools import islice
-from typing import Iterable, TypeVar, Generator, List
+from typing import Generator, Iterable, List, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def batch_n(iterable: Iterable[T], batch_count: int) -> Generator[List[T], None, None]:
     """
@@ -18,11 +19,10 @@ def batch_n(iterable: Iterable[T], batch_count: int) -> Generator[List[T], None,
         raise ValueError("Number of batches must be positive")
 
     batch_size = len(list(iterable)) // batch_count + 1
-    
+
     it = iter(iterable)
     while True:
         batch = list(islice(it, batch_size))
         if not batch:
             break
         yield batch
-

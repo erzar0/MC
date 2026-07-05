@@ -21,6 +21,7 @@ Downloads:   tmp/downloads/<map_id>/<filename>
 
 from __future__ import annotations
 
+import argparse
 import csv
 import gzip
 import json
@@ -32,11 +33,10 @@ import sys
 import tarfile
 import time
 import zipfile
-import argparse
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote, urlparse
 
 import py7zr
 import rarfile
@@ -48,10 +48,10 @@ from tqdm import tqdm
 # Paths & logging
 # ---------------------------------------------------------------------------
 
-REPO_ROOT    = Path(__file__).resolve().parents[2]
-ASSETS_DIR   = REPO_ROOT / "assets"
-INPUT_CSV    = ASSETS_DIR / "pmc_data_cleansed.csv"
-STATE_FILE   = ASSETS_DIR / "map_download_state.json"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+ASSETS_DIR = REPO_ROOT / "assets"
+INPUT_CSV = ASSETS_DIR / "pmc_data_cleansed.csv"
+STATE_FILE = ASSETS_DIR / "map_download_state.json"
 DOWNLOAD_DIR = REPO_ROOT / "tmp" / "downloads"
 
 logging.basicConfig(
@@ -67,24 +67,26 @@ ARCHIVE_EXTENSIONS = (".zip", ".rar", ".7z", ".tar.gz", ".tgz", ".tar.bz2", ".ta
 # Shared HTTP session
 # ---------------------------------------------------------------------------
 
+
 def _build_session() -> requests.Session:
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (X11; Linux x86_64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        )
-    })
+    session.headers.update(
+        {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            )
+        }
+    )
     retry = Retry(
         total=4,
         backoff_factor=1.5,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["GET", "HEAD"],
     )
-    session.mount("http://",  HTTPAdapter(max_retries=retry))
+    session.mount("http://", HTTPAdapter(max_retries=retry))
     session.mount("https://", HTTPAdapter(max_retries=retry))
     return session
+
 
 SESSION = _build_session()
 
@@ -92,22 +94,27 @@ SESSION = _build_session()
 # URL helpers
 # ---------------------------------------------------------------------------
 
-_MIRROR_RE = re.compile(r'\(https?://[^)]+\)')
+_MIRROR_RE = re.compile(r"\(https?://[^)]+\)")
+
 
 def extract_urls(mirror_field: str) -> list[str]:
     """Return all raw URLs from a ``download_mirrors`` CSV cell."""
     return [m.group(0)[1:-1].strip() for m in _MIRROR_RE.finditer(mirror_field)]
 
+
 def _netloc(url: str) -> str:
     return urlparse(url).netloc.lower()
+
 
 def _is_archive_path(path: str) -> bool:
     path = path.lower()
     return any(path.endswith(ext) for ext in ARCHIVE_EXTENSIONS)
 
+
 # ---------------------------------------------------------------------------
 # URL Resolvers
 # ---------------------------------------------------------------------------
+
 
 class UrlResolver(ABC):
     """Converts a share/page URL into a direct downloadable URL."""
@@ -203,9 +210,9 @@ class DropboxResolver(UrlResolver):
 
 class PlanetMinecraftResolver(UrlResolver):
     """Appends /download/ to PlanetMinecraft project URLs and resolves redirects."""
-    
+
     def __init__(self):
-        self.chain = None # Set by ResolverChain later
+        self.chain = None  # Set by ResolverChain later
 
     def can_handle(self, url: str) -> bool:
         return "planetminecraft.com" in _netloc(url)
@@ -213,7 +220,7 @@ class PlanetMinecraftResolver(UrlResolver):
     def resolve(self, url: str) -> Optional[str]:
         if "/download/" not in url:
             url = url.rstrip("/") + "/download/"
-            
+
         try:
             # PMC download URLs often redirect to a third-party host (like MediaFire)
             # Or they serve the file directly if hosted on PMC.
@@ -229,7 +236,7 @@ class PlanetMinecraftResolver(UrlResolver):
         except Exception as e:
             log.debug(f"PlanetMinecraft resolve error: {e}")
             pass
-            
+
         return url
 
 
@@ -251,23 +258,23 @@ class GoogleDriveResolver(UrlResolver):
 
     def resolve(self, url: str) -> Optional[str]:
         file_id = None
-        match = re.search(r'/d/([a-zA-Z0-9_-]+)', url)
+        match = re.search(r"/d/([a-zA-Z0-9_-]+)", url)
         if match:
             file_id = match.group(1)
         else:
-            match = re.search(r'[?&]id=([a-zA-Z0-9_-]+)', url)
+            match = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", url)
             if match:
                 file_id = match.group(1)
             else:
-                match = re.search(r'/folders/([a-zA-Z0-9_-]+)', url)
+                match = re.search(r"/folders/([a-zA-Z0-9_-]+)", url)
                 if match:
                     file_id = match.group(1)
-                
+
         if not file_id:
             return None
-            
+
         base_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
+
         try:
             resp = SESSION.get(base_url, stream=True, timeout=25, allow_redirects=False)
             if resp.status_code in (301, 302, 303, 307, 308):
@@ -282,7 +289,7 @@ class GoogleDriveResolver(UrlResolver):
         except Exception as e:
             log.debug(f"Google Drive resolve error: {e}")
             pass
-            
+
         return base_url
 
 
@@ -295,7 +302,7 @@ class ResolverChain:
     def __init__(self, resolvers: list[UrlResolver]):
         self._resolvers = resolvers
         for r in self._resolvers:
-            if hasattr(r, 'chain'):
+            if hasattr(r, "chain"):
                 r.chain = self
 
     def resolve(self, url: str, depth: int = 0) -> Optional[str]:
@@ -313,17 +320,20 @@ class ResolverChain:
 
 
 # Default chain used by MapDownloader
-DEFAULT_RESOLVER_CHAIN = ResolverChain([
-    MediaFireResolver(),
-    DropboxResolver(),
-    PlanetMinecraftResolver(),
-    GoogleDriveResolver(),
-    DirectResolver(),
-])
+DEFAULT_RESOLVER_CHAIN = ResolverChain(
+    [
+        MediaFireResolver(),
+        DropboxResolver(),
+        PlanetMinecraftResolver(),
+        GoogleDriveResolver(),
+        DirectResolver(),
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # Extractor
 # ---------------------------------------------------------------------------
+
 
 class Extractor:
     """Extracts archives into a destination directory."""
@@ -377,9 +387,11 @@ class Extractor:
         with gzip.open(archive, "rb") as gz_in, open(out_path, "wb") as fh:
             shutil.copyfileobj(gz_in, fh)
 
+
 # ---------------------------------------------------------------------------
 # DownloadState
 # ---------------------------------------------------------------------------
+
 
 class DownloadState:
     """
@@ -445,16 +457,21 @@ class DownloadState:
         return {}
 
     def _ensure(self, map_id: str) -> dict:
-        return self._data.setdefault(map_id, {
-            "status": "pending",
-            "attempted_urls": [],
-            "error": None,
-            "file": None,
-        })
+        return self._data.setdefault(
+            map_id,
+            {
+                "status": "pending",
+                "attempted_urls": [],
+                "error": None,
+                "file": None,
+            },
+        )
+
 
 # ---------------------------------------------------------------------------
 # Downloader (file fetcher)
 # ---------------------------------------------------------------------------
+
 
 class FileDownloader:
     """Streams a direct URL to disk with a progress bar."""
@@ -466,14 +483,13 @@ class FileDownloader:
         try:
             with SESSION.get(url, stream=True, timeout=60, allow_redirects=True) as resp:
                 resp.raise_for_status()
-                fname    = self._filename(resp)
+                fname = self._filename(resp)
                 dest_dir.mkdir(parents=True, exist_ok=True)
-                dest     = dest_dir / fname
-                total    = int(resp.headers.get("Content-Length", 0)) or None
+                dest = dest_dir / fname
+                total = int(resp.headers.get("Content-Length", 0)) or None
                 log.info(f"  Downloading → {fname} ({total} bytes)")
                 with open(dest, "wb") as fh:
-                    with tqdm(total=total, unit="B", unit_scale=True,
-                              desc=fname, leave=False) as pbar:
+                    with tqdm(total=total, unit="B", unit_scale=True, desc=fname, leave=False) as pbar:
                         for chunk in resp.iter_content(chunk_size=self.CHUNK_SIZE):
                             if chunk:
                                 fh.write(chunk)
@@ -489,7 +505,7 @@ class FileDownloader:
         cd = resp.headers.get("Content-Disposition", "")
         m = re.search(r'filename\*?=["\']?([^"\';\r\n]+)', cd)
         if m:
-            return unquote(m.group(1).strip().strip('"\''))
+            return unquote(m.group(1).strip().strip("\"'"))
 
         # Fall back to URL path
         name = unquote(Path(urlparse(resp.url).path).name) or "download"
@@ -503,16 +519,23 @@ class FileDownloader:
     @staticmethod
     def _ext_from_content_type(ct: str) -> str:
         ct = ct.lower()
-        if "zip"  in ct: return ".zip"
-        if "rar"  in ct: return ".rar"
-        if "7z"   in ct: return ".7z"
-        if "gzip" in ct: return ".gz"
-        if "tar"  in ct: return ".tar"
+        if "zip" in ct:
+            return ".zip"
+        if "rar" in ct:
+            return ".rar"
+        if "7z" in ct:
+            return ".7z"
+        if "gzip" in ct:
+            return ".gz"
+        if "tar" in ct:
+            return ".tar"
         return ".bin"
+
 
 # ---------------------------------------------------------------------------
 # MapDownloader  – main orchestrator
 # ---------------------------------------------------------------------------
+
 
 class MapDownloader:
     """
@@ -533,17 +556,17 @@ class MapDownloader:
 
     def __init__(
         self,
-        resolver_chain: ResolverChain  = DEFAULT_RESOLVER_CHAIN,
-        state: DownloadState           = None,
-        extractor: Extractor           = None,
+        resolver_chain: ResolverChain = DEFAULT_RESOLVER_CHAIN,
+        state: DownloadState = None,
+        extractor: Extractor = None,
         file_downloader: FileDownloader = None,
     ):
-        self.resolver   = resolver_chain
-        self.state      = state or DownloadState()
-        self.extractor  = extractor or Extractor()
+        self.resolver = resolver_chain
+        self.state = state or DownloadState()
+        self.extractor = extractor or Extractor()
         self.downloader = file_downloader or FileDownloader()
-        self.running    = True
-        signal.signal(signal.SIGINT,  self._handle_exit)
+        self.running = True
+        signal.signal(signal.SIGINT, self._handle_exit)
         signal.signal(signal.SIGTERM, self._handle_exit)
 
     # ------------------------------------------------------------------
@@ -553,7 +576,7 @@ class MapDownloader:
     def run(
         self,
         *,
-        skip_done: bool    = True,
+        skip_done: bool = True,
         limit: Optional[int] = None,
         year: Optional[int] = None,
         year_from: Optional[int] = None,
@@ -569,25 +592,29 @@ class MapDownloader:
 
         with open(INPUT_CSV, newline="", encoding="utf-8") as fh:
             rows = list(csv.DictReader(fh))
-            
+
         allowed_categories = {
             "Environment | Landscaping Map",
-            "Complex Map", "Complex",
-            "Land Structure Map", "Land Structure",
-            "Underground Structure Map", "Underground Structure",
-            "Water Structure Map", "Water Structure"
+            "Complex Map",
+            "Complex",
+            "Land Structure Map",
+            "Land Structure",
+            "Underground Structure Map",
+            "Underground Structure",
+            "Water Structure Map",
+            "Water Structure",
         }
-        
+
         rows = [r for r in rows if r.get("category", "").strip() in allowed_categories]
-        
+
         def get_downloads(r):
             try:
                 return int(r.get("downloads", 0) or 0)
             except ValueError:
                 return 0
-                
+
         rows.sort(key=get_downloads, reverse=True)
-            
+
         log.info(f"Loaded {len(rows)} rows from {INPUT_CSV.name} after filtering and sorting")
 
         done = failed = skipped = processed = 0
@@ -595,7 +622,7 @@ class MapDownloader:
         def get_dir_size(path: Path) -> int:
             if not path.exists():
                 return 0
-            return sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+            return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
 
         for row in rows:
             if not self.running or (limit and processed >= limit):
@@ -603,10 +630,12 @@ class MapDownloader:
 
             current_dir_size = get_dir_size(DOWNLOAD_DIR)
             if current_dir_size > 50 * 1024**3:
-                log.warning(f"Downloads directory exceeded 50GB limit (Current size: {current_dir_size / 1024**3:.2f}GB). Stopping.")
+                log.warning(
+                    f"Downloads directory exceeded 50GB limit (Current size: {current_dir_size / 1024**3:.2f}GB). Stopping."
+                )
                 break
 
-            map_id  = row["id"].strip()
+            map_id = row["id"].strip()
             mirrors = row.get("download_mirrors", "").strip()
 
             # Date filtering
@@ -662,10 +691,7 @@ class MapDownloader:
             if self.running:
                 time.sleep(0.5)
 
-        log.info(
-            f"\nFinished. done={done}  failed={failed}  "
-            f"skipped(already-done)={skipped}"
-        )
+        log.info(f"\nFinished. done={done}  failed={failed}  skipped(already-done)={skipped}")
 
     def run_ids(self, map_ids: list[str], retry_failed: bool = False, skip_done: bool = True) -> None:
         """Process only the specified map IDs."""
@@ -679,22 +705,22 @@ class MapDownloader:
             if row is None:
                 log.warning(f"ID {map_id} not found in CSV")
                 continue
-            
+
             status = self.state._data.get(map_id, {}).get("status")
-            
+
             if skip_done and status == "done":
                 log.info(f"[{map_id}] already done, skipping.")
                 continue
 
             if status == "failed" and not retry_failed:
                 continue
-            
+
             if not skip_done and status == "done":
                 self.state._data[map_id]["attempted_urls"] = []
 
             if retry_failed and status == "failed":
                 self.state._data[map_id]["attempted_urls"] = []
-                
+
             self._process_map(map_id, row.get("download_mirrors", ""), skip_done=skip_done, retry_failed=retry_failed)
             self.state.save()
 
@@ -718,8 +744,8 @@ class MapDownloader:
             return "failed"
 
         dest_dir = DOWNLOAD_DIR / str(map_id)
-        tried    = set(self.state.get_attempted_urls(map_id))
-        
+        tried = set(self.state.get_attempted_urls(map_id))
+
         last_error = "No URLs attempted"
 
         for url in urls:
@@ -732,7 +758,7 @@ class MapDownloader:
             direct = self.resolver.resolve(url)
             if direct is None:
                 log.info("  → No direct link resolved (unsupported/failed)")
-                last_error = f"Unsupported host or resolver failed"
+                last_error = "Unsupported host or resolver failed"
                 continue
 
             # Clear destination directory for a fresh attempt
@@ -768,7 +794,7 @@ class MapDownloader:
 
         if dest_dir.exists():
             shutil.rmtree(dest_dir, ignore_errors=True)
-            
+
         self.state.mark_failed(map_id, last_error)
         log.warning(f"[{map_id}] ✗ Failed – {last_error}")
         return "failed"
@@ -781,10 +807,10 @@ class MapDownloader:
             for p in dest_dir.rglob("*"):
                 if p.is_file() and _is_archive_path(p.name):
                     archives.append(p)
-            
+
             if not archives:
                 break
-                
+
             for archive in archives:
                 dest = archive.parent
                 log.info(f"  Recursive extract: {archive.relative_to(dest_dir)}")
@@ -793,10 +819,10 @@ class MapDownloader:
                     archive.unlink(missing_ok=True)
                 except Exception as e:
                     log.warning(f"  Could not delete {archive.name}: {e}")
-                
+
                 if success:
                     extracted_something = True
-                    
+
             if not extracted_something:
                 # Prevent infinite loop if we found archives but couldn't extract any
                 break
@@ -823,26 +849,19 @@ class MapDownloader:
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Download Minecraft maps from pmc_data_cleansed.csv"
+    parser = argparse.ArgumentParser(description="Download Minecraft maps from pmc_data_cleansed.csv")
+    parser.add_argument("--limit", type=int, default=None, help="Process at most N maps (for testing)")
+    parser.add_argument("--no-skip-done", action="store_true", help="Re-attempt maps already marked 'done'")
+    parser.add_argument(
+        "--retry-failed", action="store_true", help="Clear attempted URLs for failed maps so they get a fresh run"
     )
-    parser.add_argument("--limit",        type=int, default=None,
-                        help="Process at most N maps (for testing)")
-    parser.add_argument("--no-skip-done", action="store_true",
-                        help="Re-attempt maps already marked 'done'")
-    parser.add_argument("--retry-failed", action="store_true",
-                        help="Clear attempted URLs for failed maps so they get a fresh run")
-    parser.add_argument("--ids",          nargs="+",
-                        help="Only process specific map IDs")
-    parser.add_argument("--year",         type=int, default=None,
-                        help="Download maps from this exact year (e.g. 2017)")
-    parser.add_argument("--year-from",    type=int, default=None,
-                        help="Download maps starting from this year (inclusive)")
-    parser.add_argument("--year-to",      type=int, default=None,
-                        help="Download maps up to this year (inclusive)")
-    parser.add_argument("--debug",        action="store_true",
-                        help="Enable DEBUG log level")
+    parser.add_argument("--ids", nargs="+", help="Only process specific map IDs")
+    parser.add_argument("--year", type=int, default=None, help="Download maps from this exact year (e.g. 2017)")
+    parser.add_argument("--year-from", type=int, default=None, help="Download maps starting from this year (inclusive)")
+    parser.add_argument("--year-to", type=int, default=None, help="Download maps up to this year (inclusive)")
+    parser.add_argument("--debug", action="store_true", help="Enable DEBUG log level")
     return parser.parse_args()
 
 

@@ -1,18 +1,15 @@
-import os
-import csv
-import base64
-import io
 import argparse
-import time
-from pathlib import Path
-import logging
 import asyncio
+import base64
+import csv
+import io
+import logging
+from pathlib import Path
 
-from tqdm.asyncio import tqdm
-from PIL import Image
 from dotenv import load_dotenv
-
 from openai import AsyncOpenAI
+from PIL import Image
+from tqdm.asyncio import tqdm
 
 try:
     import pillow_jxl
@@ -24,7 +21,7 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 CLEANSED_DIR = PROJECT_ROOT / "tmp" / "processed_worlds" / "cleansed"
 CSV_PATH = ASSETS_DIR / "pmc_descriptions_cleaned.csv"
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
@@ -67,50 +64,56 @@ Do not include any conversational filler. Output exactly in this single-line for
 [Region]: [Holistic description or "Empty"]
 """
 
+
 def strip_thinking_tags(text: str) -> str:
     text = text.strip()
     if "<think>" in text:
         think_end = text.find("</think>")
         if think_end != -1:
-            text = text[think_end + len("</think>"):].strip()
+            text = text[think_end + len("</think>") :].strip()
     return text
+
 
 def encode_image_base64(image_path: Path, save_debug: bool = False) -> str:
     with Image.open(image_path) as img:
         img = img.convert("RGBA")
         img.thumbnail((int(img.width * 0.8), int(img.height * 0.8)))
-        
+
         if save_debug:
             debug_path = image_path.parent.parent / f"debug_{image_path.stem}.png"
             img.save(debug_path, format="PNG")
-            
+
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
 
 def load_metadata() -> dict:
     metadata = {}
     if not CSV_PATH.exists():
         return metadata
-        
+
     with open(CSV_PATH, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             metadata[row["id"]] = {
                 "title": row.get("title", ""),
                 "tags": row.get("tags", ""),
-                "description": row.get("description", "")
+                "description": row.get("description", ""),
             }
     return metadata
 
-async def process_single_image_async(client: AsyncOpenAI, image_path: Path, meta: dict, model_name: str, sem: asyncio.Semaphore, delay: float) -> bool:
+
+async def process_single_image_async(
+    client: AsyncOpenAI, image_path: Path, meta: dict, model_name: str, sem: asyncio.Semaphore, delay: float
+) -> bool:
     captions_dir = image_path.parent.parent / "captions"
     captions_dir.mkdir(parents=True, exist_ok=True)
     out_path = captions_dir / image_path.with_suffix(".txt").name
-    
+
     if out_path.exists():
         return True
-        
+
     async with sem:
         try:
             b64_image = await asyncio.to_thread(encode_image_base64, image_path, False)
@@ -133,39 +136,36 @@ async def process_single_image_async(client: AsyncOpenAI, image_path: Path, meta
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {
-                        "role": "user", 
+                        "role": "user",
                         "content": [
                             {
-                                "type": "text", 
-                                "text": f"Here is the metadata for this terrain region:\n{context_text}\n\nPlease generate the description for the entire region. Remember to output exactly one line starting with [Region]: "
+                                "type": "text",
+                                "text": f"Here is the metadata for this terrain region:\n{context_text}\n\nPlease generate the description for the entire region. Remember to output exactly one line starting with [Region]: ",
                             },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{b64_image}"
-                                }
-                            }
-                        ]
-                    }
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}"}},
+                        ],
+                    },
                 ],
-                temperature=0.7
+                temperature=0.7,
             )
             caption = strip_thinking_tags(response.choices[0].message.content.strip())
-            caption = caption.replace('\n', ' ')
-            
+            caption = caption.replace("\n", " ")
+
             if not caption.startswith("[Region]"):
                 if caption.startswith(":"):
                     caption = caption[1:].strip()
                 caption = f"[Region]: {caption}"
-                
+
         except Exception as e:
             logger.error(f"Error calling local vLLM for {image_path}: {e}")
             return False
 
         try:
+
             def save_file():
                 with open(out_path, "w", encoding="utf-8") as f:
                     f.write(caption)
+
             await asyncio.to_thread(save_file)
             logger.info(f"Successfully saved caption to file://{out_path.resolve()}")
             return True
@@ -173,14 +173,19 @@ async def process_single_image_async(client: AsyncOpenAI, image_path: Path, meta
             logger.error(f"Error writing captions to {out_path}: {e}")
             return False
 
+
 async def main_async():
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Generate spatial captions for JXL screenshots using AsyncOpenAI directly to a local vLLM server")
+    parser = argparse.ArgumentParser(
+        description="Generate spatial captions for JXL screenshots using AsyncOpenAI directly to a local vLLM server"
+    )
     parser.add_argument("--concurrency", type=int, default=128, help="Concurrent API requests")
     parser.add_argument("--max-images", type=int, default=0, help="Max images to process (0 = all)")
     parser.add_argument("--model", type=str, default="Qwen/Qwen3-VL-8B-Instruct-FP8", help="vLLM model name")
     parser.add_argument("--base-url", type=str, default="http://localhost:8000/v1", help="vLLM server base URL")
-    parser.add_argument("--delay", type=float, default=0.0, help="Delay in seconds between API requests to avoid rate limits")
+    parser.add_argument(
+        "--delay", type=float, default=0.0, help="Delay in seconds between API requests to avoid rate limits"
+    )
     args = parser.parse_args()
 
     logger.info("Loading metadata...")
@@ -202,7 +207,7 @@ async def main_async():
         return
 
     logger.info(f"Found {len(jxl_files)} images total.")
-    
+
     tasks_to_run = []
     for f_path, wid in jxl_files:
         captions_dir = f_path.parent.parent / "captions"
@@ -213,7 +218,7 @@ async def main_async():
 
     logger.info(f"Need to generate captions for {len(tasks_to_run)} remaining images.")
     if args.max_images > 0:
-        tasks_to_run = tasks_to_run[:args.max_images]
+        tasks_to_run = tasks_to_run[: args.max_images]
         logger.info(f"Limiting to {args.max_images} tasks.")
 
     if not tasks_to_run:
@@ -225,8 +230,7 @@ async def main_async():
     sem = asyncio.Semaphore(args.concurrency)
 
     coroutines = [
-        process_single_image_async(client, f_path, meta, args.model, sem, args.delay)
-        for f_path, meta in tasks_to_run
+        process_single_image_async(client, f_path, meta, args.model, sem, args.delay) for f_path, meta in tasks_to_run
     ]
 
     success_count = 0
@@ -237,8 +241,10 @@ async def main_async():
 
     logger.info(f"Successfully generated captions for {success_count}/{len(tasks_to_run)} images.")
 
+
 def main():
     asyncio.run(main_async())
+
 
 if __name__ == "__main__":
     main()
