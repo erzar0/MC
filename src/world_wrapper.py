@@ -191,48 +191,87 @@ class WorldWrapper:
             raise ValueError(f"Region ({region_x}, {region_z}) not found or was rejected.")
 
         bounds = self._world.bounds("minecraft:overworld")
-        data = None
-        start_y_offset = 0
 
         if use_fast_extractor:
-            mca_path = self._mca_coord_to_path.get((region_x, region_z))
-            if not mca_path:
-                self.reject_region(region_x, region_z)
-                raise FileNotFoundError(f"MCA file not found for region ({region_x}, {region_z}).")
-
-            try:
-                parser = FastVolumeParser(Path(mca_path), self._blockstates)
-                volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384 + 16)
-                parser.close()
-            except Exception as e:
-                self.reject_region(region_x, region_z)
-                raise RuntimeError(f"FastVolumeParser failed for region ({region_x}, {region_z}): {e}") from e
+            volume_6d = self._extract_via_fast_parser(region_x, region_z, bounds)
         else:
-            # Get Blocks (via Amulet extractor)
-            height = bounds.max_y - bounds.min_y
-            max_sections = (height // 16 + 1) + 1  # Add 1 and check later if region is too high
-            volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
-
-            pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
-            for rx in range(32):
-                for rz in range(32):
-                    pbar.update(1)
-                    chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
-                    try:
-                        chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
-                        y_offset_sections = -(bounds.min_y // 16)
-                        for y in sorted(chunk.blocks.sections):
-                            sec_idx = y + y_offset_sections
-                            if 0 <= sec_idx < max_sections:
-                                sub_chunk = chunk.blocks.get_sub_chunk(y)
-                                volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(
-                                    sub_chunk, chunk._block_palette
-                                )
-                    except Exception as e:
-                        logger.debug(f"Skipping blocks for chunk {chunk_coords}: {e}")
-                        continue
+            volume_6d = self._extract_via_amulet(region_x, region_z, bounds)
 
         data, start_y_offset = self._post_process_volume(volume_6d)
+        self._validate_region_content(region_x, region_z, data)
+        avg_surface_local = self._compute_surface_elevation(region_x, region_z, data)
+
+        actual_min_y = bounds.min_y + start_y_offset
+        avg_surface_pos = round(avg_surface_local + actual_min_y, 2)
+
+        self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
+            "y_range": (-64, min(320, int(data.shape[2]) + actual_min_y)),
+            "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True), strict=True)},
+            "avg_surface_y": avg_surface_pos,
+        }
+
+        return data
+
+    def _extract_via_fast_parser(self, region_x: int, region_z: int, bounds) -> np.ndarray:
+        """Extracts the raw 6D section volume using FastVolumeParser.
+
+        Returns:
+            A (32, 32, sections, 16, 16, 16) uint16 array of global block IDs.
+
+        Raises:
+            FileNotFoundError: If the region has no backing MCA file.
+            RuntimeError: If the fast parser fails; the region is rejected.
+        """
+        mca_path = self._mca_coord_to_path.get((region_x, region_z))
+        if not mca_path:
+            self.reject_region(region_x, region_z)
+            raise FileNotFoundError(f"MCA file not found for region ({region_x}, {region_z}).")
+
+        try:
+            parser = FastVolumeParser(Path(mca_path), self._blockstates)
+            volume_6d = parser.extract_volume(min_y=bounds.min_y, height=384 + 16)
+            parser.close()
+            return volume_6d
+        except Exception as e:
+            self.reject_region(region_x, region_z)
+            raise RuntimeError(f"FastVolumeParser failed for region ({region_x}, {region_z}): {e}") from e
+
+    def _extract_via_amulet(self, region_x: int, region_z: int, bounds) -> np.ndarray:
+        """Extracts the raw 6D section volume chunk-by-chunk via Amulet (slow path).
+
+        Returns:
+            A (32, 32, sections, 16, 16, 16) uint16 array of global block IDs.
+        """
+        height = bounds.max_y - bounds.min_y
+        max_sections = (height // 16 + 1) + 1  # Add 1 and check later if region is too high
+        volume_6d = np.zeros((32, 32, max_sections, 16, 16, 16), dtype=np.uint16)
+
+        pbar = tqdm(total=1024, desc=f"Region r.{region_x}.{region_z}", leave=False)
+        for rx in range(32):
+            for rz in range(32):
+                pbar.update(1)
+                chunk_coords = self.to_chunk_coords(region_x, region_z, rx, rz)
+                try:
+                    chunk = self._world.get_chunk(chunk_coords["x"], chunk_coords["z"], "minecraft:overworld")
+                    y_offset_sections = -(bounds.min_y // 16)
+                    for y in sorted(chunk.blocks.sections):
+                        sec_idx = y + y_offset_sections
+                        if 0 <= sec_idx < max_sections:
+                            sub_chunk = chunk.blocks.get_sub_chunk(y)
+                            volume_6d[rx, rz, sec_idx] = self._blockstates.to_global_ids(
+                                sub_chunk, chunk._block_palette
+                            )
+                except Exception as e:
+                    logger.debug(f"Skipping blocks for chunk {chunk_coords}: {e}")
+                    continue
+        return volume_6d
+
+    def _validate_region_content(self, region_x: int, region_z: int, data: np.ndarray) -> None:
+        """Rejects regions that are too thin, too tall, or mostly empty.
+
+        Raises:
+            ValueError: If the region fails any content check; the region is rejected.
+        """
         # Reject if the non-air span is too thin
         if data.shape[2] < 5:
             self.reject_region(region_x, region_z)
@@ -253,45 +292,39 @@ class WorldWrapper:
                 f"Region ({region_x}, {region_z}) rejected: {(1.0 - content_ratio) * 100:.1f}% filled with air/sponge."
             )
 
-        # Calculate Average Surface Elevation (Heightmap based)
+    def _compute_surface_elevation(self, region_x: int, region_z: int, data: np.ndarray) -> float:
+        """Computes the median surface elevation (local Y index) of a region.
+
+        Raises:
+            ValueError: If the heightmap is perfectly flat and uniform (e.g. an
+                untouched superflat world); the region is rejected.
+        """
         mask = data > 1
         has_solid = np.any(mask, axis=2)
 
-        if np.any(has_solid):
-            # Find the highest block by looking from the top down (reversing the Y axis)
-            flipped_mask = mask[:, :, ::-1]
-            highest_indices = data.shape[2] - 1 - np.argmax(flipped_mask, axis=2)
+        if not np.any(has_solid):
+            return 320
 
-            # Average the elevation ONLY for columns that have at least one block
-            # USING MEDIAN prevents tall structures or deep holes from skewing the plane
-            solid_heights = highest_indices[has_solid]
-            avg_surface_local = float(np.median(solid_heights))
+        # Find the highest block by looking from the top down (reversing the Y axis)
+        flipped_mask = mask[:, :, ::-1]
+        highest_indices = data.shape[2] - 1 - np.argmax(flipped_mask, axis=2)
 
-            # Reject if the height map is completely flat AND uniform (e.g. superflat or artificial platform)
-            if np.ptp(solid_heights) == 0:
-                # Since it's perfectly flat, all surface blocks are at the exact same vertical index
-                h = solid_heights[0]
-                surface_blocks = data[:, :, h][has_solid]
+        # Average the elevation ONLY for columns that have at least one block
+        # USING MEDIAN prevents tall structures or deep holes from skewing the plane
+        solid_heights = highest_indices[has_solid]
 
-                # Only reject if every single block on the flat surface is identical
-                if np.ptp(surface_blocks) == 0:
-                    self.reject_region(region_x, region_z)
-                    raise ValueError(
-                        f"Region ({region_x}, {region_z}) rejected: heightmap is completely flat and uniform."
-                    )
-        else:
-            avg_surface_local = 320
+        # Reject if the height map is completely flat AND uniform (e.g. superflat or artificial platform)
+        if np.ptp(solid_heights) == 0:
+            # Since it's perfectly flat, all surface blocks are at the exact same vertical index
+            h = solid_heights[0]
+            surface_blocks = data[:, :, h][has_solid]
 
-        actual_min_y = bounds.min_y + start_y_offset
-        avg_surface_pos = round(avg_surface_local + actual_min_y, 2)
+            # Only reject if every single block on the flat surface is identical
+            if np.ptp(surface_blocks) == 0:
+                self.reject_region(region_x, region_z)
+                raise ValueError(f"Region ({region_x}, {region_z}) rejected: heightmap is completely flat and uniform.")
 
-        self._metadata["extracted_regions"][f"{region_x},{region_z}"] = {
-            "y_range": (-64, min(320, int(data.shape[2]) + actual_min_y)),
-            "blocks": {str(k): int(v) for k, v in zip(*np.unique(data, return_counts=True), strict=True)},
-            "avg_surface_y": avg_surface_pos,
-        }
-
-        return data
+        return float(np.median(solid_heights))
 
     def get_heightmap(self, region_x: int, region_z: int, transparent_ids: Optional[List[int]] = None) -> np.ndarray:
         """Generates a 512x512 heightmap for a given region.
