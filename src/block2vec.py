@@ -366,6 +366,16 @@ def get_vocab_size(block_states_path: Optional[str] = None) -> int:
     return DEFAULT_VOCAB_SIZE
 
 
+def _linear_lr_schedule(progress: float, initial_lr: float, min_lr: float) -> float:
+    """Word2Vec-style linearly decaying learning rate, clamped at min_lr."""
+    return max(min_lr, initial_lr * (1.0 - progress))
+
+
+def _save_embedding_checkpoint(model: "Block2Vec", save_dir: str, volumes_processed: int) -> None:
+    ckpt_path = Path(save_dir) / f"block_embeddings_ckpt_{volumes_processed}.npy"
+    np.save(ckpt_path, model.get_embeddings())
+
+
 def train_block2vec_from_volumes(
     volumes_dir: str,
     embedding_dim: int = 128,
@@ -439,7 +449,7 @@ def train_block2vec_from_volumes(
                 pbar = tqdm(range(num_batches), desc=f"  Batches ({dataset.n_valid} centers)", leave=False)
                 for i in pbar:
                     progress = (vbar.n + (i / num_batches)) / (total_volume_steps + 1)
-                    lr = max(min_lr, initial_lr * (1.0 - progress))
+                    lr = _linear_lr_schedule(progress, initial_lr, min_lr)
 
                     c_ids, ctx_ids, neg_ids = dataset.get_batch(i, model.n_negatives)
                     model.train_step(c_ids, ctx_ids, neg_ids, lr)
@@ -456,8 +466,7 @@ def train_block2vec_from_volumes(
             vbar.update(1)
 
             if save_dir and volumes_processed % save_every == 0:
-                ckpt_path = Path(save_dir) / f"block_embeddings_ckpt_{volumes_processed}.npy"
-                np.save(ckpt_path, model.get_embeddings())
+                _save_embedding_checkpoint(model, save_dir, volumes_processed)
 
     return model
 
