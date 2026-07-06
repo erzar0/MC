@@ -78,6 +78,7 @@ dependencies = [
     "tzdata==2025.2",
     "undetected-chromedriver>=3.5.5",
     "uv==0.9.11",
+    "wandb>=0.18.0",
     "wcwidth==0.2.14",
     "webdriver-manager>=4.0.2",
     "wheel==0.45.1",

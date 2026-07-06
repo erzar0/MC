@@ -74,6 +74,15 @@ def parse_args():
         help="Also save a checkpoint every N samples seen (0 disables step-based saving)",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument(
+        "--report_to",
+        type=str,
+        default="none",
+        choices=["none", "wandb"],
+        help="Experiment tracker for metrics logging (wandb requires WANDB_API_KEY / prior login)",
+    )
+    parser.add_argument("--wandb_project", type=str, default="minecraft-sana-video", help="wandb project name")
+    parser.add_argument("--run_name", type=str, default=None, help="wandb run name (defaults to a timestamped name)")
     return parser.parse_args()
 
 
@@ -110,8 +119,18 @@ def main():
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         mixed_precision="bf16",
+        log_with="wandb" if args.report_to == "wandb" else None,
     )
     device = accelerator.device
+
+    # Initialize the experiment tracker on the main process only. Hyperparameters
+    # are logged as the run config; per-step loss/lr are logged in the loop below.
+    if args.report_to == "wandb":
+        accelerator.init_trackers(
+            args.wandb_project,
+            config=vars(args),
+            init_kwargs={"wandb": {"name": args.run_name}},
+        )
     print(
         f"Mode: {args.mode} | LR: {args.learning_rate} | Device: {device} | Mixed precision: {accelerator.mixed_precision}"
     )
@@ -261,6 +280,15 @@ def main():
             global_step += 1
             samples_seen += B
             progress_bar.set_postfix({"loss": f"{loss_val:.4f}", "step": global_step, "samples": samples_seen})
+            accelerator.log(
+                {
+                    "train/loss": loss_val,
+                    "train/lr": optimizer.param_groups[0]["lr"],
+                    "train/epoch": epoch + 1,
+                    "train/samples_seen": samples_seen,
+                },
+                step=global_step,
+            )
 
             # Step-based checkpointing: save each time samples_seen crosses a
             # multiple of save_every_steps (robust to batch size and resumes).
@@ -272,12 +300,14 @@ def main():
 
         avg_loss = epoch_loss / max(len(dataloader), 1)
         print(f"Epoch {epoch + 1} Avg Loss: {avg_loss:.4f}")
+        accelerator.log({"train/epoch_avg_loss": avg_loss}, step=global_step)
 
         if (epoch + 1) % args.save_every_epochs == 0 or (epoch + 1) == args.epochs:
             accelerator.wait_for_everyone()
             if accelerator.is_main_process:
                 save_checkpoint(args, accelerator, transformer, f"epoch-{epoch + 1}")
 
+    accelerator.end_training()
     print("Training complete!")
 
 

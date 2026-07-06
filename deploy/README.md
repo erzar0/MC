@@ -106,3 +106,19 @@ and nothing is uploaded twice.
 > VRAM note: 512×512 LoRA needs a large GPU; on 16 GB it OOMs — drop to
 > `--spatial_crop_size 256 --max_frames 33`. Full fine-tuning (`--mode full`)
 > needs substantially more than 16 GB.
+
+### Logging to Weights & Biases
+
+Add `--report_to wandb` to `TRAIN_ARGS` and provide credentials so the (usually
+headless) box can authenticate:
+
+```bash
+WANDB_API_KEY=<your-key> \
+TRAIN_ARGS="--mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3 \
+    --report_to wandb --wandb_project minecraft-sana-video" \
+bash deploy/remote_train.sh
+```
+
+`train.py` logs per-step loss, learning rate, epoch, and samples-seen, plus an
+epoch-average loss. Locally, just add the same `--report_to wandb` flag after
+`wandb login`.

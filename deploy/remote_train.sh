@@ -23,6 +23,9 @@
 #                    "--mode lora --spatial_crop_size 256 --max_frames 33 --epochs 3"
 #   ACCELERATE_ARGS  extra args for `accelerate launch` (e.g. "--num_processes 2")
 #
+# For wandb logging, add "--report_to wandb" to TRAIN_ARGS and export WANDB_API_KEY
+# (or run `wandb login`) so the headless box can authenticate.
+#
 # Example:
 #   DATASET_REMOTE=gdrive:mc/sana_video_dataset.tar \
 #   CKPT_REMOTE=gdrive:mc/checkpoints \
