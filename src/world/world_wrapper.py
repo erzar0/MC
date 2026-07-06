@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 try:
     from .fast_volume_extractor import FastVolumeParser
 except ImportError:
-    from fast_volume_extractor import FastVolumeParser  # pyrefly: ignore  # direct-script-execution fallback
+    from fast_volume_extractor import FastVolumeParser
 
 
 class WorldWrapper:
