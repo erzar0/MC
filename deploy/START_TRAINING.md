@@ -46,6 +46,23 @@ cd MC
 
 ---
 
+## Step 1.5 — one-time: refresh the manifest for height bucketing (local)
+
+Training buckets regions by content height (trains only on real blocks, ~2×
+faster), which needs a `height` field the current bundle's manifest lacks.
+Upload a height-augmented manifest once — just ~25 MB, no 38 GB re-upload:
+
+```bash
+# run LOCALLY, from your repo checkout
+python deploy/package_dataset.py --manifest-only \
+    --rclone-dest MinecraftDataset:minecraft-training/
+```
+
+(Only needed for the existing bundle. Bundles built fresh already include
+heights.)
+
+---
+
 ## Step 2 — start training (one command)
 
 The bootstrap script installs `uv` + `rclone`, syncs the env, downloads +
@@ -54,6 +71,7 @@ to Drive as they are written.
 
 ```bash
 DATASET_REMOTE=MinecraftDataset:minecraft-training/sana_video_dataset.tar \
+MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
 CKPT_REMOTE=MinecraftDataset:minecraft-training/checkpoints \
 TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3 \
     --batch_size 4 --gradient_accumulation_steps 2 \
@@ -68,6 +86,7 @@ That's it — it runs to completion and leaves checkpoints in
 
 ```bash
 DATASET_REMOTE=MinecraftDataset:minecraft-training/sana_video_dataset.tar \
+MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
 CKPT_REMOTE=MinecraftDataset:minecraft-training/checkpoints \
 TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3 \
     --batch_size 4 --gradient_accumulation_steps 2 \
@@ -76,6 +95,9 @@ nohup bash deploy/remote_train.sh > train.log 2>&1 &
 
 tail -f train.log        # watch progress
 ```
+
+> `--max_frames 385` is now just the **cap** (largest bucket); most batches run
+> far shorter since regions are bucketed by their real height.
 
 ---
 

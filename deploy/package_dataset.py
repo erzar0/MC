@@ -50,6 +50,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger("package_dataset")
 
 
+_META_CACHE: dict[Path, dict] = {}
+
+
 def _arcname_for(volume_path: Path) -> str:
     """Maps an absolute volume path to a collision-free bundle-relative name.
 
@@ -60,7 +63,26 @@ def _arcname_for(volume_path: Path) -> str:
     return f"volumes/{world_id}/{volume_path.name}"
 
 
-def build_bundle(manifest_path: Path, output_path: Path, limit: int | None = None) -> Path:
+def _height_for(src: Path, entry: dict) -> int | None:
+    """Content height for a volume: from the manifest entry, else metadata.json.
+
+    height = ``y_range[1] - y_range[0]`` (the region's content layer count), used
+    for height bucketing in the dataloader.
+    """
+    if "height" in entry:
+        return int(entry["height"])
+    meta_path = src.parent.parent / "metadata.json"
+    if meta_path not in _META_CACHE:
+        try:
+            _META_CACHE[meta_path] = json.load(open(meta_path)).get("extracted_regions", {})
+        except Exception:
+            _META_CACHE[meta_path] = {}
+    region_key = src.stem.replace("r.", "", 1).replace(".", ",")
+    y_range = _META_CACHE[meta_path].get(region_key, {}).get("y_range")
+    return (y_range[1] - y_range[0]) if y_range else None
+
+
+def _load_entries(manifest_path: Path, limit: int | None) -> list[dict]:
     entries = []
     with open(manifest_path, "r") as f:
         for line in f:
@@ -72,17 +94,15 @@ def build_bundle(manifest_path: Path, output_path: Path, limit: int | None = Non
     if not entries:
         log.error(f"Manifest {manifest_path} is empty (or --limit 0).")
         sys.exit(1)
+    return entries
 
-    for asset in ASSET_FILES:
-        if not asset.exists():
-            log.error(f"Required asset missing: {asset}")
-            sys.exit(1)
 
-    # Rewrite each entry's volume_path to its bundle-relative arcname, tracking
-    # the unique set of source files to add to the tar.
+def _build_rel_entries(entries: list[dict]) -> tuple[list[dict], dict[str, Path]]:
+    """Rewrites entries to bundle-relative paths with heights; returns files to add."""
     rel_entries = []
     to_add: dict[str, Path] = {}  # arcname -> source path
     missing = 0
+    no_height = 0
     for entry in entries:
         src = Path(entry["volume_path"])
         if not src.exists():
@@ -94,13 +114,33 @@ def build_bundle(manifest_path: Path, output_path: Path, limit: int | None = Non
             log.error(f"Arcname collision: {arc} <- {prev} and {src}")
             sys.exit(1)
         to_add[arc] = src
-        rel_entries.append({"volume_path": arc, "captions": entry["captions"]})
+        rel = {"volume_path": arc, "captions": entry["captions"]}
+        height = _height_for(src, entry)
+        if height is not None:
+            rel["height"] = height
+        else:
+            no_height += 1
+        rel_entries.append(rel)
 
     if missing:
         log.warning(f"{missing} referenced volumes were missing on disk and skipped.")
+    if no_height:
+        log.warning(f"{no_height} entries have no height (missing metadata) — they can't be bucketed.")
     if not rel_entries:
         log.error("No volumes found on disk; nothing to package.")
         sys.exit(1)
+    return rel_entries, to_add
+
+
+def build_bundle(manifest_path: Path, output_path: Path, limit: int | None = None) -> Path:
+    entries = _load_entries(manifest_path, limit)
+
+    for asset in ASSET_FILES:
+        if not asset.exists():
+            log.error(f"Required asset missing: {asset}")
+            sys.exit(1)
+
+    rel_entries, to_add = _build_rel_entries(entries)
 
     total_bytes = sum(p.stat().st_size for p in to_add.values())
     log.info(
@@ -133,8 +173,24 @@ def build_bundle(manifest_path: Path, output_path: Path, limit: int | None = Non
     return output_path
 
 
-def upload_rclone(bundle: Path, dest: str) -> None:
-    cmd = ["rclone", "copy", "--progress", str(bundle), dest]
+def build_manifest_only(manifest_path: Path, output_path: Path, limit: int | None = None) -> Path:
+    """Writes just the bundle-relative manifest (with heights), no tar.
+
+    Use this to refresh the manifest of an already-uploaded bundle (e.g. to add
+    height fields for bucketing) without re-uploading the multi-GB volume tar.
+    """
+    entries = _load_entries(manifest_path, limit)
+    rel_entries, _ = _build_rel_entries(entries)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        for e in rel_entries:
+            f.write(json.dumps(e) + "\n")
+    log.info(f"Manifest written: {output_path} ({len(rel_entries)} entries)")
+    return output_path
+
+
+def upload_rclone(path: Path, dest: str) -> None:
+    cmd = ["rclone", "copy", "--progress", str(path), dest]
     log.info(f"Uploading via rclone: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
     log.info(f"Upload complete -> {dest}")
@@ -151,16 +207,27 @@ def main():
         "--rclone-dest",
         type=str,
         default=None,
-        help="If set, rclone copy the bundle here after building (e.g. gdrive:minecraft-training/)",
+        help="If set, rclone copy the output here after building (e.g. gdrive:minecraft-training/)",
+    )
+    parser.add_argument(
+        "--manifest-only",
+        action="store_true",
+        help="Write/upload just the bundle-relative manifest (with heights), skip the volume tar. "
+        "Use to refresh an already-uploaded bundle's manifest without a multi-GB re-upload.",
     )
     args = parser.parse_args()
 
-    bundle = build_bundle(args.manifest, args.output, limit=args.limit)
+    if args.manifest_only:
+        output = args.output if args.output != DEFAULT_OUTPUT else DEFAULT_OUTPUT.with_name("manifest.jsonl")
+        result = build_manifest_only(args.manifest, output, limit=args.limit)
+    else:
+        result = build_bundle(args.manifest, args.output, limit=args.limit)
+
     if args.rclone_dest:
-        upload_rclone(bundle, args.rclone_dest)
+        upload_rclone(result, args.rclone_dest)
     else:
         log.info("Skipped upload (no --rclone-dest). To upload later:")
-        log.info(f"  rclone copy --progress {bundle} gdrive:minecraft-training/")
+        log.info(f"  rclone copy --progress {result} gdrive:minecraft-training/")
 
 
 if __name__ == "__main__":

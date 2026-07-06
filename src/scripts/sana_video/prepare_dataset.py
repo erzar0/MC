@@ -28,10 +28,24 @@ def build_manifest(cleansed_dir: str, output_path: str):
         if not volumes_dir.exists() or not captions_dir.exists():
             continue
 
+        # Per-region content height comes from metadata.json's y_range, used for
+        # height bucketing in the dataloader (avoids decompressing volumes here).
+        extracted = {}
+        meta_path = world_dir / "metadata.json"
+        if meta_path.exists():
+            try:
+                extracted = json.load(open(meta_path)).get("extracted_regions", {})
+            except Exception as e:
+                print(f"Error reading {meta_path}: {e}")
+
         b2frames = list(volumes_dir.glob("*.b2frame"))
         for b2_path in b2frames:
             # Filename is e.g. 'r.-1.-1.b2frame'
             region_name = b2_path.stem  # 'r.-1.-1'
+            # Region key in metadata is 'rx,rz' (e.g. '-1,-1').
+            region_key = region_name.replace("r.", "", 1).replace(".", ",")
+            y_range = extracted.get(region_key, {}).get("y_range")
+            height = (y_range[1] - y_range[0]) if y_range else None
 
             # Find matching captions for the 4 orientations
             orientations = ["ne", "nw", "se", "sw"]
@@ -52,6 +66,8 @@ def build_manifest(cleansed_dir: str, output_path: str):
             if captions:
                 # Store absolute paths to avoid resolving path relative issues in dataloader
                 entry = {"volume_path": str(b2_path.resolve()), "captions": captions}
+                if height is not None:
+                    entry["height"] = height
                 manifest_entries.append(entry)
 
     # Write JSONL manifest

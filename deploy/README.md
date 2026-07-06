@@ -110,12 +110,37 @@ and nothing is uploaded twice.
 | `MIN_DISK_GB` | `90` | abort early if the working filesystem has less free space |
 | `KEEP_TAR` | (unset) | set `1` to keep the downloaded tar; default deletes it after extraction to reclaim ~38 GB |
 | `HF_TOKEN` | (unset) | Hugging Face token, exported for gated base-model downloads |
+| `MANIFEST_REMOTE` | (unset) | rclone path to a `manifest.jsonl` that overwrites the bundled one (e.g. height-augmented for bucketing) |
 
 The script installs **only** the training dependencies
 (`deploy/requirements-train.txt`) into a fresh `.venv` — not the full project
 env — so it never builds `amulet` and runs on minimal boxes (Brev / bare CUDA
 instances). Versions are pinned to the known-good local env, including the git
 `diffusers` commit that provides `SanaVideoPipeline`.
+
+### Height bucketing (train only on real blocks)
+
+`.b2frame` volumes are trimmed to their content height, which differs per
+region (median ~162 layers, not 385). The dataloader **buckets** regions by
+height — snapping each up to the nearest `4n+1` and batching equal-height
+regions together — so no batch is padded with air and average frames drop
+~55% vs padding everything to 385 (roughly 2× faster training). This requires a
+`height` field in each manifest entry.
+
+The manifest inside the current uploaded bundle predates bucketing and has no
+heights, so refresh it once (no 38 GB re-upload — just the ~25 MB manifest):
+
+```bash
+python deploy/package_dataset.py --manifest-only \
+    --rclone-dest MinecraftDataset:minecraft-training/
+# then point training at it:
+MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
+DATASET_REMOTE=... CKPT_REMOTE=... bash deploy/remote_train.sh
+```
+
+Freshly built bundles (`package_dataset.py` without `--manifest-only`) already
+include heights. Tune granularity with `--bucket_step` (multiple of 4; smaller
+= less air padding, more buckets).
 
 > VRAM note: memory scales with latent tokens (`frames/4 × crop/8 × crop/8`).
 > The 128px × 385fr default (~25k tokens) fits comfortably on an H200 with room

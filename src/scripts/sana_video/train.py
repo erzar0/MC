@@ -30,9 +30,9 @@ from tqdm.auto import tqdm
 # Support both `python -m src.scripts.train_sana_video` and direct execution
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 try:
-    from src.scripts.sana_video.dataset import MinecraftVideoDataset
+    from src.scripts.sana_video.dataset import BucketBatchSampler, MinecraftVideoDataset
 except ImportError:
-    from dataset import MinecraftVideoDataset  # pyrefly: ignore  # direct-script-execution fallback
+    from dataset import BucketBatchSampler, MinecraftVideoDataset  # pyrefly: ignore  # direct-script-execution fallback
 
 
 def parse_args():
@@ -67,6 +67,12 @@ def parse_args():
     )
     parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size per device (keep 1 to fit VRAM)")
+    parser.add_argument(
+        "--bucket_step",
+        type=int,
+        default=4,
+        help="Height-bucket granularity (multiple of 4). Smaller pads less air but makes more buckets",
+    )
     parser.add_argument("--gradient_accumulation_steps", type=int, default=4, help="Gradient accumulation steps")
     parser.add_argument("--num_workers", type=int, default=2, help="DataLoader workers")
     parser.add_argument("--save_every_epochs", type=int, default=1, help="Save checkpoint every N epochs")
@@ -180,16 +186,26 @@ def main():
     transformer.enable_gradient_checkpointing()
 
     # 4. Dataset and dataloader
+    # Regions are bucketed by content height: BucketBatchSampler batches
+    # equal-height regions together so each batch is a clean fixed-shape tensor
+    # with different batches using different frame counts (see dataset.py).
     print("Preparing Minecraft voxel pseudo-video dataset...")
     dataset = MinecraftVideoDataset(
         manifest_path=args.manifest,
         spatial_crop_size=args.spatial_crop_size,
         max_frames=args.max_frames,
+        bucket_step=args.bucket_step,
+    )
+    batch_sampler = BucketBatchSampler(
+        dataset.frame_counts,
+        batch_size=args.batch_size,
+        shuffle=True,
+        drop_last=False,
+        seed=args.seed,
     )
     dataloader = DataLoader(
         dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
+        batch_sampler=batch_sampler,
         num_workers=args.num_workers,
         pin_memory=True,
     )

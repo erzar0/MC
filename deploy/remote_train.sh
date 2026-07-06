@@ -13,6 +13,8 @@
 #
 #   DATASET_REMOTE   rclone source for the dataset tar
 #                    (default: gdrive:minecraft-training/sana_video_dataset.tar)
+#   MANIFEST_REMOTE  optional rclone path to a manifest.jsonl that overwrites the
+#                    bundled one (e.g. height-augmented manifest for bucketing)
 #   CKPT_REMOTE      rclone dest for checkpoints
 #                    (default: gdrive:minecraft-training/checkpoints)
 #   OUTPUT_DIR       local checkpoint dir (default: tmp/sana_video_ft)
@@ -51,6 +53,10 @@ cd "$REPO_ROOT"
 
 # --- Config ------------------------------------------------------------------
 DATASET_REMOTE="${DATASET_REMOTE:-gdrive:minecraft-training/sana_video_dataset.tar}"
+# Optional: rclone path to a manifest.jsonl to overwrite the bundled one with
+# (e.g. a height-augmented manifest for bucketing). Leave empty to use the
+# manifest inside the tar.
+MANIFEST_REMOTE="${MANIFEST_REMOTE:-}"
 CKPT_REMOTE="${CKPT_REMOTE:-gdrive:minecraft-training/checkpoints}"
 OUTPUT_DIR="${OUTPUT_DIR:-tmp/sana_video_ft}"
 BUNDLE_DIR="${BUNDLE_DIR:-data/train_bundle}"
@@ -120,6 +126,14 @@ if [ ! -f "$BUNDLE_DIR/manifest.jsonl" ]; then
     fi
 else
     log "Dataset already present at $BUNDLE_DIR (skipping download)."
+fi
+
+# Optionally overwrite the bundled manifest (e.g. with a height-augmented one
+# for bucketing) without re-downloading the volume tar.
+if [ -n "$MANIFEST_REMOTE" ]; then
+    log "Fetching manifest override: $MANIFEST_REMOTE -> $BUNDLE_DIR/manifest.jsonl"
+    rclone copyto --progress "$MANIFEST_REMOTE" "$BUNDLE_DIR/manifest.jsonl"
+    log "Manifest now has $(wc -l < "$BUNDLE_DIR/manifest.jsonl") entries."
 fi
 
 # --- 4. Background checkpoint uploader --------------------------------------
