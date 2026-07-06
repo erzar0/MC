@@ -54,9 +54,12 @@ def parse_args():
         help="Fine-tuning mode: LoRA adapters or full transformer weights",
     )
     parser.add_argument("--output_dir", type=str, default="tmp/sana_video_ft", help="Directory to save checkpoints")
-    parser.add_argument("--spatial_crop_size", type=int, default=512, help="Spatial resolution to crop volumes to")
+    parser.add_argument("--spatial_crop_size", type=int, default=128, help="Spatial resolution to crop volumes to")
     parser.add_argument(
-        "--max_frames", type=int, default=65, help="Frame/Y-layer count per sample (must be 4n+1 for the Wan VAE)"
+        "--max_frames",
+        type=int,
+        default=385,
+        help="Frame/Y-layer count per sample (must be 4n+1 for the Wan VAE); 385 covers a full 384-tall region",
     )
     parser.add_argument("--lora_rank", type=int, default=8, help="LoRA attention rank (lora mode only)")
     parser.add_argument(

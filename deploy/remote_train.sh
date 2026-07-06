@@ -20,7 +20,8 @@
 #   SAVE_EVERY       --save_every_steps passed to train.py (default: 1000)
 #   UPLOAD_INTERVAL  seconds between checkpoint-upload passes (default: 60)
 #   TRAIN_ARGS       extra args forwarded to train.py, e.g.
-#                    "--mode lora --spatial_crop_size 256 --max_frames 33 --epochs 3"
+#                    "--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3"
+#                    (128px full-height: max_frames 385 covers a 384-tall region)
 #   ACCELERATE_ARGS  extra args for `accelerate launch` (e.g. "--num_processes 2")
 #
 # For wandb logging, add "--report_to wandb" to TRAIN_ARGS and export WANDB_API_KEY
@@ -29,7 +30,7 @@
 # Example:
 #   DATASET_REMOTE=gdrive:mc/sana_video_dataset.tar \
 #   CKPT_REMOTE=gdrive:mc/checkpoints \
-#   TRAIN_ARGS="--mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3" \
+#   TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3" \
 #   bash deploy/remote_train.sh
 #
 set -euo pipefail
@@ -46,7 +47,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-tmp/sana_video_ft}"
 BUNDLE_DIR="${BUNDLE_DIR:-data/train_bundle}"
 SAVE_EVERY="${SAVE_EVERY:-1000}"
 UPLOAD_INTERVAL="${UPLOAD_INTERVAL:-60}"
-TRAIN_ARGS="${TRAIN_ARGS:---mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3}"
+TRAIN_ARGS="${TRAIN_ARGS:---mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3}"
 ACCELERATE_ARGS="${ACCELERATE_ARGS:-}"
 
 log() { echo "[$(date +%H:%M:%S)] $*"; }

@@ -69,9 +69,14 @@ then:
 ```bash
 DATASET_REMOTE=gdrive:minecraft-training/sana_video_dataset.tar \
 CKPT_REMOTE=gdrive:minecraft-training/checkpoints \
-TRAIN_ARGS="--mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3" \
+TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3" \
 bash deploy/remote_train.sh
 ```
+
+The default config is **128px × 385 frames**: frames are the vertical (Y)
+layers of a region, so `--max_frames 385` (must be 4n+1) captures the full
+384-tall column. Each sample is cropped so its top frame is the highest block —
+empty sky is dropped and any shortfall is padded with air below.
 
 The script:
 
@@ -100,12 +105,15 @@ and nothing is uploaded twice.
 | `BUNDLE_DIR` | `data/train_bundle` | dataset extraction dir |
 | `SAVE_EVERY` | `1000` | `--save_every_steps` (samples between checkpoints) |
 | `UPLOAD_INTERVAL` | `60` | seconds between upload passes |
-| `TRAIN_ARGS` | `--mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3` | forwarded to `train.py` |
+| `TRAIN_ARGS` | `--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3` | forwarded to `train.py` |
 | `ACCELERATE_ARGS` | (empty) | forwarded to `accelerate launch` (e.g. `--num_processes 2`) |
 
-> VRAM note: 512×512 LoRA needs a large GPU; on 16 GB it OOMs — drop to
-> `--spatial_crop_size 256 --max_frames 33`. Full fine-tuning (`--mode full`)
-> needs substantially more than 16 GB.
+> VRAM note: memory scales with latent tokens (`frames/4 × crop/8 × crop/8`).
+> The 128px × 385fr default (~25k tokens) fits comfortably on an H200 with room
+> for a real batch size. Full 512px footprint at 385 frames (~400k tokens) does
+> **not** fit on a single GPU — raise `--spatial_crop_size` only if you also cut
+> `--max_frames`. Full fine-tuning (`--mode full`) adds ~25–30 GB of fixed
+> optimizer/gradient state on top.
 
 ### Logging to Weights & Biases
 
@@ -114,7 +122,7 @@ headless) box can authenticate:
 
 ```bash
 WANDB_API_KEY=<your-key> \
-TRAIN_ARGS="--mode lora --spatial_crop_size 512 --max_frames 65 --epochs 3 \
+TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3 \
     --report_to wandb --wandb_project minecraft-sana-video" \
 bash deploy/remote_train.sh
 ```

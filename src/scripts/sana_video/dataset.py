@@ -37,7 +37,8 @@ class MinecraftVideoDataset(Dataset):
         spatial_crop_size: Side length of the random spatial crop (<= 512).
         max_frames: Number of Y-layers per sample. Must satisfy
             (max_frames - 1) % 4 == 0 for the Wan VAE temporal compression.
-        surface_margin: Sky layers kept above the detected surface.
+        surface_margin: Extra layers kept above the detected surface (0 crops
+            the empty sky right at the highest content layer).
         content_threshold: Minimum non-air fraction for a layer to count as
             "surface" when locating the frame window.
     """
@@ -47,7 +48,7 @@ class MinecraftVideoDataset(Dataset):
         manifest_path: str,
         spatial_crop_size: int = 512,
         max_frames: int = 65,
-        surface_margin: int = 8,
+        surface_margin: int = 0,
         content_threshold: float = 0.01,
         block_states_path: Optional[str] = None,
         block_state2rgb_path: Optional[str] = None,
@@ -82,24 +83,35 @@ class MinecraftVideoDataset(Dataset):
         return len(self.entries)
 
     def _select_frame_window(self, volume_yxz: np.ndarray) -> np.ndarray:
-        """Picks a max_frames-layer window around the surface, padding with air above."""
+        """Picks a max_frames-layer window whose top is the highest content layer.
+
+        Empty sky above the topmost non-air layer is cropped so no frames are
+        wasted on blank air. If the window is shorter than ``max_frames`` it is
+        padded *below* (underground) with air, keeping the surface at the top of
+        the stack. A fully-air region crops to nothing and becomes all air.
+        """
         num_layers = volume_yxz.shape[0]
         non_air = ~self.is_air[volume_yxz]  # (Y, X, Z) bool
         layer_content = non_air.mean(axis=(1, 2))  # non-air fraction per Y layer
 
         content_layers = np.nonzero(layer_content >= self.content_threshold)[0]
-        surface = int(content_layers[-1]) if len(content_layers) > 0 else num_layers - 1
+        if len(content_layers) > 0:
+            surface = int(content_layers[-1])
+            end = min(num_layers, surface + 1 + self.surface_margin)
+        else:
+            # Nothing but air: crop it all away (the window fills with air below).
+            end = 0
 
-        end = min(num_layers, surface + 1 + self.surface_margin)
         start = max(0, end - self.max_frames)
         window = volume_yxz[start:end]
 
         if window.shape[0] < self.max_frames:
-            # Pad above (sky) with air so the tensor has a fixed frame count
+            # Pad below (underground) with air so the surface stays at the top of
+            # the stack and no blank sky is reintroduced above it.
             pad = self.max_frames - window.shape[0]
             air_id = self.air_ids[0] if len(self.air_ids) > 0 else 0
             padding = np.full((pad, *window.shape[1:]), air_id, dtype=window.dtype)
-            window = np.concatenate([window, padding], axis=0)
+            window = np.concatenate([padding, window], axis=0)
         return window
 
     def __getitem__(self, idx: int):
@@ -115,6 +127,13 @@ class MinecraftVideoDataset(Dataset):
         # Y-layers become frames: (X, Z, Y) -> (Y, X, Z)
         volume_yxz = np.ascontiguousarray(np.transpose(volume, (2, 0, 1)))
         window = self._select_frame_window(volume_yxz)  # (F, X, Z)
+
+        # Random 90-degree rotation about the vertical (Y) axis, i.e. in the
+        # X/Z spatial plane. Combined with the random caption orientation below
+        # this yields 4 rotations x 4 orientations = 16 augmentation variants.
+        k = random.randint(0, 3)
+        if k:
+            window = np.rot90(window, k=k, axes=(1, 2))
 
         # Random spatial crop
         crop = self.spatial_crop_size
