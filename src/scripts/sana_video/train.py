@@ -73,7 +73,7 @@ def parse_args():
     parser.add_argument(
         "--save_every_steps",
         type=int,
-        default=1000,
+        default=250,
         help="Also save a checkpoint every N samples seen (0 disables step-based saving)",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")

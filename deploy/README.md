@@ -107,6 +107,15 @@ and nothing is uploaded twice.
 | `UPLOAD_INTERVAL` | `60` | seconds between upload passes |
 | `TRAIN_ARGS` | `--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3` | forwarded to `train.py` |
 | `ACCELERATE_ARGS` | (empty) | forwarded to `accelerate launch` (e.g. `--num_processes 2`) |
+| `MIN_DISK_GB` | `90` | abort early if the working filesystem has less free space |
+| `KEEP_TAR` | (unset) | set `1` to keep the downloaded tar; default deletes it after extraction to reclaim ~38 GB |
+| `HF_TOKEN` | (unset) | Hugging Face token, exported for gated base-model downloads |
+
+The script installs **only** the training dependencies
+(`deploy/requirements-train.txt`) into a fresh `.venv` — not the full project
+env — so it never builds `amulet` and runs on minimal boxes (Brev / bare CUDA
+instances). Versions are pinned to the known-good local env, including the git
+`diffusers` commit that provides `SanaVideoPipeline`.
 
 > VRAM note: memory scales with latent tokens (`frames/4 × crop/8 × crop/8`).
 > The 128px × 385fr default (~25k tokens) fits comfortably on an H200 with room

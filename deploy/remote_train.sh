@@ -23,6 +23,15 @@
 #                    "--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3"
 #                    (128px full-height: max_frames 385 covers a 384-tall region)
 #   ACCELERATE_ARGS  extra args for `accelerate launch` (e.g. "--num_processes 2")
+#   MIN_DISK_GB      abort if the working filesystem has less free space than this
+#                    (default: 90 — 38 GB tar + 38 GB extracted + model weights)
+#   KEEP_TAR         set to 1 to keep the downloaded tar after extraction
+#                    (default: unset — the tar is deleted to reclaim ~38 GB)
+#   HF_TOKEN         Hugging Face token, exported for gated model downloads
+#
+# This installs ONLY the training dependencies (deploy/requirements-train.txt),
+# not the full project env — it never builds amulet, so it works on minimal
+# boxes (e.g. Brev / bare CUDA instances).
 #
 # For wandb logging, add "--report_to wandb" to TRAIN_ARGS and export WANDB_API_KEY
 # (or run `wandb login`) so the headless box can authenticate.
@@ -49,6 +58,8 @@ SAVE_EVERY="${SAVE_EVERY:-1000}"
 UPLOAD_INTERVAL="${UPLOAD_INTERVAL:-60}"
 TRAIN_ARGS="${TRAIN_ARGS:---mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3}"
 ACCELERATE_ARGS="${ACCELERATE_ARGS:-}"
+MIN_DISK_GB="${MIN_DISK_GB:-90}"
+VENV_DIR="${VENV_DIR:-.venv}"
 
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
@@ -72,9 +83,26 @@ if ! rclone listremotes | grep -q "^${REMOTE_NAME}:"; then
     exit 1
 fi
 
-# --- 2. Python env -----------------------------------------------------------
-log "Syncing Python environment with uv..."
-uv sync
+# Export Hugging Face token if provided (needed for gated base-model downloads).
+if [ -n "${HF_TOKEN:-}" ]; then
+    export HF_TOKEN
+    export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN"
+    log "HF_TOKEN detected; exported for model downloads."
+fi
+
+# Disk preflight: need room for the tar + its extraction + model weights.
+AVAIL_GB="$(df -Pk . | awk 'NR==2 {print int($4 / 1024 / 1024)}')"
+log "Free disk on working filesystem: ${AVAIL_GB} GB (need >= ${MIN_DISK_GB} GB)."
+if [ "$AVAIL_GB" -lt "$MIN_DISK_GB" ]; then
+    log "ERROR: not enough free disk. Provision a larger volume, lower MIN_DISK_GB,"
+    log "or set KEEP_TAR=0 (default) so the tar is deleted right after extraction."
+    exit 1
+fi
+
+# --- 2. Python env (training-only; no amulet) --------------------------------
+log "Creating training venv at $VENV_DIR and installing training deps..."
+uv venv "$VENV_DIR"
+uv pip install --python "$VENV_DIR/bin/python" -r deploy/requirements-train.txt
 
 # --- 3. Dataset download + extract ------------------------------------------
 mkdir -p "$BUNDLE_DIR"
@@ -86,6 +114,10 @@ if [ ! -f "$BUNDLE_DIR/manifest.jsonl" ]; then
     log "Extracting to $BUNDLE_DIR ..."
     tar -xf "$TAR_LOCAL" -C "$BUNDLE_DIR"
     log "Extracted $(wc -l < "$BUNDLE_DIR/manifest.jsonl") manifest entries."
+    if [ "${KEEP_TAR:-0}" != "1" ]; then
+        log "Deleting $TAR_LOCAL to reclaim disk (set KEEP_TAR=1 to keep it)."
+        rm -f "$TAR_LOCAL"
+    fi
 else
     log "Dataset already present at $BUNDLE_DIR (skipping download)."
 fi
@@ -124,9 +156,11 @@ trap stop_uploader EXIT
 start_uploader
 
 # --- 5. Train ----------------------------------------------------------------
+# Run accelerate from the training venv directly. We avoid `uv run`, which would
+# re-sync the full project env (and try to build amulet) before launching.
 log "Launching training. Checkpoints -> $OUTPUT_DIR (every $SAVE_EVERY samples)."
 # shellcheck disable=SC2086
-uv run accelerate launch $ACCELERATE_ARGS src/scripts/sana_video/train.py \
+"$VENV_DIR/bin/accelerate" launch $ACCELERATE_ARGS src/scripts/sana_video/train.py \
     --manifest "$BUNDLE_DIR/manifest.jsonl" \
     --output_dir "$OUTPUT_DIR" \
     --save_every_steps "$SAVE_EVERY" \

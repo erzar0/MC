@@ -1,0 +1,27 @@
+# Training-only dependencies for SANA-Video fine-tuning on a fresh GPU box.
+#
+# Deliberately EXCLUDES the amulet / crawling / processing dependencies from the
+# main project. Training (src/scripts/sana_video/{train,dataset}.py -> block_colors)
+# only needs the packages below, and installing the full env would try to build
+# `amulet-faulthandler`, which fails under uv. Skipping it keeps the box small
+# and the install reliable.
+#
+# Versions are pinned to the known-good local environment. In particular diffusers
+# must be the git commit that ships SanaVideoPipeline (no PyPI release has it yet).
+#
+# Install: uv pip install --python .venv/bin/python -r deploy/requirements-train.txt
+
+torch==2.10.0
+torchvision==0.25.0
+diffusers @ git+https://github.com/huggingface/diffusers@f2be8bd6b3dc4035bd989dc467f15d86bf3c9c12
+transformers==5.0.0
+accelerate==1.12.0
+peft==0.19.1
+numpy==1.26.4
+blosc2==3.12.2
+tqdm==4.67.1
+wandb>=0.18.0
+protobuf==7.35.1
+# Optional but recommended: enables 8-bit AdamW (train.py falls back to plain
+# AdamW if it is missing). Comment out if it fails to build on your box.
+bitsandbytes==0.49.2
