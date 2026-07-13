@@ -291,15 +291,19 @@ def main():
                     latents = (latents - latents_mean) / latents_std
                     latents = latents.to(dtype=torch.bfloat16)
 
-                # C. Flow-matching: sample t in [0, 1], mix noise and data
-                t = torch.rand((B,), device=device, dtype=torch.bfloat16)
-                t_expanded = t.view(-1, 1, 1, 1, 1)
+                # C. Flow-matching in the diffusers convention: sigma=1 is pure
+                # noise, sigma=0 is clean data, and the model predicts the
+                # velocity (noise - data). The pretrained SANA-Video transformer
+                # and the DPMSolver flow scheduler both assume this orientation;
+                # flipping it trains against the pretrained prior.
+                sigma = torch.rand((B,), device=device, dtype=torch.bfloat16)
+                sigma_expanded = sigma.view(-1, 1, 1, 1, 1)
                 noise = torch.randn_like(latents)
-                noisy_latents = (1.0 - t_expanded) * noise + t_expanded * latents
-                target = latents - noise
+                noisy_latents = (1.0 - sigma_expanded) * latents + sigma_expanded * noise
+                target = noise - latents
 
-                # D. Forward pass (scheduler timesteps live in [0, 1000])
-                timestep = t.float() * 1000.0
+                # D. Forward pass (scheduler timesteps live in [0, 1000], sigma*1000)
+                timestep = sigma.float() * 1000.0
                 model_pred = transformer(
                     noisy_latents,
                     encoder_hidden_states=prompt_embeds.to(dtype=torch.bfloat16),

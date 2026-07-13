@@ -123,7 +123,7 @@ def generate_grid(
             use_resolution_binning=False,  # Keep exact crop dimensions
             num_inference_steps=30,
             generator=torch.Generator(device="cuda").manual_seed(seed),
-            output_type="np.array",
+            output_type="np",
         ).frames[0]
 
     # SANA-Video returns numpy array normalized to [0, 1] (float) or [0, 255] (uint8)
