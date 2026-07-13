@@ -10,14 +10,15 @@
 │   ├── world/                   # World data extraction core:
 │   │   ├── world_wrapper.py     #   Amulet wrapper: 3D volumes, biomes, metadata.
 │   │   ├── fast_volume_extractor.py  # Fast NBT/region parsing (numba-accelerated).
-│   │   └── world_processor.py   #   Full conversion + extraction + render pipeline.
+│   │   ├── world_processor.py   #   Full conversion + extraction + render pipeline.
+│   │   └── world_builder.py     #   Voxel block-ID grid -> playable Java 1.19.2 world.
 │   └── scripts/                 # CLI entrypoints, one package per pipeline stage:
 │       ├── crawling/            #   listing_crawler.py, detail_crawler.py (PMC)
 │       ├── downloading/         #   map_downloader.py
 │       ├── processing/          #   process_worlds.py (batch WorldProcessor driver)
 │       ├── captioning/          #   cleanse_descriptions.py, vision_captions.py (vLLM)
 │       ├── embeddings/          #   negative_buffer.py, benchmark.py, visualize.py
-│       └── sana_video/          #   dataset.py, prepare_dataset.py, train.py, inference.py
+│       └── sana_video/          #   dataset.py, prepare_dataset.py, train.py, inference.py, generate_world.py
 ├── assets/                      # Immutable reference data (block states, palettes).
 ├── data/pipeline/               # Mutable crawl/download state + CSVs.
 ├── notebooks/                   # Interactive exploration and visualization.
@@ -42,6 +43,34 @@ uv sync
 
 - [mcmap](https://github.com/spoutn1k/mcmap) - Rendering of Minecraft maps
 - [chunker](https://www.chunker.app/) - Translation of Minecraft world versions
+
+## 🏗️ Generating Playable Worlds from a Trained Checkpoint
+
+`src/scripts/sana_video/generate_world.py` runs the whole generation pipeline: SANA-Video
+inference from a fine-tuned checkpoint → KD-tree snap to block IDs → playable Java 1.19.2
+world (`level.dat` + `region/*.mca`, built by `src/world/world_builder.py`) → isometric PNG
+render (mcmap) → upload of the world zip + render to Google Drive (rclone).
+
+```bash
+# Full run: prompt -> world -> render -> upload
+.venv/bin/python src/scripts/sana_video/generate_world.py \
+    --prompt "A medieval watchtower built of cobblestone and oak wood" \
+    --lora_path tmp/sana_video_ft/checkpoint-epoch-3 \
+    --gdrive-remote "gdrive:minecraft-training/generated"
+
+# Reuse an existing inference grid (.npy), skip the upload
+.venv/bin/python src/scripts/sana_video/generate_world.py \
+    --npy tmp/generated_structure.npy --skip-upload
+```
+
+Notes:
+- Outputs land in `tmp/generated/<name>/`: `grid.npy`, `world/`, `render.nw.png`, `<name>.zip`.
+  The zip contains a `world/` folder you can drop straight into Minecraft `saves/`.
+- Use `--transformer_path` instead of `--lora_path` for full fine-tune checkpoints.
+- `--gdrive-remote` must name a configured rclone remote (`rclone listremotes`); the same
+  convention as `deploy/remote_train.sh`.
+- Renders default to no `-lighting` (generated worlds carry no light data, which would
+  darken the image); opt in with `--mcmap-lighting`.
 
 ## 🖼️ Caption Generation (vLLM)
 
