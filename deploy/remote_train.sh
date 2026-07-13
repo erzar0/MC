@@ -106,8 +106,13 @@ if [ "$AVAIL_GB" -lt "$MIN_DISK_GB" ]; then
 fi
 
 # --- 2. Python env (training-only; no amulet) --------------------------------
-log "Creating training venv at $VENV_DIR and installing training deps..."
-uv venv "$VENV_DIR"
+if [ ! -d "$VENV_DIR" ]; then
+    log "Creating training venv at $VENV_DIR..."
+    uv venv "$VENV_DIR"
+else
+    log "Python venv already exists at $VENV_DIR (skipping creation)."
+fi
+log "Installing/updating training deps..."
 uv pip install --python "$VENV_DIR/bin/python" -r deploy/requirements-train.txt
 
 # --- 3. Dataset download + extract ------------------------------------------
@@ -168,6 +173,43 @@ stop_uploader() {
 }
 trap stop_uploader EXIT
 start_uploader
+
+# Check if there is an existing checkpoint on Google Drive to resume from
+if [[ "$TRAIN_ARGS" == *"--resume_from_checkpoint"* ]]; then
+    log "Resuming from checkpoint specified in TRAIN_ARGS."
+else
+    log "Checking for existing checkpoints on Google Drive at $CKPT_REMOTE..."
+    LATEST_CKPT=""
+    if rclone lsf "$CKPT_REMOTE" >/dev/null 2>&1; then
+        LATEST_CKPT=$(rclone lsjson --dirs-only "$CKPT_REMOTE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    ckpts = [d for d in data if d['Name'].startswith('checkpoint-')]
+    if ckpts:
+        ckpts.sort(key=lambda x: x['ModTime'])
+        print(ckpts[-1]['Name'])
+except Exception:
+    pass
+")
+    fi
+
+    if [ -n "$LATEST_CKPT" ]; then
+        log "Found latest checkpoint on Google Drive: $LATEST_CKPT"
+        LOCAL_CKPT_PATH="$OUTPUT_DIR/$LATEST_CKPT"
+        if [ ! -d "$LOCAL_CKPT_PATH" ]; then
+            log "Downloading $LATEST_CKPT from Drive..."
+            mkdir -p "$LOCAL_CKPT_PATH"
+            rclone copy --progress "$CKPT_REMOTE/$LATEST_CKPT" "$LOCAL_CKPT_PATH"
+        else
+            log "Checkpoint $LATEST_CKPT already present locally."
+        fi
+        # Append --resume_from_checkpoint to TRAIN_ARGS
+        TRAIN_ARGS="$TRAIN_ARGS --resume_from_checkpoint $LOCAL_CKPT_PATH"
+    else
+        log "No checkpoints found on Google Drive. Starting training from scratch."
+    fi
+fi
 
 # --- 5. Train ----------------------------------------------------------------
 # Run accelerate from the training venv directly. We avoid `uv run`, which would

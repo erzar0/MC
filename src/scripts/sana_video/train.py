@@ -92,6 +92,12 @@ def parse_args():
     )
     parser.add_argument("--wandb_project", type=str, default="minecraft-sana-video", help="wandb project name")
     parser.add_argument("--run_name", type=str, default=None, help="wandb run name (defaults to a timestamped name)")
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="Path to a checkpoint directory (step or epoch) to resume training from",
+    )
     return parser.parse_args()
 
 
@@ -147,6 +153,20 @@ def main():
     # 2. Load pretrained pipeline and split out components
     print(f"Loading pretrained SANA-Video model from {args.pretrained_model}...")
     pipe = SanaVideoPipeline.from_pretrained(args.pretrained_model, torch_dtype=torch.bfloat16)
+
+    # Resume transformer/LoRA weights if specified
+    if args.resume_from_checkpoint:
+        print(f"Resuming weights from checkpoint: {args.resume_from_checkpoint}")
+        if args.mode == "lora":
+            # For LoRA, load the adapter weights (this automatically initializes the adapter modules)
+            pipe.load_lora_weights(args.resume_from_checkpoint)
+        else:
+            # For Full, load the custom transformer checkpoint directly
+            transformer_cls = type(pipe.transformer)
+            pipe.transformer = transformer_cls.from_pretrained(
+                args.resume_from_checkpoint, torch_dtype=torch.bfloat16
+            )
+
     transformer = pipe.transformer
     vae = pipe.vae
     text_encoder = pipe.text_encoder
@@ -162,15 +182,18 @@ def main():
 
     # 3. Configure trainable weights per mode
     if args.mode == "lora":
-        print("Attaching LoRA adapters to the transformer attention layers...")
-        transformer.requires_grad_(False)
-        lora_config = LoraConfig(
-            r=args.lora_rank,
-            lora_alpha=args.lora_rank,
-            target_modules=["to_q", "to_k", "to_v", "to_out.0"],
-            init_lora_weights="gaussian",
-        )
-        transformer.add_adapter(lora_config)
+        if not args.resume_from_checkpoint:
+            print("Attaching new LoRA adapters to the transformer attention layers...")
+            transformer.requires_grad_(False)
+            lora_config = LoraConfig(
+                r=args.lora_rank,
+                lora_alpha=args.lora_rank,
+                target_modules=["to_q", "to_k", "to_v", "to_out.0"],
+                init_lora_weights="gaussian",
+            )
+            transformer.add_adapter(lora_config)
+        else:
+            print("Using loaded LoRA adapters from checkpoint...")
         # Keep LoRA params in fp32 for stable mixed-precision training
         cast_training_params(transformer, dtype=torch.float32)
     else:
