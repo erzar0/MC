@@ -112,16 +112,15 @@ class MinecraftVideoDataset(Dataset):
     def _fit_to_frames(self, volume_yxz: np.ndarray, target: int) -> np.ndarray:
         """Forces the (Y, X, Z) volume to exactly ``target`` layers.
 
-        Volumes are content-trimmed (top layer is the surface), so if the volume
-        is taller than the bucket we crop the deepest underground layers, and if
-        it is shorter we pad air *below*, keeping the surface at the top.
+        If the volume is taller than the bucket we crop the top layers (sky/surface)
+        to keep the underground blocks, and if it is shorter we pad air *above*.
         """
         num_layers = volume_yxz.shape[0]
         if num_layers >= target:
-            return volume_yxz[num_layers - target :]
+            return volume_yxz[:target]
         pad = target - num_layers
         padding = np.full((pad, *volume_yxz.shape[1:]), self.air_id, dtype=volume_yxz.dtype)
-        return np.concatenate([padding, volume_yxz], axis=0)
+        return np.concatenate([volume_yxz, padding], axis=0)
 
     def __getitem__(self, idx: int):
         entry = self.entries[idx]

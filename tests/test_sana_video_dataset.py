@@ -148,23 +148,23 @@ def test_dataset_requires_height_field(tmp_path):
         _make_dataset(tmp_path, heights=[10], drop_height=True)
 
 
-def test_fit_to_frames_pads_air_below(tmp_path):
+def test_fit_to_frames_pads_air_above(tmp_path):
     ds = _make_dataset(tmp_path, heights=[10], bucket_step=4)
     vol = np.full((10, 4, 4), SOLID_ID, dtype=np.uint16)  # (Y, X, Z), all content
     out = ds._fit_to_frames(vol, target=13)
     assert out.shape == (13, 4, 4)
-    # 3 air layers padded below (indices 0..2), content stays at the top.
-    assert np.all(out[:3] == AIR_ID)
-    assert np.all(out[3:] == SOLID_ID)
+    # 3 air layers padded above (indices 10..12), content stays at the bottom.
+    assert np.all(out[:10] == SOLID_ID)
+    assert np.all(out[10:] == AIR_ID)
 
 
-def test_fit_to_frames_crops_from_bottom(tmp_path):
+def test_fit_to_frames_crops_from_top(tmp_path):
     ds = _make_dataset(tmp_path, heights=[10], bucket_step=4)
     vol = np.arange(20, dtype=np.uint16).reshape(20, 1, 1)  # distinct per layer
     out = ds._fit_to_frames(vol, target=13)
     assert out.shape == (13, 1, 1)
-    # Keeps the top 13 layers (surface), drops the deepest 7.
-    assert np.array_equal(out[:, 0, 0], np.arange(7, 20))
+    # Keeps the bottom 13 layers, drops the top 7.
+    assert np.array_equal(out[:, 0, 0], np.arange(0, 13))
 
 
 def test_dataloader_batches_are_uniform(tmp_path):
