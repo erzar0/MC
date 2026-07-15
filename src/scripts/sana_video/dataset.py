@@ -70,7 +70,7 @@ class MinecraftVideoDataset(Dataset):
         max_frames: int = 385,
         bucket_step: int = 4,
         block_states_path: Optional[str] = None,
-        block_state2rgb_path: Optional[str] = None,
+        embeddings_rgb_path: Optional[str] = None,
     ):
         if (max_frames - 1) % 4 != 0:
             raise ValueError(f"max_frames must be 4n+1 for the Wan VAE temporal compression, got {max_frames}")
@@ -103,7 +103,7 @@ class MinecraftVideoDataset(Dataset):
         # the same list, so getitem and the sampler always agree on batch shape.
         self.frame_counts = [snap_to_bucket(int(e["height"]), bucket_step, max_frames) for e in self.entries]
 
-        self.id2rgb, self.air_ids = load_id2rgb(block_states_path, block_state2rgb_path)
+        self.id2rgb, self.air_ids = load_id2rgb(block_states_path, embeddings_rgb_path)
         self.air_id = int(self.air_ids[0]) if len(self.air_ids) > 0 else 0
 
     def __len__(self) -> int:

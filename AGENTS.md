@@ -101,7 +101,7 @@ paths internally.
 | `world/world_builder.py` | `build_world()` — writes a playable Java 1.19.2 world (`level.dat` + `region/*.mca`) from a `(X, Z, Y)` global-block-ID grid via amulet (universal→Java translation on save). | Imported by `sana_video/generate_world.py`; also usable as a library. |
 | `block2vec.py` | Block2Vec skip-gram-with-negative-sampling embeddings over voxel volumes, with a fused Triton update kernel (`_sgns_kernel`), `SpatialMinecraftDataset`, and `train_block2vec_from_volumes()`. | `python src/block2vec.py --neg_buffer <ids.pt> [--volumes DIR] [--dim 128] [--epochs N] [--neighbor_mode face6\|cube26] [--save_dir tmp/checkpoints] [--seed N]`. `--neg_buffer` is required. |
 | `common/batching.py` | `batch_n(iterable, batch_count)` utility — splits an iterable into ~even batches (generators supported). | Imported helper. |
-| `common/block_colors.py` | Shared block-ID <-> RGB palette: `load_block_states()` and `load_id2rgb()` (also returns air block IDs). Single source of truth for SANA-Video training and inference decoding. | `from src.common.block_colors import load_id2rgb`. |
+| `common/block_colors.py` | Shared block-ID <-> RGB palette sourced from the block2vec embedding LUT (`assets/block_embeddings_rgb.npy`): `load_block_states()`, `load_id2rgb()` (air forced to black, colors uniquified), `load_snap_palette()` (inference KD-snap targets; black always decodes to air). Single source of truth for SANA-Video training and inference decoding. | `from src.common.block_colors import load_id2rgb`. |
 | `common/llm_utils.py` | Shared vLLM helpers: `strip_thinking_tags()`, `make_vllm_client()`, `make_async_vllm_client()`. | Imported by the `captioning/` scripts. |
 | `common/resumable_state.py` | `JsonStateStore` — flat `{id: entry}` JSON persistence base for resumable scripts. `DownloadState` (map_downloader) and `ProcessState` (process_worlds) subclass it. | Imported helper. |
 
@@ -123,12 +123,14 @@ paths internally.
 | `sana_video/train.py` | Fine-tunes pretrained SANA-Video 2B on voxel "pseudo-video" volumes via Accelerate. `--mode lora` (PEFT adapters, default) or `--mode full` (all transformer weights). `max_frames` must be 4n+1 (Wan VAE). | `accelerate launch src/scripts/sana_video/train.py --manifest ... [--mode lora\|full] [--lora_rank 8] [--epochs 3] [--spatial_crop_size 128] [--max_frames 385] [--bucket_step 4] [--output_dir tmp/sana_video_ft] [--report_to wandb] [--wandb_project ...]`. |
 | `sana_video/inference.py` | Generates a 3D voxel grid from a text prompt with SANA-Video + fine-tuned weights (LoRA adapter or full transformer), snaps to nearest block via KD-tree, saves `.npy`. | `.venv/bin/python src/scripts/sana_video/inference.py --prompt "..." [--lora_path ...] [--transformer_path ...] [--output_npy ...] [--frames 64]`. |
 
-| `sana_video/generate_world.py` | End-to-end: prompt (or existing `.npy` grid) → SANA-Video inference → playable 1.19.2 world via `world_builder` → mcmap PNG render → world zip + PNG uploaded to Google Drive via rclone. | `.venv/bin/python src/scripts/sana_video/generate_world.py --prompt "..." [--lora_path ...\|--transformer_path ...] [--npy grid.npy] [--skip-render] [--skip-upload] [--gdrive-remote gdrive:minecraft-training/generated]`. |
+| `sana_video/generate_world.py` | End-to-end: prompt (or existing `.npy` grid) → SANA-Video inference → playable 1.19.2 world via `world_builder` → mcmap PNG render + mp4 (Y-layers as frames) → world zip + PNG + mp4 uploaded to Google Drive via rclone. | `.venv/bin/python src/scripts/sana_video/generate_world.py --prompt "..." [--lora_path ...\|--transformer_path ...] [--npy grid.npy] [--skip-render] [--skip-upload] [--gdrive-remote gdrive:minecraft-training/generated]`. |
 
 ### Data directories
 
 - **`assets/`** — immutable reference data: `block_states.txt`, `biomes.txt`,
-  `block_state2rgb.csv`, `block_type2rgb.json`, `grid.png`. The block/biome registries
+  `block_state2rgb.csv`, `block_embeddings_rgb.npy` (block2vec
+  color LUT used by `block_colors.py`; regenerate with `embeddings/visualize.py`),
+  `grid.png`. The block/biome registries
   append to these files when new states are encountered — don't edit them by hand.
 - **`data/pipeline/`** — mutable, tracked pipeline state and outputs: crawl/download
   **state JSON** (`*_crawl_state.json`, `map_download_state.json`, `process_state.json`)

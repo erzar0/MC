@@ -49,7 +49,8 @@ uv sync
 `src/scripts/sana_video/generate_world.py` runs the whole generation pipeline: SANA-Video
 inference from a fine-tuned checkpoint → KD-tree snap to block IDs → playable Java 1.19.2
 world (`level.dat` + `region/*.mca`, built by `src/world/world_builder.py`) → isometric PNG
-render (mcmap) → upload of the world zip + render to Google Drive (rclone).
+render (mcmap) + mp4 of the raw output (Y-layers as frames) → upload of the world zip,
+render, and mp4 to Google Drive (rclone).
 
 ```bash
 # Full run: prompt -> world -> render -> upload
@@ -64,7 +65,7 @@ render (mcmap) → upload of the world zip + render to Google Drive (rclone).
 ```
 
 Notes:
-- Outputs land in `tmp/generated/<name>/`: `grid.npy`, `world/`, `render.nw.png`, `<name>.zip`.
+- Outputs land in `tmp/generated/<name>/`: `grid.npy`, `world/`, `<name>.nw.png`, `<name>.mp4`, `<name>.zip`.
   The zip contains a `world/` folder you can drop straight into Minecraft `saves/`.
 - Use `--transformer_path` instead of `--lora_path` for full fine-tune checkpoints.
 - `--gdrive-remote` must name a configured rclone remote (`rclone listremotes`); the same

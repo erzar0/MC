@@ -82,6 +82,12 @@ def parse_args():
         default=250,
         help="Also save a checkpoint every N samples seen (0 disables step-based saving)",
     )
+    parser.add_argument(
+        "--caption_dropout",
+        type=float,
+        default=0.1,
+        help="Probability of replacing a caption with the empty string (enables classifier-free guidance)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
         "--report_to",
@@ -163,9 +169,11 @@ def main():
         else:
             # For Full, load the custom transformer checkpoint directly
             transformer_cls = type(pipe.transformer)
-            pipe.transformer = transformer_cls.from_pretrained(
-                args.resume_from_checkpoint, torch_dtype=torch.bfloat16
-            )
+            pipe.transformer = transformer_cls.from_pretrained(args.resume_from_checkpoint, torch_dtype=torch.bfloat16)
+
+    # Inference runs a shifted flow schedule; sample training sigmas the same way.
+    flow_shift = float(getattr(pipe.scheduler.config, "flow_shift", 8.0))
+    print(f"Flow-matching sigma sampling with flow_shift={flow_shift}")
 
     transformer = pipe.transformer
     vae = pipe.vae
@@ -273,7 +281,11 @@ def main():
                 # pixel_values shape: (B, C, F, H, W) in [-1, 1]
                 B = pixel_values.shape[0]
 
-                # A. Encode text prompts
+                # A. Encode text prompts. Caption dropout: replace some captions
+                # with the empty string so the model learns an unconditional
+                # distribution — required for classifier-free guidance at
+                # inference (guidance extrapolates conditional vs unconditional).
+                prompts = ["" if torch.rand((), device=device).item() < args.caption_dropout else p for p in prompts]
                 with torch.no_grad():
                     prompt_embeds, prompt_attention_mask, _, _ = pipe.encode_prompt(
                         prompt=list(prompts),
@@ -296,7 +308,11 @@ def main():
                 # velocity (noise - data). The pretrained SANA-Video transformer
                 # and the DPMSolver flow scheduler both assume this orientation;
                 # flipping it trains against the pretrained prior.
-                sigma = torch.rand((B,), device=device, dtype=torch.bfloat16)
+                # Sigma is sampled with the scheduler's flow shift (sigma =
+                # shift*u / (1 + (shift-1)*u)) so training emphasizes the same
+                # high-noise levels the shifted inference schedule visits.
+                u = torch.rand((B,), device=device, dtype=torch.float32)
+                sigma = (flow_shift * u / (1.0 + (flow_shift - 1.0) * u)).to(torch.bfloat16)
                 sigma_expanded = sigma.view(-1, 1, 1, 1, 1)
                 noise = torch.randn_like(latents)
                 noisy_latents = (1.0 - sigma_expanded) * latents + sigma_expanded * noise

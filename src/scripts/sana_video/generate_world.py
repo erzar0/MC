@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import json
 import logging
 import shutil
 import subprocess
@@ -28,6 +29,7 @@ import numpy as np
 # Support both package import and direct script execution
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from src import config
+from src.common.block_colors import load_id2rgb
 from src.world.world_builder import build_world
 
 logger = logging.getLogger(__name__)
@@ -49,7 +51,8 @@ def parse_args():
     )
     parser.add_argument("--height", type=int, default=512, help="Spatial Height resolution (X)")
     parser.add_argument("--width", type=int, default=512, help="Spatial Width resolution (Z)")
-    parser.add_argument("--frames", type=int, default=64, help="Voxel vertical layers (Y)")
+    parser.add_argument("--frames", type=int, default=65, help="Voxel vertical layers (Y); must be 4n+1")
+    parser.add_argument("--guidance_scale", type=float, default=6.0, help="CFG scale (1.0 disables CFG)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--name", type=str, default=None, help="Run name (default: generated-<timestamp>)")
     parser.add_argument(
@@ -70,6 +73,11 @@ def parse_args():
     args = parser.parse_args()
     if not args.prompt and not args.npy:
         parser.error("either --prompt or --npy is required")
+    # Fail fast, before any GPU time is spent
+    if not args.npy and (args.frames - 1) % 4 != 0:
+        parser.error(f"--frames must be 4n+1 for the Wan VAE, got {args.frames}")
+    if not args.npy and args.base_y + args.frames > 320:
+        parser.error(f"--base_y {args.base_y} + --frames {args.frames} exceeds the world build limit (y=320)")
     return args
 
 
@@ -90,6 +98,7 @@ def load_or_generate_grid(args, out_dir: Path) -> np.ndarray:
         height=args.height,
         width=args.width,
         frames=args.frames,
+        guidance_scale=args.guidance_scale,
         seed=args.seed,
     )
     npy_path = out_dir / "grid.npy"
@@ -133,6 +142,33 @@ def render_world(world_dir: Path, png_path: Path, base_y: int, grid_shape: tuple
     return True
 
 
+def write_video(grid: np.ndarray, mp4_path: Path, fps: int = 24, scale: int = 4) -> bool:
+    """Write the grid as an mp4: one frame per Y-layer, bottom to top.
+
+    Each (X, Z) layer is colored via the block RGB palette (the same pseudo-video
+    representation the model was trained on) and nearest-neighbor upscaled by
+    ``scale`` for visibility. Returns True on success.
+    """
+    try:
+        import imageio.v2 as imageio
+    except ImportError:
+        logger.warning("imageio not available. Skipping mp4.")
+        return False
+
+    id2rgb, _ = load_id2rgb()
+    rgb = id2rgb[grid]  # (X, Z, Y, 3) uint8
+    writer = imageio.get_writer(str(mp4_path), fps=fps, macro_block_size=1)
+    try:
+        for y in range(rgb.shape[2]):
+            frame = rgb[:, :, y, :]
+            frame = np.repeat(np.repeat(frame, scale, axis=0), scale, axis=1)
+            writer.append_data(frame)
+    finally:
+        writer.close()
+    logger.info("Video saved to %s (%d frames)", mp4_path, rgb.shape[2])
+    return True
+
+
 def upload_to_gdrive(files: list[Path], remote: str) -> None:
     """Upload files to the rclone remote (validates the remote name first)."""
     remote_name = remote.split(":", 1)[0]
@@ -152,10 +188,16 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     args = parse_args()
 
-    name = args.name or f"generated-{time.strftime('%Y%m%d-%H%M%S')}"
+    # Always timestamp the run name so repeated runs never collide (locally or on Drive)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    name = f"{args.name}-{stamp}" if args.name else f"generated-{stamp}"
     out_dir = Path(args.output_dir) / name
     out_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Run '%s' -> %s", name, out_dir)
+
+    # Record what produced this run, so outputs stay identifiable among many runs
+    meta_path = out_dir / "meta.json"
+    meta_path.write_text(json.dumps({"run": name, **vars(args)}, indent=2, default=str))
 
     # 1. Grid: load or generate
     grid = load_or_generate_grid(args, out_dir)
@@ -164,23 +206,28 @@ def main():
     world_dir = build_world(grid, out_dir / "world", base_y=args.base_y, level_name=name)
 
     # 3. Render
-    png_path = out_dir / "render.nw.png"
+    png_path = out_dir / f"{name}.nw.png"
     rendered = False
     if args.skip_render:
         logger.info("Skipping render (--skip-render).")
     else:
         rendered = render_world(world_dir, png_path, args.base_y, grid.shape, lighting=args.mcmap_lighting)
 
-    # 4. Zip the world (zip contains a world/ folder, droppable into saves/)
+    # 4. mp4 of the raw output (Y-layers as frames, bottom to top)
+    mp4_path = out_dir / f"{name}.mp4"
+    has_video = write_video(grid, mp4_path)
+
+    # 5. Zip the world (zip contains a world/ folder, droppable into saves/)
     zip_path = Path(shutil.make_archive(str(out_dir / name), "zip", root_dir=out_dir, base_dir="world"))
     logger.info("World zipped to %s", zip_path)
 
-    # 5. Upload
+    # 6. Upload
     if args.skip_upload:
         logger.info("Skipping upload (--skip-upload).")
     else:
-        uploads = [zip_path] + ([png_path] if rendered else [])
-        upload_to_gdrive(uploads, args.gdrive_remote)
+        uploads = [zip_path, meta_path] + ([png_path] if rendered else []) + ([mp4_path] if has_video else [])
+        # Per-run subdirectory on the remote keeps runs grouped and collision-free
+        upload_to_gdrive(uploads, f"{args.gdrive_remote.rstrip('/')}/{name}")
 
     logger.info("Done. Outputs in %s", out_dir)
 
