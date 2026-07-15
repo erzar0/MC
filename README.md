@@ -50,7 +50,7 @@ uv sync
 inference from a fine-tuned checkpoint → KD-tree snap to block IDs → playable Java 1.19.2
 world (`level.dat` + `region/*.mca`, built by `src/world/world_builder.py`) → isometric PNG
 render (mcmap) + mp4 of the raw output (Y-layers as frames) → upload of the world zip,
-render, and mp4 to Google Drive (rclone).
+render, and zipped mp4 to Google Drive (rclone).
 
 ```bash
 # Full run: prompt -> world -> render -> upload

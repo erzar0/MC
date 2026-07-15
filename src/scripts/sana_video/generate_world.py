@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -221,11 +222,17 @@ def main():
     zip_path = Path(shutil.make_archive(str(out_dir / name), "zip", root_dir=out_dir, base_dir="world"))
     logger.info("World zipped to %s", zip_path)
 
-    # 6. Upload
+    # 6. Upload (the mp4 is zipped so Drive stores/transfers it as a plain file)
     if args.skip_upload:
         logger.info("Skipping upload (--skip-upload).")
     else:
-        uploads = [zip_path, meta_path] + ([png_path] if rendered else []) + ([mp4_path] if has_video else [])
+        mp4_zip_path = None
+        if has_video:
+            mp4_zip_path = out_dir / f"{name}.mp4.zip"
+            with zipfile.ZipFile(mp4_zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                zf.write(mp4_path, mp4_path.name)
+            logger.info("Video zipped to %s", mp4_zip_path)
+        uploads = [zip_path, meta_path] + ([png_path] if rendered else []) + ([mp4_zip_path] if mp4_zip_path else [])
         # Per-run subdirectory on the remote keeps runs grouped and collision-free
         upload_to_gdrive(uploads, f"{args.gdrive_remote.rstrip('/')}/{name}")
 
