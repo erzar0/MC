@@ -28,10 +28,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "Sana"))
 
 # Allow a plain `python train_ivjoint.py` launch (no torchrun): the upstream
-# code reads these env vars unconditionally.
+# code reads these env vars unconditionally, and setting RANK/WORLD_SIZE makes
+# Accelerate init torch.distributed, which needs the rendezvous vars too.
 os.environ.setdefault("WORLD_SIZE", "1")
 os.environ.setdefault("RANK", "0")
 os.environ.setdefault("LOCAL_RANK", "0")
+os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
+os.environ.setdefault("MASTER_PORT", "29500")
 
 import imageio
 import pyrallis
@@ -461,14 +464,23 @@ def main(cfg: SanaVideoConfig) -> None:
     training_start_time = time.time()
     load_from = True
 
-    if args.resume_from or config.model.resume_from:
+    # model.resume_from defaults to a dict with checkpoint=None (no resume);
+    # a string (or --resume_from) names a checkpoint path or "latest".
+    resume_ckpt = args.resume_from or (
+        config.model.resume_from
+        if isinstance(config.model.resume_from, str)
+        else (config.model.resume_from or {}).get("checkpoint")
+    )
+    if resume_ckpt:
         load_from = False
         config.model.resume_from = dict(
-            checkpoint=args.resume_from or config.model.resume_from,
+            checkpoint=resume_ckpt,
             load_ema=False,
             resume_optimizer=True,
             resume_lr_scheduler=config.train.resume_lr_scheduler,
         )
+    else:
+        config.model.resume_from = None
 
     os.umask(0o000)
     os.makedirs(config.work_dir, exist_ok=True)
