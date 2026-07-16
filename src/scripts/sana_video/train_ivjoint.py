@@ -59,6 +59,19 @@ from src.scripts.sana_video.region_dataset import MinecraftRegionVideoDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+# The vendored Sana code calls torch.load without weights_only, which torch>=2.6
+# defaults to True; upstream .pth checkpoints carry numpy objects and fail that
+# check. All checkpoints here are trusted (our own or the official HF release).
+_torch_load = torch.load
+
+
+def _torch_load_trusted(*args, **kwargs):
+    kwargs.setdefault("weights_only", False)
+    return _torch_load(*args, **kwargs)
+
+
+torch.load = _torch_load_trusted
+
 
 @torch.inference_mode()
 def log_validation(accelerator, config, model, logger, step, device, vae=None, init_noise=None):
@@ -688,6 +701,22 @@ def main(cfg: SanaVideoConfig) -> None:
             del null_token_emb
             del null_tokens
             torch.cuda.empty_cache()
+
+    # load_checkpoint patches y_embedder.y_embedding from this file whenever
+    # load_from is set, so it must exist even with visualize=false (upstream
+    # only generates it inside the visualization block above).
+    if accelerator.is_main_process and not osp.exists(null_embed_path):
+        null_tokens = tokenizer(
+            "", max_length=max_length, padding="max_length", truncation=True, return_tensors="pt"
+        ).to(accelerator.device)
+        null_token_emb = text_encoder(null_tokens.input_ids, attention_mask=null_tokens.attention_mask)[0]
+        torch.save(
+            {"uncond_prompt_embeds": null_token_emb, "uncond_prompt_embeds_mask": null_tokens.attention_mask},
+            null_embed_path,
+        )
+        del null_token_emb
+        del null_tokens
+        torch.cuda.empty_cache()
 
     # 5. build models
     os.environ["AUTOCAST_LINEAR_ATTN"] = "true" if config.model.autocast_linear_attn else "false"
