@@ -53,6 +53,12 @@ def parse_args():
     parser.add_argument("--embeddings_rgb", type=str, default=None, help="Path to block_embeddings_rgb.npy")
     parser.add_argument("--guidance_scale", type=float, default=6.0, help="CFG scale (1.0 disables CFG)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument(
+        "--no_chi",
+        action="store_true",
+        help="Encode the prompt without the complex-human-instruction prefix "
+        "(for checkpoints fine-tuned before CHI was enabled in training)",
+    )
     return parser.parse_args()
 
 
@@ -69,6 +75,7 @@ def generate_grid(
     seed: int = 42,
     block_states: str | None = None,
     embeddings_rgb: str | None = None,
+    use_chi: bool = True,
 ) -> np.ndarray:
     """Generate a voxel block-ID grid from a text prompt with SANA-Video.
 
@@ -88,6 +95,8 @@ def generate_grid(
         seed: Random seed for generation.
         block_states: Optional path to ``block_states.txt``.
         embeddings_rgb: Optional path to ``block_embeddings_rgb.npy``.
+        use_chi: Encode the prompt with the pipeline's default complex-human-
+            instruction prefix (must match how the checkpoint was fine-tuned).
 
     Returns:
         A ``(X, Z, Y)`` uint16 array of global block IDs (indices into
@@ -130,9 +139,10 @@ def generate_grid(
             num_inference_steps=30,
             generator=torch.Generator(device="cuda").manual_seed(seed),
             output_type="np",
-            # Match training conditioning: raw captions, no prompt-enhancement
-            # template (training encodes prompts without complex_human_instruction)
-            complex_human_instruction=None,
+            # CHI conditioning must match the checkpoint's training (train.py
+            # encodes captions with the pipeline's default CHI prefix unless
+            # trained with --no_chi).
+            **({} if use_chi else {"complex_human_instruction": None}),
             clean_caption=False,
         ).frames[0]
 
@@ -177,6 +187,7 @@ def main():
         seed=args.seed,
         block_states=args.block_states,
         embeddings_rgb=args.embeddings_rgb,
+        use_chi=not args.no_chi,
     )
 
     # 6. Save the categorical grid

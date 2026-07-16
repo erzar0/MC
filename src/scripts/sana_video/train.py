@@ -12,6 +12,8 @@ Usage:
 """
 
 import argparse
+import inspect
+import math
 import os
 import sys
 from pathlib import Path
@@ -21,6 +23,7 @@ import torch.nn as nn
 from accelerate import Accelerator
 from accelerate.utils import set_seed
 from diffusers import SanaVideoPipeline
+from diffusers.optimization import get_scheduler
 from diffusers.training_utils import cast_training_params
 from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict
@@ -63,7 +66,7 @@ def parse_args():
     )
     parser.add_argument("--lora_rank", type=int, default=8, help="LoRA attention rank (lora mode only)")
     parser.add_argument(
-        "--learning_rate", type=float, default=None, help="Learning rate (default: 2e-4 for lora, 1e-5 for full)"
+        "--learning_rate", type=float, default=None, help="Learning rate (default: 2e-4 for lora, 5e-5 for full)"
     )
     parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size per device (keep 1 to fit VRAM)")
@@ -79,9 +82,36 @@ def parse_args():
     parser.add_argument(
         "--save_every_steps",
         type=int,
-        default=250,
+        default=500,
         help="Also save a checkpoint every N samples seen (0 disables step-based saving)",
     )
+    parser.add_argument(
+        "--flow_shift",
+        type=float,
+        default=3.0,
+        help="Training flow shift for sigma sampling (upstream trains at 3.0; inference uses the scheduler's 8.0)",
+    )
+    parser.add_argument(
+        "--weighting_scheme",
+        type=str,
+        choices=["logit_normal", "uniform"],
+        default="logit_normal",
+        help="Distribution for the pre-shift timestep u: logit-normal (upstream default) or uniform",
+    )
+    parser.add_argument("--logit_mean", type=float, default=0.0, help="Mean of the logit-normal u distribution")
+    parser.add_argument("--logit_std", type=float, default=1.0, help="Std of the logit-normal u distribution")
+    parser.add_argument("--gradient_clip", type=float, default=0.1, help="Max gradient norm (upstream trains with 0.1)")
+    parser.add_argument(
+        "--no_chi",
+        action="store_true",
+        help="Encode captions without the complex-human-instruction prefix (upstream trains with it)",
+    )
+    parser.add_argument(
+        "--use_8bit_adam",
+        action="store_true",
+        help="Use bitsandbytes 8-bit AdamW to shrink optimizer state (for low-VRAM runs)",
+    )
+    parser.add_argument("--warmup_steps", type=int, default=500, help="LR warmup steps (constant-with-warmup schedule)")
     parser.add_argument(
         "--caption_dropout",
         type=float,
@@ -133,9 +163,6 @@ def main():
     args = parse_args()
     set_seed(args.seed)
 
-    if args.learning_rate is None:
-        args.learning_rate = 2e-4 if args.mode == "lora" else 1e-5
-
     # 1. Initialize Accelerator (bf16 mixed precision to save memory)
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -143,6 +170,16 @@ def main():
         log_with="wandb" if args.report_to == "wandb" else None,
     )
     device = accelerator.device
+
+    if args.learning_rate is None:
+        if args.mode == "lora":
+            args.learning_rate = 2e-4
+        else:
+            # Upstream auto-scales the base full-FT lr (5e-5) by
+            # sqrt(effective_batch / 256) (auto_lr rule=sqrt, base 256).
+            effective_bs = args.batch_size * args.gradient_accumulation_steps * accelerator.num_processes
+            args.learning_rate = 5e-5 * math.sqrt(effective_bs / 256)
+            print(f"Auto-scaled lr to {args.learning_rate:.2e} (sqrt rule, effective batch {effective_bs})")
 
     # Initialize the experiment tracker on the main process only. Hyperparameters
     # are logged as the run config; per-step loss/lr are logged in the loop below.
@@ -171,9 +208,11 @@ def main():
             transformer_cls = type(pipe.transformer)
             pipe.transformer = transformer_cls.from_pretrained(args.resume_from_checkpoint, torch_dtype=torch.bfloat16)
 
-    # Inference runs a shifted flow schedule; sample training sigmas the same way.
-    flow_shift = float(getattr(pipe.scheduler.config, "flow_shift", 8.0))
-    print(f"Flow-matching sigma sampling with flow_shift={flow_shift}")
+    # Upstream SANA-Video trains with a milder flow shift (3.0) than inference
+    # (the scheduler's 8.0): training must cover low/mid noise levels, while the
+    # inference schedule deliberately over-samples high noise.
+    flow_shift = args.flow_shift
+    print(f"Flow-matching sigma sampling: {args.weighting_scheme} u, flow_shift={flow_shift}")
 
     transformer = pipe.transformer
     vae = pipe.vae
@@ -187,6 +226,27 @@ def main():
     if hasattr(vae, "enable_tiling"):
         vae.enable_tiling()
     text_encoder.to(device, dtype=torch.bfloat16)
+
+    # The pretrained model's text conditioning was learned with the complex-
+    # human-instruction (CHI) prefix on every caption (upstream sets chi_prompt
+    # during training); encode training captions the same way. The pipeline's
+    # __call__ default is the exact list used upstream.
+    chi_instruction = None
+    if not args.no_chi:
+        chi_instruction = inspect.signature(SanaVideoPipeline.__call__).parameters["complex_human_instruction"].default
+        print("Encoding captions with the complex-human-instruction prefix (pass --no_chi to disable).")
+
+    # Caption dropout swaps in this null embedding — a plain empty string
+    # WITHOUT the CHI prefix, matching upstream's null embed and the diffusers
+    # negative-prompt path.
+    with torch.no_grad():
+        null_embeds, null_mask, _, _ = pipe.encode_prompt(
+            prompt=[""],
+            do_classifier_free_guidance=False,
+            device=device,
+            clean_caption=False,
+            complex_human_instruction=None,
+        )
 
     # 3. Configure trainable weights per mode
     if args.mode == "lora":
@@ -241,24 +301,27 @@ def main():
         pin_memory=True,
     )
 
-    # 5. Optimizer (8-bit AdamW when available to shrink optimizer state)
-    try:
+    # 5. Optimizer (standard AdamW like upstream; 8-bit only on request)
+    if args.use_8bit_adam:
         import bitsandbytes as bnb
 
         optimizer_cls = bnb.optim.AdamW8bit
         print("Using 8-bit AdamW optimizer.")
-    except ImportError:
+    else:
         optimizer_cls = torch.optim.AdamW
-        print("bitsandbytes not found, using standard AdamW.")
     optimizer = optimizer_cls(
         trainable_params,
         lr=args.learning_rate,
-        betas=(0.9, 0.95),
-        weight_decay=0.01,
+        betas=(0.9, 0.999),
+        eps=1e-10,
+        weight_decay=0.0,
     )
+    lr_scheduler = get_scheduler("constant_with_warmup", optimizer, num_warmup_steps=args.warmup_steps)
 
     # 6. Prepare with Accelerator
-    transformer, optimizer, dataloader = accelerator.prepare(transformer, optimizer, dataloader)
+    transformer, optimizer, dataloader, lr_scheduler = accelerator.prepare(
+        transformer, optimizer, dataloader, lr_scheduler
+    )
 
     os.makedirs(args.output_dir, exist_ok=True)
     global_step = 0
@@ -281,18 +344,23 @@ def main():
                 # pixel_values shape: (B, C, F, H, W) in [-1, 1]
                 B = pixel_values.shape[0]
 
-                # A. Encode text prompts. Caption dropout: replace some captions
-                # with the empty string so the model learns an unconditional
-                # distribution — required for classifier-free guidance at
-                # inference (guidance extrapolates conditional vs unconditional).
-                prompts = ["" if torch.rand((), device=device).item() < args.caption_dropout else p for p in prompts]
+                # A. Encode text prompts (CHI-prefixed, matching pretraining).
+                # Caption dropout: swap some samples to the null (empty, CHI-free)
+                # embedding so the model learns an unconditional distribution —
+                # required for classifier-free guidance at inference (guidance
+                # extrapolates conditional vs unconditional).
                 with torch.no_grad():
                     prompt_embeds, prompt_attention_mask, _, _ = pipe.encode_prompt(
                         prompt=list(prompts),
                         do_classifier_free_guidance=False,
                         device=device,
                         clean_caption=False,
+                        complex_human_instruction=chi_instruction,
                     )
+                drop = torch.rand(B, device=device) < args.caption_dropout
+                if drop.any():
+                    prompt_embeds[drop] = null_embeds.to(prompt_embeds.dtype)
+                    prompt_attention_mask[drop] = null_mask
 
                 # B. Encode pseudo-videos to latents (fp32 VAE)
                 with torch.no_grad():
@@ -308,10 +376,14 @@ def main():
                 # velocity (noise - data). The pretrained SANA-Video transformer
                 # and the DPMSolver flow scheduler both assume this orientation;
                 # flipping it trains against the pretrained prior.
-                # Sigma is sampled with the scheduler's flow shift (sigma =
-                # shift*u / (1 + (shift-1)*u)) so training emphasizes the same
-                # high-noise levels the shifted inference schedule visits.
-                u = torch.rand((B,), device=device, dtype=torch.float32)
+                # u follows the upstream logit-normal(0,1) density (SD3-style,
+                # concentrating supervision at mid noise levels), then sigma is
+                # shift-transformed (sigma = shift*u / (1 + (shift-1)*u)) with
+                # the training flow shift.
+                if args.weighting_scheme == "logit_normal":
+                    u = torch.sigmoid(torch.normal(args.logit_mean, args.logit_std, (B,), device=device))
+                else:
+                    u = torch.rand((B,), device=device, dtype=torch.float32)
                 sigma = (flow_shift * u / (1.0 + (flow_shift - 1.0) * u)).to(torch.bfloat16)
                 sigma_expanded = sigma.view(-1, 1, 1, 1, 1)
                 noise = torch.randn_like(latents)
@@ -333,8 +405,9 @@ def main():
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    accelerator.clip_grad_norm_(trainable_params, 1.0)
+                    accelerator.clip_grad_norm_(trainable_params, args.gradient_clip)
                 optimizer.step()
+                lr_scheduler.step()
                 optimizer.zero_grad()
 
             loss_val = loss.item()

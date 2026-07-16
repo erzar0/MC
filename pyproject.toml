@@ -44,6 +44,7 @@ dependencies = [
     "parso==0.8.5",
     "pexpect==4.9.0",
     "platformdirs==3.11.0",
+    "plotext>=5.3.2",
     "plotly>=6.5.2",
     "portalocker==2.10.1",
     "prompt-toolkit==3.0.52",

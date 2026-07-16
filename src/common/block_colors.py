@@ -9,9 +9,11 @@ produced by ``src/scripts/embeddings/visualize.py`` from ``block_embeddings.npy`
 so semantically similar blocks get similar colors. On top of the LUT:
   - every air variant is forced to pure black (0, 0, 0), and no other block may
     come near black, so black always decodes to air;
-  - duplicate LUT colors are disambiguated by a deterministic minimal
-    perturbation, so every non-air state has a unique color and the inference
-    KD-tree snap is unambiguous.
+  - colors are quantized to a coarse RGB grid (``_COLOR_GRID_STEP``) so distinct
+    palette colors are guaranteed at least one grid step apart — wide enough to
+    survive the Wan VAE's reconstruction error. Many block states intentionally
+    share one quantized color; decoding returns the *first* state (in
+    block_states.txt order) that uses it.
 """
 
 import hashlib
@@ -28,8 +30,13 @@ DEFAULT_BLOCK_EMBEDDINGS_RGB_PATH = PROJECT_ROOT / "assets" / "block_embeddings_
 # keep snapping to air (any pixel with R+G+B below half this always decodes to air).
 _MIN_L1_FROM_BLACK = 48
 
+# RGB quantization grid. Distinct palette colors are >= one step apart in every
+# channel they differ in, so the KD-snap tolerates per-channel errors up to half
+# a step — comfortably above the Wan VAE round-trip error (~5.5 mean / 11.7 p90).
+_COLOR_GRID_STEP = 16
+
 # Bump to invalidate cached palettes when the assignment algorithm changes.
-_PALETTE_VERSION = 2
+_PALETTE_VERSION = 3
 
 
 def load_block_states(block_states_path: Optional[str] = None) -> list:
@@ -39,33 +46,19 @@ def load_block_states(block_states_path: Optional[str] = None) -> list:
         return [line.strip() for line in f]
 
 
-def _nearest_free_color(base: Tuple[int, int, int], used: set) -> Tuple[int, int, int]:
-    """Finds the unused color closest to ``base`` (deterministic ring search).
+def _quantize_color(base: np.ndarray) -> Tuple[int, int, int]:
+    """Snaps a color to the RGB grid, keeping non-air colors away from black.
 
-    Colors within ``_MIN_L1_FROM_BLACK`` of black are skipped so near-black stays
-    reserved for air.
+    Quantized colors whose channel sum is below ``_MIN_L1_FROM_BLACK`` are pushed
+    away from black by bumping the largest channel one grid step at a time, so
+    the black ball stays reserved for air. The push is deterministic, and states
+    sharing a quantized color share the pushed color too.
     """
-    r0, g0, b0 = (int(c) for c in base)
-    for radius in range(0, 256):
-        best = None
-        for dr in range(-radius, radius + 1):
-            for dg in range(-radius, radius + 1):
-                for db in range(-radius, radius + 1):
-                    if max(abs(dr), abs(dg), abs(db)) != radius:
-                        continue  # only the shell of this radius
-                    c = (r0 + dr, g0 + dg, b0 + db)
-                    if not all(0 <= v <= 255 for v in c):
-                        continue
-                    if sum(c) < _MIN_L1_FROM_BLACK:
-                        continue
-                    if c in used:
-                        continue
-                    key = (abs(dr) + abs(dg) + abs(db), c)
-                    if best is None or key < best[0]:
-                        best = (key, c)
-        if best is not None:
-            return best[1]
-    raise RuntimeError("RGB space exhausted — cannot assign a unique color")
+    step = _COLOR_GRID_STEP
+    c = [int(min(max(round(v / step), 0), 255 // step)) * step for v in base]
+    while sum(c) < _MIN_L1_FROM_BLACK:
+        c[int(np.argmax(c))] += step
+    return (c[0], c[1], c[2])
 
 
 def load_id2rgb(
@@ -74,16 +67,16 @@ def load_id2rgb(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Builds the global-block-ID -> RGB lookup table from the embedding LUT.
 
-    Every non-air state gets a distinct color: the base color is its block2vec
-    embedding color from ``block_embeddings_rgb.npy``, with duplicate colors
-    resolved by a deterministic nearest-free-color search. All air variants map
-    to pure black (0, 0, 0), which no other state may use or approach, so black
+    Each non-air state's block2vec color (from ``block_embeddings_rgb.npy``) is
+    quantized to the ``_COLOR_GRID_STEP`` RGB grid; states whose colors fall in
+    the same grid cell share the same quantized color. All air variants map to
+    pure black (0, 0, 0), which no other state may use or approach, so black
     always decodes to air.
 
     Args:
         block_states_path: Path to block_states.txt (defaults to assets/).
         embeddings_rgb_path: Path to the block2vec RGB LUT
-            (defaults to tmp/block_embeddings_rgb.npy).
+            (defaults to assets/block_embeddings_rgb.npy).
 
     Returns:
         Tuple of (id2rgb (vocab_size, 3) uint8 array, air block ID int64 array).
@@ -103,8 +96,7 @@ def load_id2rgb(
     if lut.shape != (len(states), 3):
         raise ValueError(f"LUT shape {lut.shape} does not match {len(states)} block states — regenerate the LUT")
 
-    # The unique-color assignment takes a few seconds; cache it on disk keyed by
-    # the source files and algorithm version.
+    # Cache the palette on disk keyed by the source files and algorithm version.
     cache_dir = PROJECT_ROOT / "tmp"
     src_files = [Path(block_states_path or DEFAULT_BLOCK_STATES_PATH), lut_path]
     cache_key = f"v{_PALETTE_VERSION}-" + "-".join(f"{p.stat().st_size}.{int(p.stat().st_mtime)}" for p in src_files)
@@ -115,15 +107,12 @@ def load_id2rgb(
 
     id2rgb = np.zeros((len(states), 3), dtype=np.uint8)
     air_ids = []
-    used: set = {(0, 0, 0)}
     for idx, state in enumerate(states):
         base_name = state.split("[")[0]
         if base_name.endswith(("air", "void_air", "cave_air")):
             air_ids.append(idx)  # stays (0, 0, 0)
             continue
-        color = _nearest_free_color(tuple(int(c) for c in lut[idx]), used)
-        used.add(color)
-        id2rgb[idx] = color
+        id2rgb[idx] = _quantize_color(lut[idx])
 
     air_ids_arr = np.asarray(air_ids, dtype=np.int64)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -137,15 +126,16 @@ def load_snap_palette(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Builds the palette for snapping generated RGB back to block IDs.
 
-    Since ``load_id2rgb`` assigns every non-air state a unique color, all states
-    are snap targets. Air (global ID 0) is the single entry at pure black — the
-    other air variants are aliases of the same color and are omitted — so black
-    (and near-black) pixels always translate to air.
+    Quantized colors are shared by multiple states, so each unique color is
+    listed once and owned by the *first* state (lowest global block ID, i.e.
+    first line in block_states.txt) that uses it — generated voxels decode to
+    that canonical state. Air (global ID 0) is the single entry at pure black,
+    so black (and near-black) pixels always translate to air.
 
     Args:
         block_states_path: Path to block_states.txt (defaults to assets/).
         embeddings_rgb_path: Path to the block2vec RGB LUT
-            (defaults to tmp/block_embeddings_rgb.npy).
+            (defaults to assets/block_embeddings_rgb.npy).
 
     Returns:
         Tuple of (rgb (K, 3) uint8 array, global block IDs (K,) int64 array),
@@ -154,7 +144,12 @@ def load_snap_palette(
     id2rgb, air_ids = load_id2rgb(block_states_path, embeddings_rgb_path)
 
     air_id = 0  # universal_minecraft:air is always line 0 of block_states.txt
-    mask = np.ones(len(id2rgb), dtype=bool)
-    mask[air_ids] = False
-    ids_arr = np.concatenate(([air_id], np.where(mask)[0])).astype(np.int64)
+    color_to_first_id = {(0, 0, 0): air_id}
+    air_id_set = set(air_ids.tolist())
+    for idx, color in enumerate(id2rgb):
+        if idx in air_id_set:
+            continue
+        color_to_first_id.setdefault(tuple(int(c) for c in color), idx)
+
+    ids_arr = np.array(sorted(color_to_first_id.values()), dtype=np.int64)
     return id2rgb[ids_arr], ids_arr

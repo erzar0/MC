@@ -35,6 +35,29 @@ def test_load_id2rgb_shape_and_air_ids():
     assert (id2rgb[0] == 0).all()
 
 
+def test_palette_quantization_and_first_seen_ownership():
+    from src.common.block_colors import _COLOR_GRID_STEP, _MIN_L1_FROM_BLACK, load_snap_palette
+
+    id2rgb, air_ids = load_id2rgb()
+    non_air = np.ones(len(id2rgb), dtype=bool)
+    non_air[air_ids] = False
+
+    # All non-air colors sit on the quantization grid and away from black
+    colors = id2rgb[non_air].astype(np.int64)
+    assert (colors % _COLOR_GRID_STEP == 0).all()
+    assert (colors.sum(axis=1) >= _MIN_L1_FROM_BLACK).all()
+
+    # Snap palette: one entry per unique color, owned by the first (lowest) ID
+    palette_rgb, palette_ids = load_snap_palette()
+    seen = {tuple(c) for c in palette_rgb}
+    assert len(seen) == len(palette_rgb)  # colors are unique
+    assert palette_ids[0] == 0 and (palette_rgb[0] == 0).all()  # black -> air
+    color_to_owner = {tuple(c): i for c, i in zip(palette_rgb, palette_ids, strict=True)}
+    for idx in np.where(non_air)[0][:2000]:
+        owner = color_to_owner[tuple(id2rgb[idx])]
+        assert owner <= idx  # owner is the first state with this color
+
+
 # ---------------------------------------------------------------------------
 # llm_utils
 # ---------------------------------------------------------------------------

@@ -1,0 +1,114 @@
+# SANA-Video 2B fine-tuning on Minecraft region pseudo-videos.
+# Based on Sana/configs/sana_video_config/Sana_2000M_480px_AdamW_fsdp.yaml with:
+# FSDP/multi-scale/image joint-training off, 256px spatial, and the
+# manifest-based Minecraft region dataset. Region heights are variable:
+# num_frames is the bucket cap (4n+1); BucketBatchSampler batches
+# equal-height regions so no batch carries cross-height air padding.
+# Run: python src/scripts/sana_video/train_ivjoint.py --config configs/sana_video_minecraft.yaml
+task: t2v
+data:
+  data_dir:
+    minecraft: tmp/sana_video_manifest.jsonl
+  image_size: 256
+  # Frame-count cap: 385 covers a full 384-tall region; also the validation
+  # video height in log_validation.
+  num_frames: 385
+  load_text_feat: false
+  load_vae_feat: false
+  shuffle_dataset: false
+# model config
+model:
+  model: SanaMSVideo_2000M_P2_D20
+  image_size: 256
+  mixed_precision: bf16
+  fp32_attention: true
+  load_from: hf://Efficient-Large-Model/SANA-Video_2B_480p/checkpoints/SANA_Video_2B_480p.pth
+  multi_scale: false
+  attn_type: LiteLAReLURope
+  linear_head_dim: 112
+  ffn_type: GLUMBConvTemp
+  t_kernel_size: 3
+  mlp_acts:
+    - silu
+    - silu
+    -
+  mlp_ratio: 3
+  use_pe: true
+  pos_embed_type: wan_rope
+  qk_norm: true
+  cross_norm: true
+  class_dropout_prob: 0.1
+# VAE setting
+vae:
+  vae_type: WanVAE
+  vae_pretrained: hf://Efficient-Large-Model/SANA-Video_2B_480p/vae/Wan2.1_VAE.pth
+  weight_dtype: float32
+  vae_latent_dim: 16
+  vae_downsample_rate: 8
+  vae_stride:
+    - 4
+    - 8
+    - 8
+  if_cache: false
+# text encoder
+text_encoder:
+  text_encoder_name: gemma-2-2b-it
+  y_norm: true
+  y_norm_scale_factor: 0.01
+  model_max_length: 300
+  # No CHI prompt: captions are encoded as-is. Inference against these
+  # checkpoints must pass --no_chi (inference.py) to match.
+  chi_prompt: []
+# Sana schedule Flow
+scheduler:
+  predict_flow_v: true
+  noise_schedule: linear_flow
+  pred_sigma: false
+  flow_shift: 3.0
+  inference_flow_shift: 8.0
+  # logit-normal timestep
+  weighting_scheme: logit_normal
+  logit_mean: 0.0
+  logit_std: 1.0
+  vis_sampler: flow_dpm-solver
+# training setting
+train:
+  use_fsdp: false
+  num_workers: 24
+  seed: 1
+  train_batch_size: 3
+  num_epochs: 100
+  gradient_accumulation_steps: 4
+  grad_checkpointing: true
+  gradient_clip: 0.1
+  optimizer:
+    betas:
+      - 0.9
+      - 0.999
+    eps: 1.0e-10
+    lr: 5.0e-5
+    type: AdamW
+    weight_decay: 0.0
+  lr_schedule: constant
+  lr_schedule_args:
+    num_warmup_steps: 500
+  auto_lr:
+    rule: sqrt
+  local_save_vis: true # saves validation mp4s to work_dir/log_vis
+  visualize: true
+  deterministic_validation: true
+  eval_sampling_steps: 500
+  log_interval: 20
+  save_model_epochs: 5
+  save_model_steps: 500
+  work_dir: tmp/sana_video_ivjoint
+  online_metric: false
+  joint_training_interval: 0
+  validation_prompts:
+    - '[Region]: A large island covered in dense green forests with sandy beaches along its shores, surrounded by deep blue water. A small village with wooden houses sits near the coast.'
+    - '[Region]: A snowy mountain range with steep rocky cliffs and pine forests covering the lower slopes. A frozen river winds through the valley between the peaks.'
+    - '[Region]: A medieval castle with tall stone towers and high walls stands on a green plain. A moat filled with water surrounds the fortress, crossed by a wooden bridge.'
+work_dir: tmp/sana_video_ivjoint
+report_to: wandb
+tracker_project_name: minecraft-sana-video
+name: ivjoint-minecraft
