@@ -30,12 +30,16 @@ export CKPT_REMOTE="MinecraftDataset:minecraft-training/checkpoints"
 # (1.25e-5 at effective batch 16), grad clip 0.1, 500-step warmup, CHI-prefixed
 # captions); resuming an older run picks these up, so expect the loss level to
 # jump at the switch.
-export TRAIN_ARGS="--mode full --spatial_crop_size 256 --batch_size 4 --gradient_accumulation_steps 4 --max_frames 385 --epochs 100 --num_workers 24 --report_to wandb"
+# These are train.py argparse flags — they only apply to the default trainer.
+# For TRAIN_SCRIPT=ivjoint, TRAIN_ARGS are pyrallis overrides on
+# configs/sana_video_minecraft.yaml (e.g. "--train.num_epochs=50") and default
+# to empty; whatever you export is passed through untouched.
+if [ "${TRAIN_SCRIPT:-train}" != "ivjoint" ]; then
+    export TRAIN_ARGS="${TRAIN_ARGS:---mode full --spatial_crop_size 256 --batch_size 4 --gradient_accumulation_steps 4 --max_frames 385 --epochs 100 --num_workers 24 --report_to wandb}"
+fi
 
-# To run the ported upstream trainer instead (configs/sana_video_minecraft.yaml:
-# 256px, height-bucketed frames up to 385, .pth checkpoints -> convert with
+# To run the ported upstream trainer instead (.pth checkpoints -> convert with
 # convert_pth_to_diffusers.py):
 #   export TRAIN_SCRIPT=ivjoint
-#   export TRAIN_ARGS=""   # or pyrallis overrides, e.g. "--train.num_epochs 50"
 
 bash "$(dirname "${BASH_SOURCE[0]}")/remote_train.sh"
