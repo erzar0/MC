@@ -1,14 +1,18 @@
 # SANA-Video 2B fine-tuning on Minecraft region pseudo-videos.
 # Based on Sana/configs/sana_video_config/Sana_2000M_480px_AdamW_fsdp.yaml with:
-# FSDP/multi-scale/image joint-training off, 256px spatial, 129 frames (4n+1),
-# and the manifest-based Minecraft region dataset.
+# FSDP/multi-scale/image joint-training off, 256px spatial, and the
+# manifest-based Minecraft region dataset. Region heights are variable:
+# num_frames is the bucket cap (4n+1); BucketBatchSampler batches
+# equal-height regions so no batch carries cross-height air padding.
 # Run: python src/scripts/sana_video/train_ivjoint.py --config configs/sana_video_minecraft.yaml
 task: t2v
 data:
   data_dir:
     minecraft: tmp/sana_video_manifest.jsonl
   image_size: 256
-  num_frames: 129
+  # Frame-count cap: 385 covers a full 384-tall region; also the validation
+  # video height in log_validation.
+  num_frames: 385
   load_text_feat: false
   load_vae_feat: false
   shuffle_dataset: false

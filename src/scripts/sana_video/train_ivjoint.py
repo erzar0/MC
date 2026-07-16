@@ -39,7 +39,6 @@ import torch
 from accelerate import Accelerator, InitProcessGroupKwargs
 from diffusion import DPMS, Scheduler
 from diffusion.data.builder import build_dataloader
-from diffusion.data.wids import DistributedRangedSampler
 from diffusion.model.builder import build_model, get_tokenizer_and_text_encoder, get_vae, vae_decode, vae_encode
 from diffusion.model.respace import compute_density_for_timestep_sampling
 from diffusion.model.utils import get_weight_dtype
@@ -52,6 +51,7 @@ from diffusion.utils.misc import DebugUnderflowOverflow, init_random_seed, set_r
 from diffusion.utils.optimizer import auto_scale_lr, build_optimizer
 from termcolor import colored
 
+from src.scripts.sana_video.dataset import BucketBatchSampler
 from src.scripts.sana_video.region_dataset import MinecraftRegionVideoDataset
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -219,21 +219,12 @@ def train(
 
     global_step = start_step
     video_step = start_video_step
-
-    skip_step = max(config.train.skip_step, video_step) % train_dataloader_len
-    skip_step = skip_step if skip_step < (train_dataloader_len - 20) else 0
     loss_nan_timer = 0
 
-    # Now you train the model
+    # Now you train the model. Buckets reshuffle every epoch, so resuming
+    # restarts the current epoch from its beginning (no in-epoch skip).
     for epoch in range(start_epoch + 1, config.train.num_epochs + 1):
         time_start, last_tic = time.time(), time.time()
-        sampler = train_dataloader.sampler
-        set_start_value = max((skip_step - 1) * config.train.train_batch_size, 0)
-        sampler.set_epoch(epoch)
-        sampler.set_start(set_start_value)
-        if skip_step > 1 and accelerator.is_main_process:
-            logger.info(f"Skipped video training Steps: {skip_step}")
-        skip_step = 1
         data_time_start = time.time()
         data_time_all = 0
         lm_time_all = 0
@@ -247,7 +238,6 @@ def train(
                 batch = next(video_dataloader_iter)
             except StopIteration:
                 logger.info("Reset video dataloader iterator")
-                sampler.set_start(0)
                 video_dataloader_iter = iter(train_dataloader)
                 batch = next(video_dataloader_iter)
             video_step += 1
@@ -359,14 +349,7 @@ def train(
                 t_vae = vae_time_all / config.train.log_interval
                 avg_time = (time.time() - time_start) / (step + 1)
                 eta = str(datetime.timedelta(seconds=int(avg_time * (total_steps - global_step - 1))))
-                eta_epoch = str(
-                    datetime.timedelta(
-                        seconds=int(
-                            avg_time
-                            * (train_dataloader_len - sampler.step_start // config.train.train_batch_size - step - 1)
-                        )
-                    )
-                )
+                eta_epoch = str(datetime.timedelta(seconds=int(avg_time * (train_dataloader_len - step - 1))))
                 log_buffer.average()
 
                 info = (
@@ -586,16 +569,22 @@ def main(cfg: SanaVideoConfig) -> None:
         image_size=config.data.image_size,
         max_length=max_length,
     )
-    sampler = DistributedRangedSampler(dataset, num_replicas=num_replicas, rank=rank)
+    # Variable region heights: BucketBatchSampler groups equal-frame-count
+    # samples so every batch is a fixed-shape tensor without air padding.
+    # ponytail: single-process only — it does not shard across ranks.
+    assert num_replicas == 1, "BucketBatchSampler does not shard across ranks; run single-GPU."
+    batch_sampler = BucketBatchSampler(
+        dataset.frame_counts, batch_size=config.train.train_batch_size, seed=config.train.seed
+    )
     train_dataloader = build_dataloader(
         dataset,
         num_workers=config.train.num_workers,
-        batch_size=config.train.train_batch_size,
-        shuffle=False,
-        sampler=sampler,
+        batch_sampler=batch_sampler,
         dataloader_type="video",
     )
     train_dataloader_len = len(train_dataloader)
+    bucket_counts = sorted(set(dataset.frame_counts))
+    logger.info(f"Height buckets (frames): {bucket_counts[0]}..{bucket_counts[-1]} ({len(bucket_counts)} buckets)")
     logger.info(f"Video set DataLoader length: {train_dataloader_len}")
 
     # prepare input for visualization during training

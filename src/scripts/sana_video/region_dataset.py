@@ -9,9 +9,11 @@ mapping, rotation/crop augmentation) into the 8-tuple contract that
      attention_mask (1, 1, max_length) int16, data_info dict, idx,
      caption_type str, {"height", "width"}, 0.0)
 
-Every sample uses one fixed frame count (``num_frames``, 4n+1 for the Wan
-VAE) — taller regions are top-cropped, shorter ones air-padded above — so the
-upstream plain (non-multi-scale) sampler path works without height bucketing.
+Frame counts are variable: each region's content height is snapped up to a
+4n+1 bucket (Wan VAE temporal stride), capped at ``num_frames``. Batches must
+group samples from one bucket — use :class:`BucketBatchSampler` from
+``dataset.py`` (train_ivjoint.py does) so every batch is a fixed-shape tensor
+with no cross-height air padding.
 """
 
 import sys
@@ -29,35 +31,35 @@ except ImportError:
 
 
 class MinecraftRegionVideoDataset(MinecraftVideoDataset):
-    """Fixed-frame-count region dataset returning the upstream 8-tuple.
+    """Height-bucketed region dataset returning the upstream 8-tuple.
 
     Args:
         manifest_path: JSONL manifest (see MinecraftVideoDataset).
-        num_frames: Fixed frame count for every sample (must be 4n+1).
+        num_frames: Frame-count cap (largest bucket, must be 4n+1).
         image_size: Side length of the random spatial crop.
         max_length: Text token length for the attention-mask placeholder
             (300 for gemma in the upstream config).
+        bucket_step: Height quantization granularity (multiple of 4).
     """
 
     def __init__(
         self,
         manifest_path: str,
-        num_frames: int = 129,
+        num_frames: int = 385,
         image_size: int = 256,
         max_length: int = 300,
+        bucket_step: int = 4,
         **kwargs,
     ):
         super().__init__(
             manifest_path,
             spatial_crop_size=image_size,
             max_frames=num_frames,
-            bucket_step=4,
+            bucket_step=bucket_step,
             **kwargs,
         )
         self.num_frames = num_frames
         self.max_length = max_length
-        # Force every sample to the same frame count (no bucketing).
-        self.frame_counts = [num_frames] * len(self.entries)
 
     def __getitem__(self, idx: int):
         frames, prompt = super().__getitem__(idx)  # (C, F, H, W), str
