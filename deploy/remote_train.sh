@@ -62,7 +62,18 @@ OUTPUT_DIR="${OUTPUT_DIR:-tmp/sana_video_ft}"
 BUNDLE_DIR="${BUNDLE_DIR:-data/train_bundle}"
 SAVE_EVERY="${SAVE_EVERY:-1000}"
 UPLOAD_INTERVAL="${UPLOAD_INTERVAL:-60}"
-TRAIN_ARGS="${TRAIN_ARGS:---mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3}"
+# TRAIN_SCRIPT: "train" (diffusers-based train.py, default) or "ivjoint"
+# (ported upstream trainer train_ivjoint.py + configs/sana_video_minecraft.yaml,
+# saves .pth checkpoints; convert with convert_pth_to_diffusers.py for inference).
+TRAIN_SCRIPT="${TRAIN_SCRIPT:-train}"
+IVJOINT_CONFIG="${IVJOINT_CONFIG:-configs/sana_video_minecraft.yaml}"
+# TRAIN_ARGS semantics depend on TRAIN_SCRIPT: train.py argparse flags for
+# "train", pyrallis overrides (e.g. "--train.num_epochs 50") for "ivjoint".
+if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
+    TRAIN_ARGS="${TRAIN_ARGS:-}"
+else
+    TRAIN_ARGS="${TRAIN_ARGS:---mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3}"
+fi
 ACCELERATE_ARGS="${ACCELERATE_ARGS:-}"
 MIN_DISK_GB="${MIN_DISK_GB:-90}"
 VENV_DIR="${VENV_DIR:-.venv}"
@@ -114,6 +125,12 @@ else
 fi
 log "Installing/updating training deps..."
 uv pip install --python "$VENV_DIR/bin/python" -r deploy/requirements-train.txt
+if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
+    log "Installing upstream-trainer deps (ivjoint)..."
+    uv pip install --python "$VENV_DIR/bin/python" -r deploy/requirements-ivjoint.txt
+    # mmcv 1.7.2's sdist build needs pkg_resources (setuptools<81, installed above).
+    MMCV_WITH_OPS=0 uv pip install --python "$VENV_DIR/bin/python" --no-build-isolation "mmcv==1.7.2"
+fi
 
 # --- 3. Dataset download + extract ------------------------------------------
 mkdir -p "$BUNDLE_DIR"
@@ -146,6 +163,16 @@ fi
 # the checkpoint is fully flushed) and hasn't been uploaded yet. The .complete /
 # .uploaded markers are not themselves pushed to Drive.
 sync_checkpoints_once() {
+    if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
+        # ivjoint saves flat .pth files under $OUTPUT_DIR/checkpoints/ with no
+        # completion marker; --min-age skips files still being written and
+        # latest.pth is a symlink to the newest epoch_*.pth.
+        if [ -d "$OUTPUT_DIR/checkpoints" ]; then
+            rclone copy --min-age 2m --exclude "latest.pth" "$OUTPUT_DIR/checkpoints" "$CKPT_REMOTE" \
+                || log "[uploader] WARNING: .pth upload failed; will retry next pass"
+        fi
+        return
+    fi
     shopt -s nullglob
     for d in "$OUTPUT_DIR"/checkpoint-*; do
         [ -d "$d" ] || continue
@@ -175,7 +202,17 @@ trap stop_uploader EXIT
 start_uploader
 
 # Check if there is an existing checkpoint on Google Drive to resume from
-if [[ "$TRAIN_ARGS" == *"--resume_from_checkpoint"* ]]; then
+if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
+    # Pull the newest .pth from Drive (if any) into work_dir/checkpoints; the
+    # trainer's --resume_from latest then picks it up (or falls back to the
+    # pretrained load_from when the dir is empty).
+    mkdir -p "$OUTPUT_DIR/checkpoints"
+    LATEST_PTH="$(rclone lsf --files-only "$CKPT_REMOTE" 2>/dev/null | grep '\.pth$' | sort | tail -1 || true)"
+    if [ -n "$LATEST_PTH" ] && [ ! -f "$OUTPUT_DIR/checkpoints/$LATEST_PTH" ]; then
+        log "Downloading $LATEST_PTH from Drive..."
+        rclone copyto --progress "$CKPT_REMOTE/$LATEST_PTH" "$OUTPUT_DIR/checkpoints/$LATEST_PTH"
+    fi
+elif [[ "$TRAIN_ARGS" == *"--resume_from_checkpoint"* ]]; then
     log "Resuming from checkpoint specified in TRAIN_ARGS."
 else
     log "Checking for existing checkpoints on Google Drive at $CKPT_REMOTE..."
@@ -215,12 +252,24 @@ fi
 # Run accelerate from the training venv directly. We avoid `uv run`, which would
 # re-sync the full project env (and try to build amulet) before launching.
 log "Launching training. Checkpoints -> $OUTPUT_DIR (every $SAVE_EVERY samples)."
-# shellcheck disable=SC2086
-"$VENV_DIR/bin/accelerate" launch $ACCELERATE_ARGS src/scripts/sana_video/train.py \
-    --manifest "$BUNDLE_DIR/manifest.jsonl" \
-    --output_dir "$OUTPUT_DIR" \
-    --save_every_steps "$SAVE_EVERY" \
-    $TRAIN_ARGS
+if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
+    # Save cadence, batch size etc. come from $IVJOINT_CONFIG; TRAIN_ARGS may
+    # add pyrallis overrides (e.g. --train.train_batch_size 4).
+    # shellcheck disable=SC2086
+    "$VENV_DIR/bin/python" src/scripts/sana_video/train_ivjoint.py \
+        --config "$IVJOINT_CONFIG" \
+        --work_dir "$OUTPUT_DIR" \
+        --data.data_dir "{minecraft: $BUNDLE_DIR/manifest.jsonl}" \
+        --resume_from latest \
+        $TRAIN_ARGS
+else
+    # shellcheck disable=SC2086
+    "$VENV_DIR/bin/accelerate" launch $ACCELERATE_ARGS src/scripts/sana_video/train.py \
+        --manifest "$BUNDLE_DIR/manifest.jsonl" \
+        --output_dir "$OUTPUT_DIR" \
+        --save_every_steps "$SAVE_EVERY" \
+        $TRAIN_ARGS
+fi
 
 # --- 6. Final sync -----------------------------------------------------------
 log "Training finished. Final checkpoint sync..."

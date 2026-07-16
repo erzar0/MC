@@ -32,4 +32,9 @@ export CKPT_REMOTE="MinecraftDataset:minecraft-training/checkpoints"
 # jump at the switch.
 export TRAIN_ARGS="--mode full --spatial_crop_size 256 --batch_size 4 --gradient_accumulation_steps 4 --max_frames 385 --epochs 100 --num_workers 24 --report_to wandb"
 
+# To run the ported upstream trainer instead (configs/sana_video_minecraft.yaml:
+# 256px, 129 frames, .pth checkpoints -> convert with convert_pth_to_diffusers.py):
+#   export TRAIN_SCRIPT=ivjoint
+#   export TRAIN_ARGS=""   # or pyrallis overrides, e.g. "--train.num_epochs 50"
+
 bash "$(dirname "${BASH_SOURCE[0]}")/remote_train.sh"

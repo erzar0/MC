@@ -1,0 +1,26 @@
+# Extra dependencies for the ported upstream trainer
+# (src/scripts/sana_video/train_ivjoint.py imports Sana/diffusion/*).
+# Installed ON TOP of requirements-train.txt by remote_train.sh when
+# TRAIN_SCRIPT=ivjoint.
+#
+# NOTE: mmcv 1.7.2 is installed separately by remote_train.sh with
+# --no-build-isolation (its sdist build needs pkg_resources from setuptools<81).
+
+pyrallis
+termcolor
+imageio[pyav,ffmpeg]
+einops
+flash-linear-attention>=0.4.2
+timm
+came-pytorch
+tensorboard
+tensorboardX
+webdataset
+ftfy
+bs4
+omegaconf
+qwen_vl_utils
+# mmcv 1.7.2 imports cv2; opencv >=4.10 requires numpy>=2 which conflicts with
+# the numpy==1.26.4 pin in requirements-train.txt.
+opencv-python-headless==4.9.0.80
+setuptools<81
