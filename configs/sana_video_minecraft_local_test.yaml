@@ -82,8 +82,9 @@ train:
   gradient_accumulation_steps: 1
   grad_checkpointing: true
   gradient_clip: 0.1
-  # CAME instead of AdamW: fp32 Adam states + gemma don't fit in 16 GB;
-  # CAME's factored second moment does.
+  # CAME8bit instead of AdamW: fp32 Adam states + gemma don't fit in 16 GB;
+  # factored second moment + int8 exp_avg leave headroom for the
+  # visualization/validation path on the same GPU.
   optimizer:
     betas:
       - 0.9
@@ -93,7 +94,7 @@ train:
       - 1.0e-30
       - 1.0e-16
     lr: 5.0e-5
-    type: CAMEWrapper
+    type: CAME8BitWrapper
     weight_decay: 0.0
   lr_schedule: constant
   lr_schedule_args:
