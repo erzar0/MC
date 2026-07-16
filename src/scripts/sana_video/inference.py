@@ -130,9 +130,8 @@ def generate_grid(
             num_inference_steps=30,
             generator=torch.Generator(device="cuda").manual_seed(seed),
             output_type="np",
-            # Match training conditioning: raw captions, no prompt-enhancement
-            # template (training encodes prompts without complex_human_instruction)
-            complex_human_instruction=None,
+            # The pipeline's default complex_human_instruction applies — training
+            # encodes captions with the same CHI prefix (see train.py).
             clean_caption=False,
         ).frames[0]
 
