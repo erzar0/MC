@@ -94,13 +94,14 @@ train:
     num_warmup_steps: 500
   auto_lr:
     rule: sqrt
-  local_save_vis: true # saves validation mp4s to work_dir/log_vis
-  visualize: true
+  local_save_vis: true # saves validation mp4s to work_dir/log_vis (if visualize)
+  visualize: false
   deterministic_validation: true
-  eval_sampling_steps: 500
+  eval_sampling_steps: 1650
   log_interval: 20
-  save_model_epochs: 5
-  save_model_steps: 500
+  save_model_epochs: 1
+  # ~5 saves per epoch at batch 2 (16,734 regions -> ~8,367 steps/epoch)
+  save_model_steps: 1650
   work_dir: tmp/sana_video_ivjoint
   online_metric: false
   joint_training_interval: 0
