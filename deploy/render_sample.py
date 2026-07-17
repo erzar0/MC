@@ -73,5 +73,29 @@ def main():
     img.save(out_png)
     print(f"Sample region heightmap visualization saved to {out_png}")
 
+    # 3. Generate MP4 of Y layers
+    mp4_path = Path("tmp/sample_y_layers.mp4")
+    try:
+        import imageio.v2 as imageio
+        print(f"Generating video of Y layers at {mp4_path}...")
+        
+        # id2rgb shape: (vocab_size, 3)
+        # grid shape: (X, Z, Y)
+        # Map grid block IDs to colors: (X, Z, Y, 3)
+        rgb = id2rgb[grid]
+        
+        writer = imageio.get_writer(str(mp4_path), fps=16, macro_block_size=1)
+        try:
+            for y in range(y_size):
+                frame = rgb[:, :, y, :]
+                # Upscale by 2x for visualization visibility
+                frame = np.repeat(np.repeat(frame, 2, axis=0), 2, axis=1)
+                writer.append_data(frame)
+        finally:
+            writer.close()
+        print(f"Sample Y-layers video saved to {mp4_path}")
+    except ImportError:
+        print("Warning: imageio not installed. Skipping video generation.")
+
 if __name__ == "__main__":
     main()
