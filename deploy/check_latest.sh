@@ -72,19 +72,30 @@ $VENV src/scripts/sana_video/inference.py \
 
 echo "=========================================================="
 echo "Categorical block IDs saved to tmp/generated_check.npy"
-echo "Rendering 3D volume visualization using generate_world.py..."
 echo "=========================================================="
 
-$VENV src/scripts/sana_video/generate_world.py \
-    --npy tmp/generated_check.npy \
-    --skip-upload \
-    --name check_render
+if $VENV -c "import amulet" 2>/dev/null; then
+    echo "Amulet detected. Rendering 3D world with generate_world.py..."
+    echo "=========================================================="
+    $VENV src/scripts/sana_video/generate_world.py \
+        --npy tmp/generated_check.npy \
+        --skip-upload \
+        --name check_render
 
-echo "=========================================================="
-echo "Visualizations generated in tmp/generated/check_render/ !"
-echo "Check the directory for: "
-echo "  - check_render.png (3D Isometric Voxel Render)"
-echo "  - check_render.mp4 (Layer-by-layer video)"
-echo "  - check_render.zip (Playable Minecraft world)"
-echo "=========================================================="
+    echo "=========================================================="
+    echo "Visualizations generated in tmp/generated/check_render/ !"
+    echo "Check the directory for: "
+    echo "  - check_render.png (3D Isometric Voxel Render)"
+    echo "  - check_render.mp4 (Layer-by-layer video)"
+    echo "  - check_render.zip (Playable Minecraft world)"
+    echo "=========================================================="
+else
+    echo "Amulet not found. Running lightweight 2D heightmap renderer..."
+    echo "=========================================================="
+    $VENV deploy/render_voxel_grid.py
+    echo "=========================================================="
+    echo "Heightmap visualization generated!"
+    echo "Check file: tmp/generated_check_heightmap.png"
+    echo "=========================================================="
+fi
 
