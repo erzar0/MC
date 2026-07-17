@@ -36,7 +36,7 @@ _MIN_L1_FROM_BLACK = 48
 _COLOR_GRID_STEP = 16
 
 # Bump to invalidate cached palettes when the assignment algorithm changes.
-_PALETTE_VERSION = 3
+_PALETTE_VERSION = 4
 
 
 def load_block_states(block_states_path: Optional[str] = None) -> list:
@@ -112,7 +112,11 @@ def load_id2rgb(
         if base_name.endswith(("air", "void_air", "cave_air")):
             air_ids.append(idx)  # stays (0, 0, 0)
             continue
-        id2rgb[idx] = _quantize_color(lut[idx])
+        color = lut[idx]
+        if np.sum(color) == 0:
+            # Ensure only air states can be pure black (0, 0, 0)
+            color = np.array([1, 1, 1], dtype=np.uint8)
+        id2rgb[idx] = color
 
     air_ids_arr = np.asarray(air_ids, dtype=np.int64)
     cache_dir.mkdir(parents=True, exist_ok=True)
