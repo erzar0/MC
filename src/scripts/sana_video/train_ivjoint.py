@@ -47,7 +47,7 @@ from diffusion.model.respace import compute_density_for_timestep_sampling
 from diffusion.model.utils import get_weight_dtype
 from diffusion.utils.checkpoint import load_checkpoint, save_checkpoint
 from diffusion.utils.config import SanaVideoConfig, model_video_init_config
-from diffusion.utils.dist_utils import get_world_size
+from diffusion.utils.dist_utils import get_rank, get_world_size
 from diffusion.utils.logger import LogBuffer, get_root_logger
 from diffusion.utils.lr_scheduler import build_lr_scheduler
 from diffusion.utils.misc import DebugUnderflowOverflow, init_random_seed, set_random_seed
@@ -584,8 +584,8 @@ def main(cfg: SanaVideoConfig) -> None:
     logger.info(predict_info)
 
     # 3. build dataloader (Minecraft region manifest instead of upstream zips)
-    num_replicas = int(os.environ["WORLD_SIZE"])
-    rank = int(os.environ["RANK"])
+    num_replicas = get_world_size()
+    rank = get_rank()
 
     manifest_path = (
         next(iter(config.data.data_dir.values())) if isinstance(config.data.data_dir, dict) else config.data.data_dir
@@ -766,10 +766,7 @@ def main(cfg: SanaVideoConfig) -> None:
         )
     optimizer = build_optimizer(model, config.train.optimizer)
 
-    if config.train.lr_schedule_args and config.train.lr_schedule_args.get("num_warmup_steps", None):
-        config.train.lr_schedule_args["num_warmup_steps"] = (
-            config.train.lr_schedule_args["num_warmup_steps"] * num_replicas
-        )
+
     lr_scheduler = build_lr_scheduler(config.train, optimizer, train_dataloader, lr_scale_ratio)
     logger.warning(
         f"{colored('Basic Training Settings: ', 'green', attrs=['bold'])}"
