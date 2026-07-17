@@ -121,7 +121,7 @@ def main():
     args = parser.parse_args()
 
     print(f"Loading {args.pth}...")
-    ckpt = torch.load(args.pth, map_location="cpu", weights_only=True)
+    ckpt = torch.load(args.pth, map_location="cpu", weights_only=False)
     state_dict = ckpt.get("state_dict", ckpt)
 
     converted = convert_state_dict(state_dict)
