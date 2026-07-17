@@ -220,7 +220,8 @@ if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
     # trainer's --resume_from latest then picks it up (or falls back to the
     # pretrained load_from when the dir is empty).
     mkdir -p "$OUTPUT_DIR/checkpoints"
-    LATEST_PTH="$(rclone lsf --files-only "$CKPT_REMOTE" 2>/dev/null | grep '\.pth$' | sort | tail -1 || true)"
+    # sort -V so step_3200 ranks above step_800 (plain sort is lexicographic)
+    LATEST_PTH="$(rclone lsf --files-only "$CKPT_REMOTE" 2>/dev/null | grep '\.pth$' | sort -V | tail -1 || true)"
     if [ -n "$LATEST_PTH" ] && [ ! -f "$OUTPUT_DIR/checkpoints/$LATEST_PTH" ]; then
         log "Downloading $LATEST_PTH from Drive..."
         rclone copyto --progress "$CKPT_REMOTE/$LATEST_PTH" "$OUTPUT_DIR/checkpoints/$LATEST_PTH"
