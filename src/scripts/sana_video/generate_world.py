@@ -55,6 +55,12 @@ def parse_args():
     parser.add_argument("--frames", type=int, default=65, help="Voxel vertical layers (Y); must be 4n+1")
     parser.add_argument("--guidance_scale", type=float, default=6.0, help="CFG scale (1.0 disables CFG)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument(
+        "--no_chi",
+        action="store_true",
+        help="Encode the prompt without the complex-human-instruction prefix "
+        "(for checkpoints trained without a CHI prompt, e.g. the ivjoint config)",
+    )
     parser.add_argument("--name", type=str, default=None, help="Run name (default: generated-<timestamp>)")
     parser.add_argument(
         "--output_dir",
@@ -101,6 +107,7 @@ def load_or_generate_grid(args, out_dir: Path) -> np.ndarray:
         frames=args.frames,
         guidance_scale=args.guidance_scale,
         seed=args.seed,
+        use_chi=not args.no_chi,
     )
     npy_path = out_dir / "grid.npy"
     np.save(npy_path, grid)
