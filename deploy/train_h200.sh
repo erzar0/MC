@@ -17,11 +17,11 @@ export HF_HOME="${HF_HOME:-/ephemeral/cache/huggingface}"
 export OUTPUT_DIR="${OUTPUT_DIR:-/ephemeral/sana_video_ft}"
 export BUNDLE_DIR="${BUNDLE_DIR:-/ephemeral/train_bundle}"
 
-export DATASET_REMOTE="MinecraftDataset:minecraft-training/sana_video_dataset.tar"
+export DATASET_REMOTE="${DATASET_REMOTE:-MinecraftDataset:minecraft-training/sana_video_dataset.tar}"
 # The tar's bundled manifest lacks the `height` field; this height-augmented
 # manifest on Drive overwrites it (required for height bucketing).
-export MANIFEST_REMOTE="MinecraftDataset:minecraft-training/manifest.jsonl"
-export CKPT_REMOTE="MinecraftDataset:minecraft-training/checkpoints"
+export MANIFEST_REMOTE="${MANIFEST_REMOTE:-MinecraftDataset:minecraft-training/manifest.jsonl}"
+export CKPT_REMOTE="${CKPT_REMOTE:-MinecraftDataset:minecraft-training/checkpoints}"
 
 # batch_size must stay <= 4: at 8, the tallest height bucket (385 frames ->
 # 97 latent frames) overflows conv2d's 32-bit index limit (canUse32BitIndexMath).
