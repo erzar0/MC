@@ -94,6 +94,9 @@ train:
   lr_schedule: constant
   lr_schedule_args:
     num_warmup_steps: 500
+  # Explicit null: an ABSENT key re-enables sqrt scaling via the pyrallis
+  # default ({rule: sqrt}); null makes optimizer.lr the raw training lr.
+  auto_lr: null
   local_save_vis: true # saves validation mp4s to work_dir/log_vis (if visualize)
   visualize: false
   deterministic_validation: true

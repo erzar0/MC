@@ -17,6 +17,11 @@
 #                    bundled one (e.g. height-augmented manifest for bucketing)
 #   CKPT_REMOTE      rclone dest for checkpoints
 #                    (default: gdrive:minecraft-training/checkpoints)
+#   INIT_FROM        (ivjoint only) path to a .pth used as weights-only init:
+#                    skips the Drive resume download, moves any local
+#                    checkpoints aside, and starts at step 0 with a fresh
+#                    optimizer and full lr warmup. Point CKPT_REMOTE at a new
+#                    folder too, or the next relaunch resumes the OLD run.
 #   OUTPUT_DIR       local checkpoint dir (default: tmp/sana_video_ft)
 #   BUNDLE_DIR       where the dataset is extracted (default: data/train_bundle)
 #   SAVE_EVERY       --save_every_steps passed to train.py (default: 1000)
@@ -216,15 +221,29 @@ start_uploader
 
 # Check if there is an existing checkpoint on Google Drive to resume from
 if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
-    # Pull the newest .pth from Drive (if any) into work_dir/checkpoints; the
-    # trainer's --resume_from latest then picks it up (or falls back to the
-    # pretrained load_from when the dir is empty).
     mkdir -p "$OUTPUT_DIR/checkpoints"
-    # sort -V so step_3200 ranks above step_800 (plain sort is lexicographic)
-    LATEST_PTH="$(rclone lsf --files-only "$CKPT_REMOTE" 2>/dev/null | grep '\.pth$' | sort -V | tail -1 || true)"
-    if [ -n "$LATEST_PTH" ] && [ ! -f "$OUTPUT_DIR/checkpoints/$LATEST_PTH" ]; then
-        log "Downloading $LATEST_PTH from Drive..."
-        rclone copyto --progress "$CKPT_REMOTE/$LATEST_PTH" "$OUTPUT_DIR/checkpoints/$LATEST_PTH"
+    if [ -n "${INIT_FROM:-}" ]; then
+        # Fresh start: use $INIT_FROM as weights-only init (fresh optimizer,
+        # step 0, full lr warmup). Any local .pth would make --resume_from
+        # latest do a full resume instead, so move them aside.
+        [ -f "$INIT_FROM" ] || { log "ERROR: INIT_FROM=$INIT_FROM does not exist."; exit 1; }
+        if compgen -G "$OUTPUT_DIR/checkpoints/*.pth" > /dev/null; then
+            BAK="$OUTPUT_DIR/checkpoints.bak-$(date +%s)"
+            log "INIT_FROM set: moving existing checkpoints to $BAK"
+            mv "$OUTPUT_DIR/checkpoints" "$BAK"
+            mkdir -p "$OUTPUT_DIR/checkpoints"
+        fi
+        log "Fresh start from $INIT_FROM (weights only; optimizer/lr/step reset)."
+    else
+        # Pull the newest .pth from Drive (if any) into work_dir/checkpoints;
+        # the trainer's --resume_from latest then picks it up (or falls back to
+        # the pretrained load_from when the dir is empty).
+        # sort -V so step_3200 ranks above step_800 (plain sort is lexicographic)
+        LATEST_PTH="$(rclone lsf --files-only "$CKPT_REMOTE" 2>/dev/null | grep '\.pth$' | sort -V | tail -1 || true)"
+        if [ -n "$LATEST_PTH" ] && [ ! -f "$OUTPUT_DIR/checkpoints/$LATEST_PTH" ]; then
+            log "Downloading $LATEST_PTH from Drive..."
+            rclone copyto --progress "$CKPT_REMOTE/$LATEST_PTH" "$OUTPUT_DIR/checkpoints/$LATEST_PTH"
+        fi
     fi
 elif [[ "$TRAIN_ARGS" == *"--resume_from_checkpoint"* ]]; then
     log "Resuming from checkpoint specified in TRAIN_ARGS."
@@ -275,6 +294,7 @@ if [ "$TRAIN_SCRIPT" = "ivjoint" ]; then
         --work_dir "$OUTPUT_DIR" \
         --data.data_dir "{minecraft: $BUNDLE_DIR/manifest.jsonl}" \
         --resume_from latest \
+        ${INIT_FROM:+--model.load_from="$INIT_FROM"} \
         $TRAIN_ARGS
 else
     # shellcheck disable=SC2086

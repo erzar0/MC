@@ -796,6 +796,7 @@ def main(cfg: SanaVideoConfig) -> None:
     # 7. Resume training
     if config.model.resume_from is not None and config.model.resume_from["checkpoint"] is not None:
         loaded_video_step = None
+        fresh_start = False
         ckpt_path = osp.join(config.work_dir, "checkpoints")
         check_flag = osp.exists(ckpt_path) and len(os.listdir(ckpt_path)) != 0
         remove_state_dict_keys = config.model.remove_state_dict_keys
@@ -813,6 +814,9 @@ def main(cfg: SanaVideoConfig) -> None:
                     checkpoints = sorted(checkpoints, key=lambda x: int(x.replace(".pth", "").split("_")[3]))
                     config.model.resume_from["checkpoint"] = osp.join(ckpt_path, checkpoints[-1])
             else:
+                # Fresh start: load_from is a weights-only init, so the
+                # epoch/step encoded in its filename must not be adopted.
+                fresh_start = True
                 config.model.resume_from["resume_optimizer"] = config.train.load_from_optimizer
                 config.model.resume_from["resume_lr_scheduler"] = config.train.load_from_lr_scheduler
                 config.model.resume_from["checkpoint"] = config.model.load_from
@@ -833,14 +837,15 @@ def main(cfg: SanaVideoConfig) -> None:
             logger.warning(colored(f"Missing keys: {missing}", "red"))
             logger.warning(colored(f"Unexpected keys: {unexpected}", "red"))
 
-            path = osp.basename(config.model.resume_from["checkpoint"])
-            try:
-                start_epoch = int(path.replace(".pth", "").split("_")[1]) - 1
-                start_step = int(path.replace(".pth", "").split("_")[3])
-            except (IndexError, ValueError):
-                pass
+            if not fresh_start:
+                path = osp.basename(config.model.resume_from["checkpoint"])
+                try:
+                    start_epoch = int(path.replace(".pth", "").split("_")[1]) - 1
+                    start_step = int(path.replace(".pth", "").split("_")[3])
+                except (IndexError, ValueError):
+                    pass
 
-        if loaded_video_step is not None:
+        if loaded_video_step is not None and not fresh_start:
             start_video_step = loaded_video_step
             logger.info(f"Loaded video_step: {start_video_step} from checkpoint")
         else:
