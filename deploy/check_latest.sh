@@ -45,15 +45,25 @@ fi
 # Prompt to generate (can be overridden as first argument)
 PROMPT="${1:-[Region]: A small island covered in dense green forests with sandy beaches along its shores. A small wooden house sits near the coast.}"
 
+DIFFUSERS_DIR="tmp/check_render_diffusers"
+
 echo "=========================================================="
-echo "Running check with checkpoint: $LATEST"
+echo "Converting checkpoint to Diffusers format..."
+echo "=========================================================="
+$VENV src/scripts/sana_video/convert_pth_to_diffusers.py \
+    --pth "$LATEST" \
+    --output "$DIFFUSERS_DIR" \
+    --dtype bf16
+
+echo "=========================================================="
+echo "Running inference with converted checkpoint: $DIFFUSERS_DIR"
 echo "Prompt: $PROMPT"
 echo "=========================================================="
 
 # Run inference
 $VENV src/scripts/sana_video/inference.py \
     --prompt "$PROMPT" \
-    --transformer_path "$LATEST" \
+    --transformer_path "$DIFFUSERS_DIR" \
     --height 256 \
     --width 256 \
     --frames 65 \
