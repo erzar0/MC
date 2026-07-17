@@ -76,7 +76,9 @@ train:
   use_fsdp: false
   num_workers: 24
   seed: 1
-  train_batch_size: 2
+  # 4 is the hard cap: above it the 385-frame bucket overflows conv2d's
+  # 32-bit indexing in the Wan VAE.
+  train_batch_size: 4
   num_epochs: 100
   gradient_accumulation_steps: 4
   grad_checkpointing: true
@@ -98,7 +100,7 @@ train:
   eval_sampling_steps: 1650
   log_interval: 20
   save_model_epochs: 1
-  # ~5 saves per epoch at batch 2 (16,734 regions -> ~8,367 steps/epoch)
+  # ~2.5 saves per epoch at batch 4 (16,734 regions -> ~4,184 steps/epoch)
   save_model_steps: 1650
   work_dir: tmp/sana_video_ivjoint
   online_metric: false
