@@ -86,14 +86,12 @@ train:
       - 0.9
       - 0.999
     eps: 1.0e-10
-    lr: 5.0e-5
+    lr: 1.0e-4
     type: AdamW
     weight_decay: 0.0
   lr_schedule: constant
   lr_schedule_args:
     num_warmup_steps: 500
-  auto_lr:
-    rule: sqrt
   local_save_vis: true # saves validation mp4s to work_dir/log_vis (if visualize)
   visualize: false
   deterministic_validation: true
