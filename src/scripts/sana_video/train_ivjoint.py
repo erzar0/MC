@@ -522,8 +522,10 @@ def main(cfg: SanaVideoConfig) -> None:
         pyrallis.dump(config, open(osp.join(config.work_dir, "config.yaml"), "w"), sort_keys=False, indent=4)
         if args.report_to == "wandb":
             import wandb
-
-            wandb.init(project=args.tracker_project_name, name=args.name, resume="allow", id=args.name)
+            # Generate a timestamp to make the run name/id unique on each launch
+            run_timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+            run_name = f"{args.name}-{run_timestamp}"
+            wandb.init(project=args.tracker_project_name, name=run_name, id=run_name)
 
     config.global_world_size = get_world_size()
     logger.info(f"Config: \n{config}")
