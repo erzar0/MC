@@ -58,8 +58,21 @@ DATASET_REMOTE="${DATASET_REMOTE:-gdrive:minecraft-training/sana_video_dataset.t
 # manifest inside the tar.
 MANIFEST_REMOTE="${MANIFEST_REMOTE:-}"
 CKPT_REMOTE="${CKPT_REMOTE:-gdrive:minecraft-training/checkpoints}"
-OUTPUT_DIR="${OUTPUT_DIR:-tmp/sana_video_ft}"
-BUNDLE_DIR="${BUNDLE_DIR:-data/train_bundle}"
+
+# Use /ephemeral partition for large files by default if it exists (e.g. on Brev boxes)
+if [ -d "/ephemeral" ]; then
+    OUTPUT_DIR="${OUTPUT_DIR:-/ephemeral/sana_video_ft}"
+    BUNDLE_DIR="${BUNDLE_DIR:-/ephemeral/train_bundle}"
+    export HF_HOME="${HF_HOME:-/ephemeral/cache/huggingface}"
+else
+    OUTPUT_DIR="${OUTPUT_DIR:-tmp/sana_video_ft}"
+    BUNDLE_DIR="${BUNDLE_DIR:-data/train_bundle}"
+    export HF_HOME="${HF_HOME:-tmp/cache/huggingface}"
+fi
+
+# Optimize rclone Google Drive upload speeds by increasing the chunk size from the 8M default
+export RCLONE_DRIVE_CHUNK_SIZE="${RCLONE_DRIVE_CHUNK_SIZE:-1024M}"
+
 SAVE_EVERY="${SAVE_EVERY:-1000}"
 UPLOAD_INTERVAL="${UPLOAD_INTERVAL:-60}"
 # TRAIN_SCRIPT: "train" (diffusers-based train.py, default) or "ivjoint"

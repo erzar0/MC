@@ -1,8 +1,6 @@
-# Start training — copy/paste runbook
+# SANA-Video Voxel Training (`ivjoint`) Runbook
 
-Zero-to-training on a fresh GPU box (H200). Values below are pre-filled for this
-project's Drive remote (`MinecraftDataset:`) and the uploaded dataset. Only the
-two secrets/paths in **Step 0** need your input.
+Zero-to-training on a fresh H200 GPU box using the `train_ivjoint.py` pipeline (flat `.pth` files). 
 
 ---
 
@@ -10,25 +8,22 @@ two secrets/paths in **Step 0** need your input.
 
 ```bash
 # Your Weights & Biases API key (https://wandb.ai/authorize). Leave unset to
-# train without wandb (drop --report_to wandb from TRAIN_ARGS below).
+# train without wandb (use --report_to none in TRAIN_ARGS below).
 export WANDB_API_KEY=PASTE_YOUR_KEY_HERE
 
 # Only if the SANA-Video base model is gated for your account:
 # export HF_TOKEN=PASTE_YOUR_HF_TOKEN
 ```
 
-> **Brev / minimal boxes:** this works on a plain CUDA instance — the bootstrap
-> installs only the training deps (no `amulet` build) into a fresh `.venv`.
-> Provision **≥ ~90 GB disk** (dataset tar + extraction + model weights); the
-> script aborts early via `MIN_DISK_GB` if there isn't enough, and deletes the
-> tar after extraction by default (`KEEP_TAR=1` to keep it).
+> **Disk Space & Egress**: 
+> * The script automatically detects `/ephemeral` (on Brev/GPU instances) and points your checkpoints (`OUTPUT_DIR`), dataset (`BUNDLE_DIR`), and Hugging Face downloads cache (`HF_HOME`) there to avoid running out of disk space.
+> * It automatically sets `RCLONE_DRIVE_CHUNK_SIZE=1024M` to optimize Google Drive upload speeds.
 
-rclone needs Drive access on the box. From **your local machine**, copy the
-config you already made over to the remote (headless boxes can't do the browser
-OAuth):
+Ensure `rclone` has Drive access. From **your local machine**, copy your configured `rclone.conf` over to the remote GPU instance (running `mkdir -p` first so the destination folder exists):
 
 ```bash
-# run LOCALLY, replace user@remote with your box
+# Run LOCALLY, replacing user@remote with your box's ssh address
+ssh user@remote "mkdir -p ~/.config/rclone"
 scp ~/.config/rclone/rclone.conf user@remote:~/.config/rclone/rclone.conf
 ```
 
@@ -37,97 +32,94 @@ scp ~/.config/rclone/rclone.conf user@remote:~/.config/rclone/rclone.conf
 ## Step 1 — get the repo onto the box
 
 ```bash
-git clone git@github.com:erzar0/MC.git
+git clone https://github.com/erzar0/MC.git
 cd MC
 ```
-
-> If the box has no SSH key for GitHub, use HTTPS instead:
-> `git clone https://github.com/erzar0/MC.git`
 
 ---
 
 ## Step 1.5 — one-time: refresh the manifest for height bucketing (local)
 
-Training buckets regions by content height (trains only on real blocks, ~2×
-faster), which needs a `height` field the current bundle's manifest lacks.
-Upload a height-augmented manifest once — just ~25 MB, no 38 GB re-upload:
+Training buckets regions by content height (trains only on real blocks, ~2× faster), which needs a `height` field. Upload a height-augmented manifest once from your local development machine:
 
 ```bash
-# run LOCALLY, from your repo checkout
+# Run LOCALLY, from your local repo checkout
 python deploy/package_dataset.py --manifest-only \
     --rclone-dest MinecraftDataset:minecraft-training/
 ```
 
-(Only needed for the existing bundle. Bundles built fresh already include
-heights.)
-
 ---
 
-## Step 2 — start training (one command)
+## Step 2 — start training (One Command)
 
-The bootstrap script installs `uv` + `rclone`, syncs the env, downloads +
-extracts the dataset from Drive, launches training, and streams checkpoints back
-to Drive as they are written.
+Running `remote_train.sh` with `TRAIN_SCRIPT=ivjoint` will automatically:
+1. Detect and download the newest `.pth` checkpoint from Google Drive (if one exists).
+2. Start or resume training from it seamlessly using `--resume_from latest`.
+3. Stream newly completed epoch checkpoints back to Google Drive in the background.
 
 ```bash
+# Configure script, config targets, and keys
+export TRAIN_SCRIPT=ivjoint
+export IVJOINT_CONFIG=configs/sana_video_minecraft.yaml
+export WANDB_API_KEY=PASTE_YOUR_KEY_HERE
+export HF_TOKEN=PASTE_YOUR_HF_TOKEN
+
+# Run detached in the background
 DATASET_REMOTE=MinecraftDataset:minecraft-training/sana_video_dataset.tar \
 MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
 CKPT_REMOTE=MinecraftDataset:minecraft-training/checkpoints \
-TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3 \
-    --batch_size 4 --gradient_accumulation_steps 2 \
-    --report_to wandb --wandb_project minecraft-sana-video" \
-bash deploy/remote_train.sh
-```
-
-That's it — it runs to completion and leaves checkpoints in
-`MinecraftDataset:minecraft-training/checkpoints`.
-
-### Run it detached (survives SSH disconnects)
-
-```bash
-DATASET_REMOTE=MinecraftDataset:minecraft-training/sana_video_dataset.tar \
-MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
-CKPT_REMOTE=MinecraftDataset:minecraft-training/checkpoints \
-TRAIN_ARGS="--mode lora --spatial_crop_size 128 --max_frames 385 --epochs 3 \
-    --batch_size 4 --gradient_accumulation_steps 2 \
-    --report_to wandb --wandb_project minecraft-sana-video" \
 nohup bash deploy/remote_train.sh > train.log 2>&1 &
 
-tail -f train.log        # watch progress
+# Watch live progress
+tail -f train.log
 ```
-
-> `--max_frames 385` is now just the **cap** (largest bucket); most batches run
-> far shorter since regions are bucketed by their real height.
 
 ---
 
-## Tuning knobs
+## Tuning Knobs (Pyrallis Overrides)
 
-- **OOM?** Lower `--batch_size` (4 → 2 → 1). Memory scales with batch size.
-- **GPU underused?** Raise `--batch_size` and drop `--gradient_accumulation_steps`
-  to keep the effective batch (`batch_size × grad_accum`) where you want it.
-- **No wandb:** delete `--report_to wandb --wandb_project ...` and skip the
-  `WANDB_API_KEY` export.
-- **Full fine-tuning:** swap `--mode lora` → `--mode full` (needs much more VRAM;
-  start at `--batch_size 1`).
+Since `ivjoint` is driven by a YAML config file, you can override any parameter on the command line by prepending extra arguments to `TRAIN_ARGS`:
 
-## After training
+* **OOM / Out of Memory?** Decrease the batch size:
+  `TRAIN_ARGS="--train.train_batch_size 1"`
+* **Adjust Gradient Accumulation**:
+  `TRAIN_ARGS="--train.gradient_accumulation_steps 8"`
+* **Disable WandB tracker**:
+  `TRAIN_ARGS="--report_to none"`
+* **Change Learning Rate**:
+  `TRAIN_ARGS="--train.optimizer.lr 2.5e-5"`
 
-Checkpoints (`checkpoint-step-<N>/`, `checkpoint-epoch-<N>/`) are already on
-Drive. Pull them anywhere with:
+*Example running with custom overrides:*
+```bash
+export TRAIN_SCRIPT=ivjoint
+export IVJOINT_CONFIG=configs/sana_video_minecraft.yaml
+
+DATASET_REMOTE=MinecraftDataset:minecraft-training/sana_video_dataset.tar \
+MANIFEST_REMOTE=MinecraftDataset:minecraft-training/manifest.jsonl \
+CKPT_REMOTE=MinecraftDataset:minecraft-training/checkpoints \
+TRAIN_ARGS="--train.train_batch_size 1 --train.gradient_accumulation_steps 8 --report_to none" \
+nohup bash deploy/remote_train.sh > train.log 2>&1 &
+```
+
+---
+
+## After training & Inference
+
+Checkpoints (`epoch_X_step_Y.pth`) are stored on Google Drive. Pull them down locally with:
 
 ```bash
 rclone copy --progress MinecraftDataset:minecraft-training/checkpoints ./checkpoints
 ```
 
-Generate a voxel grid from a trained LoRA:
+Generate a 3D voxel grid from a `.pth` checkpoint:
 
 ```bash
 .venv/bin/python src/scripts/sana_video/inference.py \
-    --prompt "a medieval castle on a hill" \
-    --lora_path checkpoints/checkpoint-epoch-3 \
-    --height 128 --width 128 --frames 385 \
+    --prompt "[Region]: A medieval castle with tall stone towers stands on a green plain." \
+    --transformer_path checkpoints/epoch_1_step_3200.pth \
+    --height 256 --width 256 --frames 385 --no_chi \
     --output_npy tmp/generated.npy
 ```
 
-> Match `--height`/`--width`/`--frames` to what you trained on (128 / 128 / 385).
+> [!IMPORTANT]
+> Because `train_ivjoint.py` disables the CHI system prompt encoder, you **must** pass `--no_chi` during inference to match the trained checkpoint weights.
