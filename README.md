@@ -108,4 +108,6 @@ Once the server finishes loading and starts listening, run the captioning script
 
 ## ⚖️ License
 
-TWOJA STARA
+MIT License
+
+Copyright (c) [2026] [Eryk Zarębski]
