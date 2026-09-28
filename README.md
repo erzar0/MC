@@ -110,4 +110,4 @@ Once the server finishes loading and starts listening, run the captioning script
 
 MIT License
 
-Copyright (c) [2026] [Eryk Zarębski]
+Copyright (c) 2026 Eryk Zarębski
